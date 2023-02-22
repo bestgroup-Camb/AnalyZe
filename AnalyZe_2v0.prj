@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="1664551257" file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\AnalyZe_2v0.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp" name="AnalyZe_2v0" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="4034504976" file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe_2v0.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe" name="AnalyZe_2v0" target="target.mlapps" target-name="Package App">
     <param.appname>AnalyZe_2v0</param.appname>
     <param.authnamewatermark>Douglas van Niekerk</param.authnamewatermark>
     <param.email>dcv24@cam.ac.uk</param.email>
@@ -8,8 +8,8 @@
     <param.icons />
     <param.summary>AnalyZe - A MATLAB app for processing EIS data.</param.summary>
     <param.description>Current functionality includes rudimentary data handling, equivalent circuit fitting, goodness of fit analysis and simple magnitude cross section time series analysis.</param.description>
-    <param.screenshot>C:\Users\dougl\AppData\Local\Temp\tpa0dc7dd7_7b79_4a7c_9b2d_74306ea239b8.png</param.screenshot>
-    <param.version>2.0</param.version>
+    <param.screenshot>C:\Users\dougl\AppData\Local\Temp\tpbc8bf2a2_aec6_4bcf_b2e6_54f68cb6329e.png</param.screenshot>
+    <param.version>2.1</param.version>
     <param.products.name>
       <item>MATLAB</item>
       <item>Curve Fitting Toolbox</item>
@@ -32,7 +32,7 @@
       <item>7.7</item>
     </param.products.version>
     <param.platforms />
-    <param.output>${PROJECT_ROOT}\Ver2</param.output>
+    <param.output>${PROJECT_ROOT}\Packaged App</param.output>
     <param.guid>ab05bef3-fef6-4d59-ad3a-205c2810e397</param.guid>
     <unset>
       <param.icon />
@@ -49,7 +49,7 @@
     <fileset.resources />
     <fileset.package />
     <build-deliverables>
-      <file location="${PROJECT_ROOT}" name="Ver2" optional="false">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Ver2</file>
+      <file location="${PROJECT_ROOT}" name="Packaged App" optional="false">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\Packaged App</file>
     </build-deliverables>
     <workflow />
     <matlab>
