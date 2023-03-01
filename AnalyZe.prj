@@ -1,17 +1,22 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\AnalyZe.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp" name="AnalyZe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe" name="AnalyZe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>AnalyZe</param.appname>
-    <param.icon />
-    <param.icons />
-    <param.version>1.0</param.version>
+    <param.icon>${PROJECT_ROOT}\AnalyZe_resources\icon.ico</param.icon>
+    <param.icons>
+      <file>${PROJECT_ROOT}\AnalyZe_resources\icon_48.png</file>
+      <file>${PROJECT_ROOT}\AnalyZe_resources\icon_32.png</file>
+      <file>${PROJECT_ROOT}\AnalyZe_resources\icon_24.png</file>
+      <file>${PROJECT_ROOT}\AnalyZe_resources\icon_16.png</file>
+    </param.icons>
+    <param.version>2.0</param.version>
     <param.authnamewatermark>Douglas van Niekerk</param.authnamewatermark>
     <param.email>dcv24@cam.ac.uk</param.email>
-    <param.company>Best Group</param.company>
-    <param.summary />
-    <param.description />
+    <param.company>Best Group, University of Cambridge</param.company>
+    <param.summary>EIS data analysis tool</param.summary>
+    <param.description>Circuit fitting and time-series impedance magnitude analysis</param.description>
     <param.screenshot>${PROJECT_ROOT}\Splash.png</param.screenshot>
     <param.guid />
-    <param.installpath.string>\Best Group\AnalyZe\</param.installpath.string>
+    <param.installpath.string>\Best Group, University of Cambridge\AnalyZe\</param.installpath.string>
     <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
     <param.logo />
     <param.install.notes />
@@ -41,13 +46,10 @@
 	 
  Input Arguments 
 	 -?  print help on how to use the application 
-	 input arguments</param.help.text>
+	 input arguments 
+ Description 
+ 	 Circuit fitting and time-series impedance magnitude analysis</param.help.text>
     <unset>
-      <param.icon />
-      <param.icons />
-      <param.version />
-      <param.summary />
-      <param.description />
       <param.guid />
       <param.installpath.string />
       <param.installpath.combo />
@@ -85,9 +87,9 @@
       <file>${PROJECT_ROOT}\Bioelectronicist.png</file>
     </fileset.depfun>
     <build-deliverables>
-      <file location="${PROJECT_ROOT}\AnalyZe\for_testing" name="readme.txt" optional="true">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\AnalyZe\for_testing\readme.txt</file>
-      <file location="${PROJECT_ROOT}\AnalyZe\for_testing" name="splash.png" optional="false">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\AnalyZe\for_testing\splash.png</file>
-      <file location="${PROJECT_ROOT}\AnalyZe\for_testing" name="AnalyZe.exe" optional="false">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\AnalyZe\for_testing\AnalyZe.exe</file>
+      <file location="${PROJECT_ROOT}\AnalyZe\for_testing" name="readme.txt" optional="true">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\AnalyZe\for_testing" name="AnalyZe.exe" optional="false">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe\for_testing\AnalyZe.exe</file>
+      <file location="${PROJECT_ROOT}\AnalyZe\for_testing" name="splash.png" optional="false">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe\for_testing\splash.png</file>
     </build-deliverables>
     <workflow />
     <matlab>
