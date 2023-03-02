@@ -8,13 +8,13 @@
       <file>${PROJECT_ROOT}\AnalyZe_resources\icon_24.png</file>
       <file>${PROJECT_ROOT}\AnalyZe_resources\icon_16.png</file>
     </param.icons>
-    <param.version>2.0</param.version>
+    <param.version>3.0</param.version>
     <param.authnamewatermark>Douglas van Niekerk</param.authnamewatermark>
     <param.email>dcv24@cam.ac.uk</param.email>
     <param.company>Best Group, University of Cambridge</param.company>
     <param.summary>EIS data analysis tool</param.summary>
     <param.description>Circuit fitting and time-series impedance magnitude analysis</param.description>
-    <param.screenshot>${PROJECT_ROOT}\Splash.png</param.screenshot>
+    <param.screenshot>${PROJECT_ROOT}\splash2.png</param.screenshot>
     <param.guid />
     <param.installpath.string>\Best Group, University of Cambridge\AnalyZe\</param.installpath.string>
     <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
@@ -46,9 +46,7 @@
 	 
  Input Arguments 
 	 -?  print help on how to use the application 
-	 input arguments 
- Description 
- 	 Circuit fitting and time-series impedance magnitude analysis</param.help.text>
+	 input arguments</param.help.text>
     <unset>
       <param.guid />
       <param.installpath.string />
