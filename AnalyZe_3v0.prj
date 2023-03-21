@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="973482140" file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe_3v0.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe" name="AnalyZe_3v0" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="2740467544" file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe_3v0.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe" name="AnalyZe_3v0" target="target.mlapps" target-name="Package App">
     <param.appname>AnalyZe_3v0</param.appname>
     <param.authnamewatermark>Douglas van Niekerk</param.authnamewatermark>
     <param.email>dcv24@cam.ac.uk</param.email>
@@ -8,8 +8,8 @@
     <param.icons />
     <param.summary>AnalyZe - A MATLAB app for processing EIS data.</param.summary>
     <param.description>Current functionality includes rudimentary data handling, equivalent circuit fitting, goodness of fit analysis and simple magnitude cross section time series analysis.</param.description>
-    <param.screenshot>C:\Users\dougl\AppData\Local\Temp\tpfc2d97d4_fc18_4cb8_924d_bfe5ea6d581f.png</param.screenshot>
-    <param.version>3.0</param.version>
+    <param.screenshot>C:\Users\dougl\AppData\Local\Temp\tp18a66b0d_5d15_461f_a5b7_def492990633.png</param.screenshot>
+    <param.version>3.1</param.version>
     <param.products.name>
       <item>MATLAB</item>
       <item>Curve Fitting Toolbox</item>
