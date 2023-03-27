@@ -1,0 +1,112 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="2876575308" file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe_4v0.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe" name="AnalyZe_4v0" target="target.mlapps" target-name="Package App">
+    <param.appname>AnalyZe_4v0</param.appname>
+    <param.authnamewatermark>Douglas van Niekerk</param.authnamewatermark>
+    <param.email>dcv24@cam.ac.uk</param.email>
+    <param.company>BEST Group</param.company>
+    <param.icon />
+    <param.icons />
+    <param.summary>AnalyZe - A MATLAB app for processing EIS data in particular for monitoring biological barriers.</param.summary>
+    <param.description>Current functionality includes rudimentary data handling, equivalent circuit fitting, goodness of fit analysis, regression diagnostic, simple magnitude cross section time series analysis and transfer function estimation for time series pole drift analysis.</param.description>
+    <param.screenshot>C:\Users\dougl\AppData\Local\Temp\tp766da02c_9629_4364_8246_070f41fead1f.png</param.screenshot>
+    <param.version>4.0</param.version>
+    <param.products.name>
+      <item>MATLAB</item>
+      <item>Curve Fitting Toolbox</item>
+      <item>Global Optimization Toolbox</item>
+      <item>Optimization Toolbox</item>
+      <item>Parallel Computing Toolbox</item>
+    </param.products.name>
+    <param.products.id>
+      <item>1</item>
+      <item>60</item>
+      <item>90</item>
+      <item>6</item>
+      <item>80</item>
+    </param.products.id>
+    <param.products.version>
+      <item>9.13</item>
+      <item>3.8</item>
+      <item>4.8</item>
+      <item>9.4</item>
+      <item>7.7</item>
+    </param.products.version>
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}\Packaged App</param.output>
+    <param.guid>ab05bef3-fef6-4d59-ad3a-205c2810e397</param.guid>
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.platforms />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\AnalyZe.mlapp</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\BEST_Logo.png</file>
+      <file>${PROJECT_ROOT}\Bioelectronicist.png</file>
+    </fileset.depfun>
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}" name="Packaged App" optional="false">C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\Packaged App</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2022b</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+        <toolbox name="embeddedcoder" />
+        <toolbox name="gpucoder" />
+        <toolbox name="fixedpoint" />
+        <toolbox name="matlabhdlcoder" />
+        <toolbox name="neuralnetwork" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
+      <toolbox>
+        <gpucoder>
+          <enabled>true</enabled>
+        </gpucoder>
+      </toolbox>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+      <toolbox>
+        <matlabhdlcoder>
+          <enabled>true</enabled>
+        </matlabhdlcoder>
+      </toolbox>
+      <toolbox>
+        <neuralnetwork>
+          <enabled>true</enabled>
+        </neuralnetwork>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
