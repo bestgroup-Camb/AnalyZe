@@ -37,3 +37,17 @@ In MATLAB navigate to Apps -> Design App \
 Then Open -> AnalyZe/AnalyZe.mlapp
 
 For more information refer to [Creating MATLAB GUIs](https://www.mathworks.com/help/matlab/creating_guis/). 
+
+## MATLAB Dependencies
+
+- Control System Toolbox
+- System Identification Toolbox
+- Statistics and Machine Learning Toolbox
+- Global Optimization Toolbox
+- Econometrics Toolbox
+
+Check for up-to-date dependencies using 
+```
+[fList, pList] = matlab.codetools.requiredFilesAndProducts('.\AnalyZe.mlapp')
+pList.Name
+```
