@@ -8,7 +8,8 @@ A MATLAB application for handling and analyzing Electrochemical Impedance Spectr
 
 ## Features
 
-- Import .txt (.csv) and label impedance data and write .mat files for future analysis.
+- Import .txt (.csv) and label impedance data.
+- Write .mat files for future analysis.
 - Fit equivalent circuits to EIS data
     - Equivalent circuit fitting assumes the objective is the extraction of the parameters associated with a biological barrier of the form R//C.
     - Batch processing.
