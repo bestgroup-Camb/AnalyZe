@@ -1548,7 +1548,7 @@ classdef AnalyZe < matlab.apps.AppBase
             Condition = app.ConditionListBox.Value;
             Well = app.WellNumberListBox.Value;
             Exp = app.ExperimentNumberListBox.Value;
-            Time = app.TimeListBox.Value;
+            Time = string(app.TimeListBox.Value);
             display(Time)
 
             Dat = app.Data;
@@ -1603,7 +1603,14 @@ classdef AnalyZe < matlab.apps.AppBase
                     case 'Select All'
                         Indexes = [1:length(Dat)];
                    otherwise
-                        Indexes = find(TimeAll == Time);
+                       Indexes = [];
+                       display(Indexes)
+                       for j = 1:length(Time)
+                            Ind_j = find(TimeAll == Time(j));
+                            display(Ind_j)
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(TimeAll == Time);
                end
                 Dat = Dat(Indexes);
 
@@ -1780,7 +1787,8 @@ classdef AnalyZe < matlab.apps.AppBase
                             mu = zeros(1,2);
                             sigma = eye(2);
                             
-                            LogLikelihood = sum(log(mvnpdf(Res_pair,mu,sigma)));
+                            MvLik = mvnpdf(Res_pair,mu,sigma);
+                            LogLikelihood = sum(log(MvLik));
                             numObs = length(Res);
                             numParams = 1;
                             if (fit_blank_only)
@@ -1794,7 +1802,8 @@ classdef AnalyZe < matlab.apps.AppBase
                                 end
                             end
                             
-                           [aic,bic] = aicbic(LogLikelihood,numParams,numObs);
+                           idx= MvLik~=0;
+                           [aic,bic] = aicbic(LogLikelihood(idx),numParams,numObs);
 
                             
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                   
