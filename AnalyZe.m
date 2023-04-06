@@ -165,12 +165,19 @@ classdef AnalyZe < matlab.apps.AppBase
         ClearResultsButton_2            matlab.ui.control.Button
         ResultsTable_2                  matlab.ui.control.Table
         CrossSectionParametersPanel     matlab.ui.container.Panel
-        Panel                           matlab.ui.container.Panel
+        CrossSectionOptions             matlab.ui.container.TabGroup
+        NormalizationTab_2              matlab.ui.container.Tab
+        Panel_3                         matlab.ui.container.Panel
         ModulobeforeafternormalizingSwitch  matlab.ui.control.Switch
-        NormalizationSchemeListBox_3    matlab.ui.control.ListBox
-        NormalizationSchemeListBox_3Label  matlab.ui.control.Label
+        NormalizationSchemeListBox_5    matlab.ui.control.ListBox
+        NormalizationSchemeListBox_5Label  matlab.ui.control.Label
         NormalizeSwitch                 matlab.ui.control.Switch
         NormalizeSwitchLabel            matlab.ui.control.Label
+        OutlierRemovalTab               matlab.ui.container.Tab
+        DetectionSchemeListBox          matlab.ui.control.ListBox
+        DetectionSchemeListBoxLabel     matlab.ui.control.Label
+        OutlierRemovalSwitch            matlab.ui.control.Switch
+        OutlierRemovalSwitchLabel       matlab.ui.control.Label
         Panel_2                         matlab.ui.container.Panel
         PlotMeanSwitch                  matlab.ui.control.Switch
         PlotMeanSwitchLabel             matlab.ui.control.Label
@@ -937,6 +944,16 @@ classdef AnalyZe < matlab.apps.AppBase
                        
                     end
                 case 'Off'
+            end
+
+            switch (app.OutlierRemovalSwitch.Value)
+                case 'On'
+                    scheme =  string(app.DetectionSchemeListBox.Value);
+                    
+                    Outliers = isoutlier(CS_local,scheme);
+
+                    CS_local(Outliers) = NaN; 
+                      
             end
 
             results = CS_local;
@@ -5263,12 +5280,12 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OffsetRemovalSwitchLabel.FontSize = 14;
             app.OffsetRemovalSwitchLabel.FontWeight = 'bold';
             app.OffsetRemovalSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.OffsetRemovalSwitchLabel.Position = [121 251 107 22];
+            app.OffsetRemovalSwitchLabel.Position = [121 254 107 22];
             app.OffsetRemovalSwitchLabel.Text = 'Offset Removal';
 
             % Create OffsetRemovalSwitch
             app.OffsetRemovalSwitch = uiswitch(app.CrossSectionParametersPanel, 'slider');
-            app.OffsetRemovalSwitch.Position = [151 278 45 20];
+            app.OffsetRemovalSwitch.Position = [151 281 45 20];
 
             % Create CrossSectionFrequencySliderLabel
             app.CrossSectionFrequencySliderLabel = uilabel(app.CrossSectionParametersPanel);
@@ -5276,7 +5293,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CrossSectionFrequencySliderLabel.FontSize = 18;
             app.CrossSectionFrequencySliderLabel.FontWeight = 'bold';
             app.CrossSectionFrequencySliderLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.CrossSectionFrequencySliderLabel.Position = [113 105 224 23];
+            app.CrossSectionFrequencySliderLabel.Position = [113 80 224 23];
             app.CrossSectionFrequencySliderLabel.Text = 'Cross Section Frequency';
 
             % Create CrossSectionFrequencySlider
@@ -5284,7 +5301,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CrossSectionFrequencySlider.ValueChangedFcn = createCallbackFcn(app, @CrossSectionFrequencySliderValueChanged, true);
             app.CrossSectionFrequencySlider.ValueChangingFcn = createCallbackFcn(app, @CrossSectionFrequencySliderValueChanging, true);
             app.CrossSectionFrequencySlider.FontColor = [0.4667 0.6745 0.1882];
-            app.CrossSectionFrequencySlider.Position = [6 87 449 3];
+            app.CrossSectionFrequencySlider.Position = [6 74 449 3];
 
             % Create HzEditFieldLabel
             app.HzEditFieldLabel = uilabel(app.CrossSectionParametersPanel);
@@ -5297,7 +5314,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HzEditField = uieditfield(app.CrossSectionParametersPanel, 'numeric');
             app.HzEditField.ValueChangedFcn = createCallbackFcn(app, @HzEditFieldValueChanged, true);
             app.HzEditField.FontSize = 18;
-            app.HzEditField.Position = [173 5 105 48];
+            app.HzEditField.Position = [173 5 105 35];
 
             % Create Panel_2
             app.Panel_2 = uipanel(app.CrossSectionParametersPanel);
@@ -5338,44 +5355,81 @@ classdef AnalyZe < matlab.apps.AppBase
             app.PlotMeanSwitch = uiswitch(app.Panel_2, 'slider');
             app.PlotMeanSwitch.Position = [44 74 45 20];
 
-            % Create Panel
-            app.Panel = uipanel(app.CrossSectionParametersPanel);
-            app.Panel.Position = [20 132 296 114];
+            % Create CrossSectionOptions
+            app.CrossSectionOptions = uitabgroup(app.CrossSectionParametersPanel);
+            app.CrossSectionOptions.Position = [16 106 300 149];
+
+            % Create NormalizationTab_2
+            app.NormalizationTab_2 = uitab(app.CrossSectionOptions);
+            app.NormalizationTab_2.Title = 'Normalization';
+
+            % Create Panel_3
+            app.Panel_3 = uipanel(app.NormalizationTab_2);
+            app.Panel_3.Position = [9 9 280 106];
 
             % Create NormalizeSwitchLabel
-            app.NormalizeSwitchLabel = uilabel(app.Panel);
+            app.NormalizeSwitchLabel = uilabel(app.Panel_3);
             app.NormalizeSwitchLabel.HorizontalAlignment = 'center';
             app.NormalizeSwitchLabel.FontSize = 14;
             app.NormalizeSwitchLabel.FontWeight = 'bold';
             app.NormalizeSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.NormalizeSwitchLabel.Position = [31 91 72 22];
+            app.NormalizeSwitchLabel.Position = [31 83 72 22];
             app.NormalizeSwitchLabel.Text = 'Normalize';
 
             % Create NormalizeSwitch
-            app.NormalizeSwitch = uiswitch(app.Panel, 'slider');
+            app.NormalizeSwitch = uiswitch(app.Panel_3, 'slider');
             app.NormalizeSwitch.FontWeight = 'bold';
-            app.NormalizeSwitch.Position = [31 57 68 30];
+            app.NormalizeSwitch.Position = [31 49 68 30];
 
-            % Create NormalizationSchemeListBox_3Label
-            app.NormalizationSchemeListBox_3Label = uilabel(app.Panel);
-            app.NormalizationSchemeListBox_3Label.HorizontalAlignment = 'right';
-            app.NormalizationSchemeListBox_3Label.Position = [144 17 126 22];
-            app.NormalizationSchemeListBox_3Label.Text = 'Normalization Scheme';
+            % Create NormalizationSchemeListBox_5Label
+            app.NormalizationSchemeListBox_5Label = uilabel(app.Panel_3);
+            app.NormalizationSchemeListBox_5Label.HorizontalAlignment = 'right';
+            app.NormalizationSchemeListBox_5Label.Position = [141 9 126 22];
+            app.NormalizationSchemeListBox_5Label.Text = 'Normalization Scheme';
 
-            % Create NormalizationSchemeListBox_3
-            app.NormalizationSchemeListBox_3 = uilistbox(app.Panel);
-            app.NormalizationSchemeListBox_3.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
-            app.NormalizationSchemeListBox_3.Position = [140 39 143 56];
-            app.NormalizationSchemeListBox_3.Value = 'zscore';
+            % Create NormalizationSchemeListBox_5
+            app.NormalizationSchemeListBox_5 = uilistbox(app.Panel_3);
+            app.NormalizationSchemeListBox_5.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
+            app.NormalizationSchemeListBox_5.Position = [140 31 131 56];
+            app.NormalizationSchemeListBox_5.Value = 'zscore';
 
             % Create ModulobeforeafternormalizingSwitch
-            app.ModulobeforeafternormalizingSwitch = uiswitch(app.Panel, 'slider');
+            app.ModulobeforeafternormalizingSwitch = uiswitch(app.Panel_3, 'slider');
             app.ModulobeforeafternormalizingSwitch.Items = {'|Z|', 'Z'};
             app.ModulobeforeafternormalizingSwitch.FontSize = 14;
             app.ModulobeforeafternormalizingSwitch.FontWeight = 'bold';
             app.ModulobeforeafternormalizingSwitch.FontColor = [0.6353 0.0784 0.1843];
-            app.ModulobeforeafternormalizingSwitch.Position = [43 18 45 20];
+            app.ModulobeforeafternormalizingSwitch.Position = [43 10 45 20];
             app.ModulobeforeafternormalizingSwitch.Value = '|Z|';
+
+            % Create OutlierRemovalTab
+            app.OutlierRemovalTab = uitab(app.CrossSectionOptions);
+            app.OutlierRemovalTab.Title = 'Outlier Removal';
+
+            % Create OutlierRemovalSwitchLabel
+            app.OutlierRemovalSwitchLabel = uilabel(app.OutlierRemovalTab);
+            app.OutlierRemovalSwitchLabel.HorizontalAlignment = 'center';
+            app.OutlierRemovalSwitchLabel.FontSize = 14;
+            app.OutlierRemovalSwitchLabel.FontWeight = 'bold';
+            app.OutlierRemovalSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.OutlierRemovalSwitchLabel.Position = [9 45 112 22];
+            app.OutlierRemovalSwitchLabel.Text = 'Outlier Removal';
+
+            % Create OutlierRemovalSwitch
+            app.OutlierRemovalSwitch = uiswitch(app.OutlierRemovalTab, 'slider');
+            app.OutlierRemovalSwitch.Position = [41 72 45 20];
+
+            % Create DetectionSchemeListBoxLabel
+            app.DetectionSchemeListBoxLabel = uilabel(app.OutlierRemovalTab);
+            app.DetectionSchemeListBoxLabel.HorizontalAlignment = 'right';
+            app.DetectionSchemeListBoxLabel.Position = [164 19 103 22];
+            app.DetectionSchemeListBoxLabel.Text = 'Detection Scheme';
+
+            % Create DetectionSchemeListBox
+            app.DetectionSchemeListBox = uilistbox(app.OutlierRemovalTab);
+            app.DetectionSchemeListBox.Items = {'median', 'mean', 'quartiles', 'grubbs', 'gesd'};
+            app.DetectionSchemeListBox.Position = [152 45 131 56];
+            app.DetectionSchemeListBox.Value = 'median';
 
             % Create TabGroup4
             app.TabGroup4 = uitabgroup(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
