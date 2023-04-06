@@ -1,5 +1,6 @@
-classdef AnalyZe_exported < matlab.apps.AppBase
-    %ANALYZE_EXPORTED EIS (Impedance) data analysis toolbox
+
+classdef AnalyZe < matlab.apps.AppBase
+    %ANALYZE EIS (Impedance) data analysis toolbox
     %   Copyright <2023> <Douglas van Niekerk>
     %   
     %   Permission is hereby granted, free of charge, to any person
@@ -882,7 +883,12 @@ classdef AnalyZe_exported < matlab.apps.AppBase
                             Dat = Dat(Indexes{3});
 
                 Dat_full = Dat;
+                
             end
+
+            T = struct2table(Dat_full); % convert the struct array to a table
+             sortedT = sortrows(T, 'Time'); % sort the table by 'DOB'
+             Dat_full = table2struct(sortedT) 
 
             NumDays = length(Dat_full);
 
@@ -1237,6 +1243,11 @@ classdef AnalyZe_exported < matlab.apps.AppBase
 
     % Callbacks that handle component events
     methods (Access = private)
+
+        % Code that executes after component creation
+        function startupFcn(app)
+            writelines(evalc('type(mfilename(''fullpath'')+".mlapp")'),mfilename('fullpath')+".m");
+        end
 
         % Button pushed function: FindFileButton
         function FindFileButtonPushed(app, event)
@@ -5903,13 +5914,16 @@ classdef AnalyZe_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = AnalyZe_exported
+        function app = AnalyZe
 
             % Create UIFigure and components
             createComponents(app)
 
             % Register the app with App Designer
             registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @startupFcn)
 
             if nargout == 0
                 clear app
@@ -5924,3 +5938,4 @@ classdef AnalyZe_exported < matlab.apps.AppBase
         end
     end
 end
+
