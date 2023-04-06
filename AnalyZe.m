@@ -117,9 +117,20 @@ classdef AnalyZe < matlab.apps.AppBase
         FitSeriesPlot                   matlab.ui.control.UIAxes
         RefreshDataOptionsButton        matlab.ui.control.Button
         FittingParams                   matlab.ui.container.Panel
+        TabGroup7                       matlab.ui.container.TabGroup
+        SeriesResistanceEstimateTab     matlab.ui.container.Tab
+        AlternateRestimationListBox     matlab.ui.control.ListBox
+        AlternateRestimationListBoxLabel  matlab.ui.control.Label
+        RSeriesResistanceSwitch         matlab.ui.control.Switch
+        RSeriesResistanceSwitchLabel    matlab.ui.control.Label
+        SequentialBarrierFittingTab     matlab.ui.container.Tab
+        FitBlankOnlyExcludeBarrierSwitch  matlab.ui.control.Switch
+        FitBlankOnlyExcludeBarrierLabel  matlab.ui.control.Label
+        FitSequentiallySwitch           matlab.ui.control.Switch
+        FitSequentiallySwitchLabel      matlab.ui.control.Label
+        BlankFitMultiStartsEditField    matlab.ui.control.NumericEditField
+        BlankFitMultiStartsEditFieldLabel  matlab.ui.control.Label
         ProgressGuage                   matlab.ui.control.SemicircularGauge
-        InferRinffromsemicirclefitSwitch  matlab.ui.control.Switch
-        InferRinffromsemicirclefitSwitchLabel  matlab.ui.control.Label
         CircuitToFit                    matlab.ui.container.TabGroup
         SelectACircuitTab               matlab.ui.container.Tab
         SelectaCircuitBarrierInclusiveListBox  matlab.ui.control.ListBox
@@ -133,12 +144,6 @@ classdef AnalyZe < matlab.apps.AppBase
         RunningLamp                     matlab.ui.control.Lamp
         RunningLampLabel                matlab.ui.control.Label
         GoButton                        matlab.ui.control.Button
-        FitBlankOnlyExcludeBarrierSwitch  matlab.ui.control.Switch
-        FitBlankOnlyExcludeBarrierLabel  matlab.ui.control.Label
-        FitSequentiallySwitch           matlab.ui.control.Switch
-        FitSequentiallySwitchLabel      matlab.ui.control.Label
-        BlankFitMultiStartsEditField    matlab.ui.control.NumericEditField
-        BlankFitMultiStartsEditFieldLabel  matlab.ui.control.Label
         MultiStartsEditField            matlab.ui.control.NumericEditField
         MultiStartsEditFieldLabel       matlab.ui.control.Label
         TrimData                        matlab.ui.container.Panel
@@ -376,49 +381,66 @@ classdef AnalyZe < matlab.apps.AppBase
                         
             
                         %% Fit data setup
+                           
+                            R_inf = 0;
                             
-                            value = app.InferRinffromsemicirclefitSwitch.Value;
+                            value = app.RSeriesResistanceSwitch.Value;
                             switch value
-                                case 'On'
+                                case 'Alternate'
 
-                                    f = figure;
-                                    ax = axes(f);
-                                    ax.Units = 'pixels';
-                                    ax.Position = [75 75 325 280];
-                                    
-                                            x = real(y_z);
-                                            y = -1.*imag(y_z);
-                                            plot(ax,x,y,'*r')
-                                            grid minor
-                                    c = uicontrol;
-                                    c.String = 'Choose Data to Fit';
-                                    c.Callback = @app.plotButtonPushed;
-                                   
-                                    app.WaitForInput = true;
-                                   while (app.WaitForInput == true)
-                                       drawnow()
-                                   end
-                                   app.WaitForInput = false; 
-                                   r_opt = app.Rinfty;
-                                   hold on
-                                    xvals = linspace(0,1000,2000);
-                                    plot(xvals, sqrt(r_opt(2)^2 - (xvals-r_opt(1)).^2), 'r')
-                                    
+                                    switch app.AlternateRestimationListBox.Value
+                                        case 'Semi-circle Fit'
+                                            f = figure;
+                                            ax = axes(f);
+                                            ax.Units = 'pixels';
+                                            ax.Position = [75 75 325 280];
+                                            
+                                                    x = real(y_z);
+                                                    y = -1.*imag(y_z);
+                                                    plot(ax,x,y,'*r')
+                                                    grid minor
+                                            c = uicontrol;
+                                            c.String = 'Choose Data to Fit';
+                                            c.Callback = @app.plotButtonPushed;
+                                           
+                                            app.WaitForInput = true;
+                                           while (app.WaitForInput == true)
+                                               drawnow()
+                                           end
+                                           app.WaitForInput = false; 
+                                           r_opt = app.Rinfty;
+                                           hold on
+                                            xvals = linspace(0,1000,2000);
+                                            plot(ax,xvals, sqrt(r_opt(2)^2 - (xvals-r_opt(1)).^2), 'r')
+                                            
+                                           hold off
 
-                                   R_inf = r_opt(1) - r_opt(2)
-                                   %display(R_inf)
+                                           R_inf = r_opt(1) - r_opt(2);
+                                           %display(R_inf)
+        
+                                           drawnow()
+                                           m = msgbox("R_inf = " + num2str(R_inf));
+                                           pause(5)
+                                          try 
+                                           close(f)
+                                          end
+                                          try
+                                           close(m)
+                                          end
 
-                                   drawnow()
-                                   m = msgbox("R_inf = " + num2str(R_inf));
-                                   pause(5)
-                                  try 
-                                   close(f)
-                                  end
-                                  try
-                                   close(m)
-                                  end
+                                        case 'Im(Z) Local Min'
+                                            
+                                            nI = -1.*imag(y_z);
+                                            R = real(y_z);
+                                            local_min = islocalmin(nI,'SamplePoints',R);
+                                            local_min_locs = find(local_min==true);            
+                                            First_min = local_min_locs(1);
                                 
-                                case 'Off'
+                                            R_inf = real(y_z(First_min));
+
+                                    end
+                                
+                                case 'Re(Z)_final'
                                     R_inf = real(y_z(1));
                             end
                             
@@ -622,22 +644,28 @@ classdef AnalyZe < matlab.apps.AppBase
                             lb = lb';
                             beta0 = varargin{5};
                             beta0 = beta0';
-
-%                             display(CCT_Fn)
-%                             display(ub)
-%                             display(lb)
-%                             display(beta0)
                         end
             
-                        %display(CCT_Fn)
+                %%% Free R Fitting
+                    value = app.RSeriesResistanceSwitch.Value;
+                    switch value
+                                case 'Alternate'
+
+                                    switch app.AlternateRestimationListBox.Value
+                                        case 'Free R Fit'
+                                            R_inf = 0;
+                                            CCT_Fn_Chosen = CCT_Fn;
+                                            NumParams = length(beta0);
+                                            CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) + b(NumParams+1);
+                                            ub = [ub;1e3];
+                                            lb = [lb;0];
+                                            beta0 = [beta0;1];
+                                    end
+                    end
+
             
                 %% FIT Data
                 
-            %             if (blank_fit)
-            %                 freq_Scale = 1./(2*pi.*freq);
-            %             else
-            %                 freq_Scale =  (2*pi.*freq);; %freq./max(freq);
-            %             end
                         freq_Scale = 1;
                         weighting = 1./( (real(y_z)).^2 + (imag(y_z)).^2 );
                         Real_Scale = weighting; % 1./real(y_z);
@@ -1545,11 +1573,19 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Button pushed function: ChooseButton
         function ChooseButtonPushed(app, event)
+            
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                flag = app.TutorialMode;
+                   
+                   if flag
+                        msgbox('You can now select a subset of time points by holding CTRL and multi-selecting from the Time list box','Heads-Up')
+                   end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
             Condition = app.ConditionListBox.Value;
             Well = app.WellNumberListBox.Value;
             Exp = app.ExperimentNumberListBox.Value;
             Time = string(app.TimeListBox.Value);
-            display(Time)
 
             Dat = app.Data;
 
@@ -1604,10 +1640,9 @@ classdef AnalyZe < matlab.apps.AppBase
                         Indexes = [1:length(Dat)];
                    otherwise
                        Indexes = [];
-                       display(Indexes)
                        for j = 1:length(Time)
                             Ind_j = find(TimeAll == Time(j));
-                            display(Ind_j)
+                            display(Ind_j);
                             Indexes = [Indexes Ind_j];
                        end
                         %Indexes = find(TimeAll == Time);
@@ -1717,6 +1752,8 @@ classdef AnalyZe < matlab.apps.AppBase
                 Dat_i_EIS = Dat_i.Data;
                 y_z_i = Dat_i_EIS.Z - 1j*Dat_i_EIS.Z1;
                 freq_i = Dat_i_EIS.FrequencyHz;
+
+                assignin('base', 'y_z_i',y_z_i)
                 
                 selectedTab = app.CircuitToFit.SelectedTab;
 
@@ -1729,8 +1766,8 @@ classdef AnalyZe < matlab.apps.AppBase
                        case 'Off'
                            fit_blank_only = true;
                    end
-                
-
+                    
+                   
                     Fits_local{i} = app.MultistartFit( y_z_i,... %y_z
                                             freq_i,... %freq
                                             multi_starts,... %multi_starts
@@ -1788,7 +1825,8 @@ classdef AnalyZe < matlab.apps.AppBase
                             sigma = eye(2);
                             
                             MvLik = mvnpdf(Res_pair,mu,sigma);
-                            LogLikelihood = sum(log(MvLik));
+                            idx= MvLik~=0;
+                            LogLikelihood = sum(log(MvLik(idx)));
                             numObs = length(Res);
                             numParams = 1;
                             if (fit_blank_only)
@@ -1802,8 +1840,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                 end
                             end
                             
-                           idx= MvLik~=0;
-                           [aic,bic] = aicbic(LogLikelihood(idx),numParams,numObs);
+                           [aic,bic] = aicbic(LogLikelihood,numParams,numObs);
 
                             
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                   
@@ -2484,29 +2521,51 @@ classdef AnalyZe < matlab.apps.AppBase
     
                     x = [];
                     y = [];
+                    var_y = [];
     
                     if length(columns) >=2 
-                        var1 = string(Names(columns(1)));
-                        var2 = string(Names(columns(2)));
+                        var_x = string(Names(columns(1)));
+                        var_y = string(Names(columns(2)));
         
-                        xlabel(app.FitSeriesPlot,var1);
-                        ylabel(app.FitSeriesPlot,var2);
+                        xlabel(app.FitSeriesPlot,var_x);
+                        ylabel(app.FitSeriesPlot,var_y);
                         
-                        DatToPlot = table2array(T(unique(ind(:,1)),[var1, var2])) ;
+                        DatToPlot = table2array(T(unique(ind(:,1)),[var_x, var_y])) ;
                         x = DatToPlot(:,1)
                         y = DatToPlot(:,2)
                     else
-                        var1 = string(Names(columns(1)));
+                        var_y = string(Names(columns(1)));
                             
                         xlabel(app.FitSeriesPlot,"Indexes");
-                        ylabel(app.FitSeriesPlot,var1);
+                        ylabel(app.FitSeriesPlot,var_y);
                         
-                        DatToPlot = table2array(T(ind(:,1),var1)) ;
+                        DatToPlot = table2array(T(ind(:,1),var_y)) ;
                         
                         y = DatToPlot(:,1)
                         x = 1:length(y);
                         x = x';
                     end
+
+                    switch var_y
+                        case 'Device CCT Params'
+                            prompt = {'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'};
+                            dlgtitle = 'Choose Param';
+                            dims = [1 40];
+                            definput = {'1'};
+                            
+                            answer = inputdlg(prompt,dlgtitle,dims,definput);
+                            Index = round(str2double(answer));
+                            
+                            y_temp = [];
+                            for i = 1:length(y)
+                                temp = eval(y{i});
+                                y_temp(i) = temp(Index);
+                            end
+                            y = y_temp';
+                            assignin('base','y',y)
+                    end
+
+
     
                     switch app.FlipAxesSwitch.Value
                         case 'On'
@@ -4406,6 +4465,40 @@ classdef AnalyZe < matlab.apps.AppBase
             value = app.AutoNumberofZerosSwitch.Value;
             
         end
+
+        % Value changed function: RSeriesResistanceSwitch
+        function RSeriesResistanceSwitchValueChanged(app, event)
+            value = app.RSeriesResistanceSwitch.Value;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                flag = app.TutorialMode;
+                   
+                   if flag
+                        msgbox({'All circuits, at a minimum, consist of some series resistance. By default this resistance is taken to be the real component of the highest frequency measurement; this assumes that the circuit is both exclusively capacitive and that the frequency is high enough that only the series resistance contributes to the impedance. Alternatively the series resitance can be determined as follows:',...
+                            '- If an ideal barrier is present, a semi-circle can be fit to it by manually selecting three points on said semi-circle in the Nyquist domain. The series resistance is estimated by extrapolating the semi-circle to the Real axis at the high frequency side.',...
+                            '- If the system exhibits some time constant faster than the barrier (such as the parallel circuit formed by a non-ohmic contact), then should the barrier time constant and the aforementioned time constant be well separated, then a crude estimate for the series resistance may be optained by taking the real part of the impedance at the first local minima in the Im(Z)',...
+                            '- The series resistance may be fit as an additional free parameter (RECOMMENDED)'},'Explainer')
+                   end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        end
+
+        % Value changed function: FitSequentiallySwitch
+        function FitSequentiallySwitchValueChanged(app, event)
+            value = app.FitSequentiallySwitch.Value;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                flag = app.TutorialMode;
+                   
+                   if flag
+                        msgbox({'When a barrier is small, or a high order circuit is used (many parameters), the contribution to the residuals by the barrier can be sufficiently small that the barrier component is fit, in part, by parameters which were inteded to model the non-biological electrochemial phenema in the system',...
+                            'As a crude form of regularisation, the data can be initially fit without the (R//C) barrier model - a circuit without any additional parallel current paths will preferentially fit the non-biological components of the system, ideally leaving the entirety of the barrier contribution to the impedance within the residual. This is more likely when the barrier is small.',...
+                            'In the second iteration, the parameters fit prior are held constant and only the (R//C) barrier model is fit. This reduces the effective order of the fitting.',...
+                            'This approach is best when the series resistance can be estimated a priori. As a means of circumventing overfitting without introducing additional prior information, this approach is potentially more conservative than conventional regularization (or frequency weighting schemes), but it is somewwhat ad hoc.',...
+                            '',...
+                            'USE WITH CARE',...
+                            '',...
+                            'Use ''Fit Blank Only'' to investigate the fit sans-barrier.'},'Explainer')
+                   end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        end
     end
 
     % Component initialization
@@ -4752,8 +4845,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create FittingParams
             app.FittingParams = uipanel(app.AnalysisCCTFITTab);
-            app.FittingParams.Title = 'Choose Fitting Parameters';
-            app.FittingParams.Position = [15 14 476 325];
+            app.FittingParams.Position = [15 14 476 333];
 
             % Create MultiStartsEditFieldLabel
             app.MultiStartsEditFieldLabel = uilabel(app.FittingParams);
@@ -4761,51 +4853,15 @@ classdef AnalyZe < matlab.apps.AppBase
             app.MultiStartsEditFieldLabel.FontSize = 24;
             app.MultiStartsEditFieldLabel.FontWeight = 'bold';
             app.MultiStartsEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.MultiStartsEditFieldLabel.Position = [15 259 129 31];
+            app.MultiStartsEditFieldLabel.Position = [15 287 129 31];
             app.MultiStartsEditFieldLabel.Text = 'MultiStarts';
 
             % Create MultiStartsEditField
             app.MultiStartsEditField = uieditfield(app.FittingParams, 'numeric');
             app.MultiStartsEditField.FontSize = 36;
             app.MultiStartsEditField.Tooltip = {'This is the primary fitting tuning parameter = the number of fitting attempts made for different initial condition candidates. In general, fitness increases with this parameter. Performance may be sensitive to the exact value.'};
-            app.MultiStartsEditField.Position = [20 217 120 35];
+            app.MultiStartsEditField.Position = [20 245 120 35];
             app.MultiStartsEditField.Value = 3000;
-
-            % Create BlankFitMultiStartsEditFieldLabel
-            app.BlankFitMultiStartsEditFieldLabel = uilabel(app.FittingParams);
-            app.BlankFitMultiStartsEditFieldLabel.HorizontalAlignment = 'right';
-            app.BlankFitMultiStartsEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.BlankFitMultiStartsEditFieldLabel.Position = [309 265 62 30];
-            app.BlankFitMultiStartsEditFieldLabel.Text = {'Blank Fit'; 'MultiStarts'};
-
-            % Create BlankFitMultiStartsEditField
-            app.BlankFitMultiStartsEditField = uieditfield(app.FittingParams, 'numeric');
-            app.BlankFitMultiStartsEditField.Position = [376 269 68 26];
-            app.BlankFitMultiStartsEditField.Value = 1000;
-
-            % Create FitSequentiallySwitchLabel
-            app.FitSequentiallySwitchLabel = uilabel(app.FittingParams);
-            app.FitSequentiallySwitchLabel.HorizontalAlignment = 'center';
-            app.FitSequentiallySwitchLabel.Position = [246 195 87 22];
-            app.FitSequentiallySwitchLabel.Text = 'Fit Sequentially';
-
-            % Create FitSequentiallySwitch
-            app.FitSequentiallySwitch = uiswitch(app.FittingParams, 'slider');
-            app.FitSequentiallySwitch.Orientation = 'vertical';
-            app.FitSequentiallySwitch.Tooltip = {'Fit the data with the circuit sans barrier first, then refit the data by fitting only the barrier parameters and keeping the pre-fit non-barrier parameters constant.'};
-            app.FitSequentiallySwitch.Position = [277 237 20 45];
-
-            % Create FitBlankOnlyExcludeBarrierLabel
-            app.FitBlankOnlyExcludeBarrierLabel = uilabel(app.FittingParams);
-            app.FitBlankOnlyExcludeBarrierLabel.HorizontalAlignment = 'center';
-            app.FitBlankOnlyExcludeBarrierLabel.Position = [365 205 95 30];
-            app.FitBlankOnlyExcludeBarrierLabel.Text = {'Fit Blank Only '; '(Exclude Barrier)'};
-
-            % Create FitBlankOnlyExcludeBarrierSwitch
-            app.FitBlankOnlyExcludeBarrierSwitch = uiswitch(app.FittingParams, 'slider');
-            app.FitBlankOnlyExcludeBarrierSwitch.ValueChangedFcn = createCallbackFcn(app, @FitBlankOnlyExcludeBarrierSwitchValueChanged, true);
-            app.FitBlankOnlyExcludeBarrierSwitch.Tooltip = {'Fit the circuit excluding the barrier R//C'};
-            app.FitBlankOnlyExcludeBarrierSwitch.Position = [389 238 45 20];
 
             % Create GoButton
             app.GoButton = uibutton(app.FittingParams, 'push');
@@ -4813,7 +4869,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.GoButton.FontSize = 24;
             app.GoButton.FontWeight = 'bold';
             app.GoButton.FontColor = [0.4667 0.6745 0.1882];
-            app.GoButton.Position = [169 4 123 38];
+            app.GoButton.Position = [169 7 123 38];
             app.GoButton.Text = 'Go!';
 
             % Create RunningLampLabel
@@ -4821,18 +4877,18 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RunningLampLabel.HorizontalAlignment = 'right';
             app.RunningLampLabel.FontSize = 14;
             app.RunningLampLabel.FontWeight = 'bold';
-            app.RunningLampLabel.Position = [343 11 62 22];
+            app.RunningLampLabel.Position = [343 14 62 22];
             app.RunningLampLabel.Text = 'Running';
 
             % Create RunningLamp
             app.RunningLamp = uilamp(app.FittingParams);
-            app.RunningLamp.Position = [415 4 35 35];
+            app.RunningLamp.Position = [415 7 35 35];
             app.RunningLamp.Color = [1 0 0];
 
             % Create CircuitToFit
             app.CircuitToFit = uitabgroup(app.FittingParams);
             app.CircuitToFit.SelectionChangedFcn = createCallbackFcn(app, @CircuitToFitSelectionChanged, true);
-            app.CircuitToFit.Position = [5 46 464 152];
+            app.CircuitToFit.Position = [5 49 464 152];
 
             % Create SelectACircuitTab
             app.SelectACircuitTab = uitab(app.CircuitToFit);
@@ -4893,20 +4949,91 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CircuitBuilderTable_MaxVals.FontSize = 10;
             app.CircuitBuilderTable_MaxVals.Position = [55 8 364 116];
 
-            % Create InferRinffromsemicirclefitSwitchLabel
-            app.InferRinffromsemicirclefitSwitchLabel = uilabel(app.FittingParams);
-            app.InferRinffromsemicirclefitSwitchLabel.HorizontalAlignment = 'center';
-            app.InferRinffromsemicirclefitSwitchLabel.Position = [161 204 86 44];
-            app.InferRinffromsemicirclefitSwitchLabel.Text = {'Infer Rinf'; 'from semicircle'; 'fit'};
-
-            % Create InferRinffromsemicirclefitSwitch
-            app.InferRinffromsemicirclefitSwitch = uiswitch(app.FittingParams, 'slider');
-            app.InferRinffromsemicirclefitSwitch.Position = [185 257 41 18];
-
             % Create ProgressGuage
             app.ProgressGuage = uigauge(app.FittingParams, 'semicircular');
             app.ProgressGuage.FontSize = 9;
-            app.ProgressGuage.Position = [42 5 70 38];
+            app.ProgressGuage.Position = [42 8 70 38];
+
+            % Create TabGroup7
+            app.TabGroup7 = uitabgroup(app.FittingParams);
+            app.TabGroup7.Position = [152 205 317 121];
+
+            % Create SeriesResistanceEstimateTab
+            app.SeriesResistanceEstimateTab = uitab(app.TabGroup7);
+            app.SeriesResistanceEstimateTab.Title = 'Series Resistance Estimate';
+
+            % Create RSeriesResistanceSwitchLabel
+            app.RSeriesResistanceSwitchLabel = uilabel(app.SeriesResistanceEstimateTab);
+            app.RSeriesResistanceSwitchLabel.HorizontalAlignment = 'center';
+            app.RSeriesResistanceSwitchLabel.FontWeight = 'bold';
+            app.RSeriesResistanceSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.RSeriesResistanceSwitchLabel.Position = [7 -1 136 22];
+            app.RSeriesResistanceSwitchLabel.Text = 'R∞ (Series Resistance)';
+
+            % Create RSeriesResistanceSwitch
+            app.RSeriesResistanceSwitch = uiswitch(app.SeriesResistanceEstimateTab, 'slider');
+            app.RSeriesResistanceSwitch.Items = {'Re(Z)_final', 'Alternate'};
+            app.RSeriesResistanceSwitch.Orientation = 'vertical';
+            app.RSeriesResistanceSwitch.ValueChangedFcn = createCallbackFcn(app, @RSeriesResistanceSwitchValueChanged, true);
+            app.RSeriesResistanceSwitch.FontSize = 10;
+            app.RSeriesResistanceSwitch.Position = [59 37 17 38];
+            app.RSeriesResistanceSwitch.Value = 'Re(Z)_final';
+
+            % Create AlternateRestimationListBoxLabel
+            app.AlternateRestimationListBoxLabel = uilabel(app.SeriesResistanceEstimateTab);
+            app.AlternateRestimationListBoxLabel.HorizontalAlignment = 'right';
+            app.AlternateRestimationListBoxLabel.FontWeight = 'bold';
+            app.AlternateRestimationListBoxLabel.Position = [148 0 141 22];
+            app.AlternateRestimationListBoxLabel.Text = 'Alternate R∞ estimation';
+
+            % Create AlternateRestimationListBox
+            app.AlternateRestimationListBox = uilistbox(app.SeriesResistanceEstimateTab);
+            app.AlternateRestimationListBox.Items = {'Semi-circle Fit', 'Im(Z) Local Min', 'Free R Fit'};
+            app.AlternateRestimationListBox.Position = [156 24 145 64];
+            app.AlternateRestimationListBox.Value = 'Semi-circle Fit';
+
+            % Create SequentialBarrierFittingTab
+            app.SequentialBarrierFittingTab = uitab(app.TabGroup7);
+            app.SequentialBarrierFittingTab.Title = 'Sequential Barrier Fitting';
+
+            % Create BlankFitMultiStartsEditFieldLabel
+            app.BlankFitMultiStartsEditFieldLabel = uilabel(app.SequentialBarrierFittingTab);
+            app.BlankFitMultiStartsEditFieldLabel.HorizontalAlignment = 'right';
+            app.BlankFitMultiStartsEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.BlankFitMultiStartsEditFieldLabel.Position = [149 59 62 30];
+            app.BlankFitMultiStartsEditFieldLabel.Text = {'Blank Fit'; 'MultiStarts'};
+
+            % Create BlankFitMultiStartsEditField
+            app.BlankFitMultiStartsEditField = uieditfield(app.SequentialBarrierFittingTab, 'numeric');
+            app.BlankFitMultiStartsEditField.Position = [216 63 68 26];
+            app.BlankFitMultiStartsEditField.Value = 1000;
+
+            % Create FitSequentiallySwitchLabel
+            app.FitSequentiallySwitchLabel = uilabel(app.SequentialBarrierFittingTab);
+            app.FitSequentiallySwitchLabel.HorizontalAlignment = 'center';
+            app.FitSequentiallySwitchLabel.FontSize = 14;
+            app.FitSequentiallySwitchLabel.FontWeight = 'bold';
+            app.FitSequentiallySwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.FitSequentiallySwitchLabel.Position = [13 21 108 22];
+            app.FitSequentiallySwitchLabel.Text = 'Fit Sequentially';
+
+            % Create FitSequentiallySwitch
+            app.FitSequentiallySwitch = uiswitch(app.SequentialBarrierFittingTab, 'slider');
+            app.FitSequentiallySwitch.ValueChangedFcn = createCallbackFcn(app, @FitSequentiallySwitchValueChanged, true);
+            app.FitSequentiallySwitch.Tooltip = {'Fit the data with the circuit sans barrier first, then refit the data by fitting only the barrier parameters and keeping the pre-fit non-barrier parameters constant.'};
+            app.FitSequentiallySwitch.Position = [37 52 59 26];
+
+            % Create FitBlankOnlyExcludeBarrierLabel
+            app.FitBlankOnlyExcludeBarrierLabel = uilabel(app.SequentialBarrierFittingTab);
+            app.FitBlankOnlyExcludeBarrierLabel.HorizontalAlignment = 'center';
+            app.FitBlankOnlyExcludeBarrierLabel.Position = [138 6 173 22];
+            app.FitBlankOnlyExcludeBarrierLabel.Text = 'Fit Blank Only (Exclude Barrier)';
+
+            % Create FitBlankOnlyExcludeBarrierSwitch
+            app.FitBlankOnlyExcludeBarrierSwitch = uiswitch(app.SequentialBarrierFittingTab, 'slider');
+            app.FitBlankOnlyExcludeBarrierSwitch.ValueChangedFcn = createCallbackFcn(app, @FitBlankOnlyExcludeBarrierSwitchValueChanged, true);
+            app.FitBlankOnlyExcludeBarrierSwitch.Tooltip = {'Fit the circuit excluding the barrier R//C'};
+            app.FitBlankOnlyExcludeBarrierSwitch.Position = [201 31 45 20];
 
             % Create RefreshDataOptionsButton
             app.RefreshDataOptionsButton = uibutton(app.AnalysisCCTFITTab, 'push');
