@@ -815,8 +815,8 @@ classdef AnalyZe < matlab.apps.AppBase
                                                   lines(i).LineWidth = 1.0;
                                                 end
 
-                                                CrossSectionMean = mean(CrossSectionCollated);
-                                                CrossSectionStd = std(CrossSectionCollated);
+                                                CrossSectionMean = mean(CrossSectionCollated,"omitnan");
+                                                CrossSectionStd = std(CrossSectionCollated,"omitnan");
                                                 errorbar(app.CSResultsPlot, CS_i.CSResults.Time, CrossSectionMean,  CrossSectionStd,...
                                                                                                                        "-s","MarkerSize",10,...
                                                                                                                        "MarkerEdgeColor","blue",...
@@ -895,7 +895,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             T = struct2table(Dat_full); % convert the struct array to a table
              sortedT = sortrows(T, 'Time'); % sort the table by 'DOB'
-             Dat_full = table2struct(sortedT) 
+             Dat_full = table2struct(sortedT) ;
 
             NumDays = length(Dat_full);
 
@@ -928,7 +928,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             switch (app.NormalizeSwitch.Value)
                 case 'On'
-                    Scheme = string(app.NormalizationSchemeListBox_3.Value);
+                    Scheme = string(app.NormalizationSchemeListBox_5.Value);
                     
                     if (Scheme == "range")
                         CS_local.y_z = normalize(abs(CS_local.y_z),Scheme);
@@ -950,9 +950,9 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'On'
                     scheme =  string(app.DetectionSchemeListBox.Value);
                     
-                    Outliers = isoutlier(CS_local,scheme);
-
-                    CS_local(Outliers) = NaN; 
+                    Outliers = isoutlier(abs(CS_local.y_z),scheme);
+                    
+                    CS_local.y_z(Outliers) = missing; 
                       
             end
 
@@ -1549,6 +1549,7 @@ classdef AnalyZe < matlab.apps.AppBase
             Well = app.WellNumberListBox.Value;
             Exp = app.ExperimentNumberListBox.Value;
             Time = app.TimeListBox.Value;
+            display(Time)
 
             Dat = app.Data;
 
@@ -4736,7 +4737,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create TimeListBox
             app.TimeListBox = uilistbox(app.TrimData);
+            app.TimeListBox.Multiselect = 'on';
             app.TimeListBox.Position = [323 165 122 57];
+            app.TimeListBox.Value = {'Item 1'};
 
             % Create FittingParams
             app.FittingParams = uipanel(app.AnalysisCCTFITTab);
