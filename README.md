@@ -52,3 +52,17 @@ Check for up-to-date dependencies using
 [fList, pList] = matlab.codetools.requiredFilesAndProducts('.\AnalyZe.mlapp')
 pList.Name
 ```
+## App Publishing Procedure
+
+In the MATLAB App Designer, update the app sharing details (lower right corner)
+ - Name = AnalyZe
+ - Version = <version number>++ e.g. '4.2'
+ 
+Initiate the share utility (Share->MATLAB App)
+ - Within the 'Describe your app' section
+    - Name = AnalyZe_<version string> e.g. 'AnalyZe_4v2'
+    - Version = <version number>++ e.g. '4.2'
+    - Update App descriptions.
+ - Within the 'Package into installation file' section
+    - Output Folder = ./Packaged App
+    - Click 'Package'
