@@ -141,6 +141,16 @@ classdef AnalyZe < matlab.apps.AppBase
         CircuitBuilderTable             matlab.ui.control.Table
         BuildACircuitMaxValuesTab       matlab.ui.container.Tab
         CircuitBuilderTable_MaxVals     matlab.ui.control.Table
+        WriteACircuitTab                matlab.ui.container.Tab
+        IncludeBarrierSwitch_2          matlab.ui.control.RockerSwitch
+        IncludeBarrierSwitch_2Label     matlab.ui.control.Label
+        RLabel                          matlab.ui.control.Label
+        DoubleClicktoAddElementListBox  matlab.ui.control.ListBox
+        DoubleClicktoAddElementListBoxLabel  matlab.ui.control.Label
+        MaxValuesEditField              matlab.ui.control.EditField
+        MaxValuesEditFieldLabel         matlab.ui.control.Label
+        CircuitStringEditField          matlab.ui.control.EditField
+        CircuitStringEditFieldLabel     matlab.ui.control.Label
         RunningLamp                     matlab.ui.control.Lamp
         RunningLampLabel                matlab.ui.control.Label
         GoButton                        matlab.ui.control.Button
@@ -393,15 +403,18 @@ classdef AnalyZe < matlab.apps.AppBase
                                             f = figure;
                                             ax = axes(f);
                                             ax.Units = 'pixels';
-                                            ax.Position = [75 75 325 280];
-                                            
+                                            ax.Position = [125 100 325 280];
                                                     x = real(y_z);
                                                     y = -1.*imag(y_z);
                                                     plot(ax,x,y,'*r')
                                                     grid minor
+     
                                             c = uicontrol;
-                                            c.String = 'Choose Data to Fit';
+                                            c.String = 'Select Three Points on Semi-Circle';
+                                            c.Position = [30 10 500 50]
+                                            c.FontSize = 20;
                                             c.Callback = @app.plotButtonPushed;
+                                            c.Tooltip = 'Click this button when ready. Select three points on the plot (each click is registered, but won''t reflect on the plot until the last click).'
                                            
                                             app.WaitForInput = true;
                                            while (app.WaitForInput == true)
@@ -451,9 +464,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
                              R = @(r1,x) r1;
                              W = @(w1,x) Q(w1,0.5,x);
-            
-            
-                  
+
+                             p = @(p1,p2) ( (1./p1) + (1./p2) ).^(-1);
+                             
                             Bilayer = @(b,x) ( (1./b(1,:)) + (1./C(b(2,:),x)) ).^(-1);
                             Counter =  @(b,x) ( (1./b(3,:)) + (1./Q(b(4,:),b(5,:),x)) ).^(-1);
                             RandleCounter = @(b,x) ( (1./( b(3,:) + Q(b(4,:),0.5,x)  )) + (1./( C(b(5),x)  )) ).^(-1);
@@ -637,6 +650,7 @@ classdef AnalyZe < matlab.apps.AppBase
             
                             end
                         else
+  
                             CCT_Fn = eval(cct_type);
                             ub = varargin{3};
                             ub = ub';
@@ -1161,7 +1175,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
                             CurrentDisplayStr = CurrentDisplayStr + "--C";
                         case 'L'
-                            CurrentStr = CurrentStr + "L(b(" + num2str(ParamCounter) + "),x)";
+                            CurrentStr = CurrentStr + "L(b(" + num2str(ParamCounter) + ",:),x)";
                             ParamCounter = ParamCounter +1;
 
                             CurrentDisplayStr = CurrentDisplayStr + "--L";
@@ -1263,12 +1277,93 @@ classdef AnalyZe < matlab.apps.AppBase
         end
         
         
+        
+        function [CCT_Func_Str,UpperBound,LowerBound,Beta_zero,DisplayStr] = getWrittenCircuit(app)
+
+%             Modifed from ZFit
+%             Jean-Luc Dellis (2023). Zfit (https://www.mathworks.com/matlabcentral/fileexchange/19460-zfit), MATLAB Central File Exchange. Retrieved April 6, 2023. 
+
+            circuit = app.CircuitStringEditField.Value;
+            MaxValsStr = app.MaxValuesEditField.Value;
+            MaxValsStr = ['[',MaxValsStr,']'];
+            MaxVals = eval(MaxValsStr);
+
+            A=circuit~='p' & circuit~='+' & circuit~='(' & circuit~=')' & circuit~=','
+            element=circuit(A);
+            CCT_Func_Str = "@(b,x) R_inf + ";
+            DisplayStr = ['R+',circuit];
+            UpperBound = [];
+            LowerBound = [];
+            Beta_zero = [];
+            ParamCounter = 1;
+            
+            k=0;
+            % for each element
+            for i=1:2:length(element-2)
+                k=k+1;
+                nlp=str2num(element(i+1));% idendify its numeral
+                localmaxvals=MaxVals(1:nlp);% get its parameter values
+                MaxVals=MaxVals(nlp+1:end);% remove them from param
+            
+                DisplayStr = regexprep(DisplayStr,element(i:i+1),element(i),'once');
+            
+                UpperBound = [UpperBound localmaxvals];
+                LowerVals = 1e-12.*ones(nlp,1);
+                LowerBound = [LowerBound LowerVals'];
+                bet_i =ones(nlp,1);
+                Beta_zero = [Beta_zero bet_i'];
+            
+                    switch element(i)
+                        case 'C'
+                            circuit=regexprep(circuit,element(i:i+1),['C(b(',num2str(ParamCounter),',:),x)'],'once');
+                            ParamCounter = ParamCounter +1;
+      
+                        case 'L'
+                            circuit=regexprep(circuit,element(i:i+1),['L(b(',num2str(ParamCounter),',:),x)'],'once');
+                            ParamCounter = ParamCounter +1;
+          
+                        case 'Q'
+                            circuit=regexprep(circuit,element(i:i+1),['Q(b(',num2str(ParamCounter),',:),b(',num2str(ParamCounter+1),',:),x)'],'once');
+                            ParamCounter = ParamCounter +2;
+     
+                        case 'R'
+                            circuit=regexprep(circuit,element(i:i+1),['R(b(',num2str(ParamCounter),',:),x)'],'once');
+                            ParamCounter = ParamCounter +1;
+    
+                        case 'W'
+                            circuit=regexprep(circuit,element(i:i+1),['R(b(',num2str(ParamCounter),',:),x)'],'once');
+                            ParamCounter = ParamCounter +1;
+     
+                end
+            end
+            
+            CCT_Func_Str = CCT_Func_Str + convertCharsToStrings(circuit);
+            %DisplayStr = convertCharsToStrings(DisplayStr);
+
+            
+        end
+        
+%         function z=p(app,varargin) % more zp in parallel
+%             %             From ZFit
+%             %             Jean-Luc Dellis (2023). Zfit (https://www.mathworks.com/matlabcentral/fileexchange/19460-zfit), MATLAB Central File Exchange. Retrieved April 6, 2023. 
+%             temp_size_varargin=size(varargin{1},1);
+%             temp_n=ones(temp_size_varargin,nargin-1);
+%             temp_sum=ones(temp_size_varargin,1);
+%             for iii=1:(nargin-1)
+%                 temp_n(:,iii)=varargin{iii};
+%             end
+%             for iii=1:temp_size_varargin
+%                 temp_sum(iii)=sum(1./temp_n(iii,:));
+%             end
+%             z=1./(temp_sum);
+%         end
     end
     
     methods (Access = public)
         
         function results = plotButtonPushed(app,src,event)
-            [x,y] = ginput(3);
+
+                       [x,y] = ginput(3);
                                     
                         circ =@(r)sum(((x-r(1)).^2 + y.^2 - r(2)^2).^2);
                         r_opt = fminunc(circ, [1 1]);
@@ -1573,7 +1668,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Button pushed function: ChooseButton
         function ChooseButtonPushed(app, event)
-            
+
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 flag = app.TutorialMode;
                    
@@ -1642,7 +1737,6 @@ classdef AnalyZe < matlab.apps.AppBase
                        Indexes = [];
                        for j = 1:length(Time)
                             Ind_j = find(TimeAll == Time(j));
-                            display(Ind_j);
                             Indexes = [Indexes Ind_j];
                        end
                         %Indexes = find(TimeAll == Time);
@@ -1721,7 +1815,8 @@ classdef AnalyZe < matlab.apps.AppBase
                 CircuitUsed = app.SelectaCircuitBarrierInclusiveListBox.Value;
 
             elseif (selectedTab == app.BuildACircuitTab) || (selectedTab == app.BuildACircuitMaxValuesTab)
-                
+
+               
                 CCTTable = cell2mat(app.CircuitBuilderTable.Data);
                 MaxValTable = cell2mat(app.CircuitBuilderTable_MaxVals.Data);
                 
@@ -1729,9 +1824,14 @@ classdef AnalyZe < matlab.apps.AppBase
 
                CircuitUsed = convertStringsToChars(CircuitUsed);
 
-               selectedTab = app.CircuitToFit.SelectedTab;
-            
-            
+                app.FitSequentiallySwitch.Value = 'Off';
+                fit_sequentially = false;
+                
+                
+            elseif selectedTab == app.WriteACircuitTab
+
+                [fit_cct, Upper_bound, Lower_Bound, Beta_Zero, CircuitUsed] = app.getWrittenCircuit();
+
                 app.FitSequentiallySwitch.Value = 'Off';
                 fit_sequentially = false;
             
@@ -1752,12 +1852,10 @@ classdef AnalyZe < matlab.apps.AppBase
                 Dat_i_EIS = Dat_i.Data;
                 y_z_i = Dat_i_EIS.Z - 1j*Dat_i_EIS.Z1;
                 freq_i = Dat_i_EIS.FrequencyHz;
-
-                assignin('base', 'y_z_i',y_z_i)
-                
+               
                 selectedTab = app.CircuitToFit.SelectedTab;
 
-                if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.CircuitBuilderTable_MaxVals)
+                if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.CircuitBuilderTable_MaxVals) 
                     
                    value = app.IncludeBarrierSwitch.Value;
                    switch value
@@ -1766,8 +1864,30 @@ classdef AnalyZe < matlab.apps.AppBase
                        case 'Off'
                            fit_blank_only = true;
                    end
+
+                    Fits_local{i} = app.MultistartFit( y_z_i,... %y_z
+                                            freq_i,... %freq
+                                            multi_starts,... %multi_starts
+                                            fit_cct,... %cct type
+                                            fit_sequentially,... %fit blank first
+                                            fit_blank_only, ... %fit blank now
+                                            y_z_i,... %y_z blank
+                                            multi_starts_blank,... %multi starts
+                                            Upper_bound,...
+                                            Lower_Bound,...
+                                            Beta_Zero...
+                                            ); 
+
+                elseif (selectedTab == app.WriteACircuitTab)
                     
-                   
+                    value = app.IncludeBarrierSwitch_2.Value;
+                   switch value
+                       case 'On'
+                           fit_blank_only = false;
+                       case 'Off'
+                           fit_blank_only = true;
+                   end
+
                     Fits_local{i} = app.MultistartFit( y_z_i,... %y_z
                                             freq_i,... %freq
                                             multi_starts,... %multi_starts
@@ -2824,12 +2944,39 @@ classdef AnalyZe < matlab.apps.AppBase
 
             selectedTab = app.CircuitToFit.SelectedTab;
 
-            if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.BuildACircuitMaxValuesTab)
+            if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.BuildACircuitMaxValuesTab) || (selectedTab == app.WriteACircuitTab)
                 app.FitSequentiallySwitch.Value = 'Off';
                 app.FitSequentiallySwitch.Enable = 'off';
             else
                  app.FitSequentiallySwitch.Enable = 'on';
             end
+    
+
+            flag = app.TutorialMode;
+                   if flag
+                        if selectedTab == app.WriteACircuitTab
+
+                            msgbox({'Write-A-Circuit allows you to enter an arbitrary circuit to fit (where the series resistance is included implicitly)',...
+                                'The circuit format is as follows:',...
+                                '-> Series Connection A--B = '' A + B''',...
+                                '-> Parallel Connection (A//B) = '' p(A,B) '' ',...
+                                '-> An Arbitrary Element A = Xn, where X is the symbol for that circuit element and n is the number of free parameters for an element of that type',...
+                                '-> Available elements are:',...
+                                '          --> R1 (Resistance)',...
+                                '          --> C1 (Capacitance)',...
+                                '          --> L1 (Inductance)',...
+                                '          --> Q2 (Constant Phase Element)',...
+                                '          --> W1 (Warburg Element)',...
+                                'An example circuit is thus given by: R--(R//C)--((R--W)//Q) == R1+p(R1,C1)+p(R1+W1,Q2)',...
+                                'The series resistance is included implicitly.',...
+                                '',...
+                                'Each free parameter must be assigned an absolute maximum value, in a comma separated list in the order that they appear in the circuit string.',...
+                                '',...
+                                'As an alternative to writing out the string, elements and parallel branches can be added by double clicking the appropriate entry in the list box alongside.'},'Explainer')
+            
+                        end
+                   end
+
 
             
         end
@@ -4499,6 +4646,192 @@ classdef AnalyZe < matlab.apps.AppBase
                    end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
+
+        % Value changed function: DoubleClicktoAddElementListBox
+        function DoubleClicktoAddElementListBoxValueChanged(app, event)
+            value = app.DoubleClicktoAddElementListBox.Value;
+            
+        end
+
+        % Double-clicked callback: DoubleClicktoAddElementListBox
+        function DoubleClicktoAddElementListBoxDoubleClicked(app, event)
+            item = event.InteractionInformation.Item;
+
+            ElemToAdd = app.DoubleClicktoAddElementListBox.Value;
+            CurrentCCTstring = app.CircuitStringEditField.Value;
+            CurrentMaxVals = app.MaxValuesEditField.Value;
+            
+            
+            if (~isempty(CurrentCCTstring)) 
+                temp_cctstr = convertStringsToChars(CurrentCCTstring);
+                lastChar = temp_cctstr(end);
+ 
+                Open_brackets = sum(temp_cctstr=='(')
+                Closed_brackets = sum(temp_cctstr==')')
+                Commas = sum(temp_cctstr==',')
+                switch ElemToAdd
+                    case 'Add New Parallel Branch'
+                    case 'Edit Adjacent Branch'
+                        if lastChar == '('
+                            msgbox('First add element(s) to this branch','No Elements in Branch')
+                            return
+                        end
+
+                        if Open_brackets == Commas
+                            msgbox('You are already editing an Adjacent Branch','On Adjacent Branch')
+                            return
+                        end
+
+                        if Open_brackets == Closed_brackets
+                            msgbox('First add new parallel branch','No Open Branches Found')
+                            return
+                        end
+                    case 'End Parallel Branch'
+
+                        if (lastChar == ',')||(lastChar == '(')
+                            msgbox('First add element(s) to this branch','No Elements in Branch')
+                            return
+                        end
+                        
+                        if Open_brackets == Closed_brackets
+                            msgbox('First add new parallel branch','No Open Branches Found')
+                            return
+                        end
+
+                        BranchDeficit = (Closed_brackets+1) - Commas;
+                        if BranchDeficit>0
+                            msgbox('First edit adjacent branch','No Adjacent Branches Found')
+                            return
+                        end
+                        
+
+                    otherwise
+                        if ~isempty(CurrentMaxVals)
+                            CurrentMaxVals = CurrentMaxVals + ",";
+                        end
+                end
+
+                if (lastChar ~= '(') && (lastChar ~= ',')
+                    
+                    switch ElemToAdd
+                        case 'Add New Parallel Branch'
+                            CurrentCCTstring = CurrentCCTstring + "+";
+                        case 'Edit Adjacent Branch'
+                        case 'End Parallel Branch'
+                        otherwise
+                            CurrentCCTstring = CurrentCCTstring + "+";
+                    end
+
+                end
+                
+                
+
+            end
+
+            switch ElemToAdd
+                case 'Add New Parallel Branch'
+
+                    CurrentCCTstring = CurrentCCTstring + "p(";
+
+                case 'Edit Adjacent Branch'
+                    
+                    CurrentCCTstring = CurrentCCTstring + ",";
+
+                case 'End Parallel Branch'
+
+                    CurrentCCTstring = CurrentCCTstring + ")";
+
+
+                case 'R'
+                    CurrentCCTstring = CurrentCCTstring + "R1";
+                    CurrentMaxVals = CurrentMaxVals + "1000";             
+                    
+                case 'C'
+
+                    CurrentCCTstring = CurrentCCTstring + "C1";
+                    CurrentMaxVals = CurrentMaxVals + "1";
+
+                case 'Q'
+
+                    CurrentCCTstring = CurrentCCTstring + "Q2";
+                    CurrentMaxVals = CurrentMaxVals + "1,1";
+
+                case 'W'
+
+                    CurrentCCTstring = CurrentCCTstring + "W1";
+                    CurrentMaxVals = CurrentMaxVals + "1";
+
+                case 'L'
+                    CurrentCCTstring = CurrentCCTstring + "L1";
+                    CurrentMaxVals = CurrentMaxVals + "1";
+            end
+
+            app.CircuitStringEditField.Value = CurrentCCTstring;
+            app.MaxValuesEditField.Value = CurrentMaxVals;
+        end
+
+        % Value changed function: IncludeBarrierSwitch_2
+        function IncludeBarrierSwitch_2ValueChanged(app, event)
+            value = app.IncludeBarrierSwitch_2.Value;
+            switch value
+                case 'On'
+                    msgbox('The barrier model p(R1,C1) must be kept as the first entry in the circuit string.','Breakable Point!')
+
+                    BarrierStr = 'p(R1,C1)';
+                    BarrierMaxVals = '1000,1';
+
+                    if ~isempty(app.CircuitStringEditField.Value)
+                        BarrierStr = [BarrierStr,'+'];
+                        BarrierMaxVals = [BarrierMaxVals,','];
+                    end
+
+                    CurrentCct = app.CircuitStringEditField.Value;
+                    CurrentMaxVals = app.MaxValuesEditField.Value;
+                    
+                    app.CircuitStringEditField.Value = [BarrierStr,CurrentCct];
+                    app.MaxValuesEditField.Value = [BarrierMaxVals,CurrentMaxVals];
+
+
+                case 'Off'
+                    msgbox('Any leading p(R1,C1) statement will now be considered as part of the system (non-barrier) part of the model')
+
+            end
+        end
+
+        % Value changed function: CircuitStringEditField
+        function CircuitStringEditFieldValueChanged(app, event)
+            value = app.CircuitStringEditField.Value;
+            BarrierStr = 'p(R1,C1)';
+            CurrentCct = app.CircuitStringEditField.Value;
+            switch app.IncludeBarrierSwitch_2.Value
+                case 'On'
+
+                    display("HERE")
+                    
+                    errorflag = false;
+
+                    if length(CurrentCct) < length(BarrierStr)
+                        errorflag =true;
+                         display("HERE2")
+                    else
+                        len = length(BarrierStr);
+                        BarrierStrCurrent = CurrentCct(1:len);
+            
+                        switch BarrierStrCurrent
+                            case BarrierStr
+                                errorflag = false;
+                            otherwise
+                                 display("HERE3")
+                                errorflag = true;
+                        end
+                    end
+
+                    if errorflag
+                        msgbox('The app is expecting a leading p(R1,C1) as the Include Barrier Switch is turned on. Please revise circuit string.')
+                    end
+
+            end
+        end
     end
 
     % Component initialization
@@ -4948,6 +5281,72 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CircuitBuilderTable_MaxVals.Tooltip = {'Enter the maximum allowed values for each circuit parameter. Use the same locations as the Build-A-Circuit table'};
             app.CircuitBuilderTable_MaxVals.FontSize = 10;
             app.CircuitBuilderTable_MaxVals.Position = [55 8 364 116];
+
+            % Create WriteACircuitTab
+            app.WriteACircuitTab = uitab(app.CircuitToFit);
+            app.WriteACircuitTab.Title = 'Write-A-Circuit';
+
+            % Create CircuitStringEditFieldLabel
+            app.CircuitStringEditFieldLabel = uilabel(app.WriteACircuitTab);
+            app.CircuitStringEditFieldLabel.HorizontalAlignment = 'right';
+            app.CircuitStringEditFieldLabel.FontWeight = 'bold';
+            app.CircuitStringEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.CircuitStringEditFieldLabel.Position = [5 84 43 30];
+            app.CircuitStringEditFieldLabel.Text = {'Circuit'; 'String'};
+
+            % Create CircuitStringEditField
+            app.CircuitStringEditField = uieditfield(app.WriteACircuitTab, 'text');
+            app.CircuitStringEditField.ValueChangedFcn = createCallbackFcn(app, @CircuitStringEditFieldValueChanged, true);
+            app.CircuitStringEditField.Position = [63 85 193 35];
+
+            % Create MaxValuesEditFieldLabel
+            app.MaxValuesEditFieldLabel = uilabel(app.WriteACircuitTab);
+            app.MaxValuesEditFieldLabel.HorizontalAlignment = 'right';
+            app.MaxValuesEditFieldLabel.FontWeight = 'bold';
+            app.MaxValuesEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.MaxValuesEditFieldLabel.Position = [6 41 43 30];
+            app.MaxValuesEditFieldLabel.Text = {'Max'; 'Values'};
+
+            % Create MaxValuesEditField
+            app.MaxValuesEditField = uieditfield(app.WriteACircuitTab, 'text');
+            app.MaxValuesEditField.Position = [64 42 230 35];
+
+            % Create DoubleClicktoAddElementListBoxLabel
+            app.DoubleClicktoAddElementListBoxLabel = uilabel(app.WriteACircuitTab);
+            app.DoubleClicktoAddElementListBoxLabel.HorizontalAlignment = 'right';
+            app.DoubleClicktoAddElementListBoxLabel.FontWeight = 'bold';
+            app.DoubleClicktoAddElementListBoxLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.DoubleClicktoAddElementListBoxLabel.Position = [285 1 168 22];
+            app.DoubleClicktoAddElementListBoxLabel.Text = 'Double Click to Add Element';
+
+            % Create DoubleClicktoAddElementListBox
+            app.DoubleClicktoAddElementListBox = uilistbox(app.WriteACircuitTab);
+            app.DoubleClicktoAddElementListBox.Items = {'Add New Parallel Branch', 'Edit Adjacent Branch', 'End Parallel Branch', 'R', 'C', 'Q', 'W', 'L'};
+            app.DoubleClicktoAddElementListBox.ValueChangedFcn = createCallbackFcn(app, @DoubleClicktoAddElementListBoxValueChanged, true);
+            app.DoubleClicktoAddElementListBox.DoubleClickedFcn = createCallbackFcn(app, @DoubleClicktoAddElementListBoxDoubleClicked, true);
+            app.DoubleClicktoAddElementListBox.Position = [301 24 151 98];
+            app.DoubleClicktoAddElementListBox.Value = 'R';
+
+            % Create RLabel
+            app.RLabel = uilabel(app.WriteACircuitTab);
+            app.RLabel.FontWeight = 'bold';
+            app.RLabel.FontColor = [0.6353 0.0784 0.1843];
+            app.RLabel.Position = [261 91 29 22];
+            app.RLabel.Text = '+R∞';
+
+            % Create IncludeBarrierSwitch_2Label
+            app.IncludeBarrierSwitch_2Label = uilabel(app.WriteACircuitTab);
+            app.IncludeBarrierSwitch_2Label.HorizontalAlignment = 'center';
+            app.IncludeBarrierSwitch_2Label.FontWeight = 'bold';
+            app.IncludeBarrierSwitch_2Label.FontColor = [0.6353 0.0784 0.1843];
+            app.IncludeBarrierSwitch_2Label.Position = [8 9 90 22];
+            app.IncludeBarrierSwitch_2Label.Text = 'Include Barrier';
+
+            % Create IncludeBarrierSwitch_2
+            app.IncludeBarrierSwitch_2 = uiswitch(app.WriteACircuitTab, 'rocker');
+            app.IncludeBarrierSwitch_2.Orientation = 'horizontal';
+            app.IncludeBarrierSwitch_2.ValueChangedFcn = createCallbackFcn(app, @IncludeBarrierSwitch_2ValueChanged, true);
+            app.IncludeBarrierSwitch_2.Position = [127 10 45 20];
 
             % Create ProgressGuage
             app.ProgressGuage = uigauge(app.FittingParams, 'semicircular');
