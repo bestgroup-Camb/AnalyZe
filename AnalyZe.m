@@ -1831,6 +1831,36 @@ classdef AnalyZe < matlab.apps.AppBase
                 
             elseif selectedTab == app.WriteACircuitTab
 
+                    BarrierStr = 'p(R1,C1)';
+                    CurrentCct = app.CircuitStringEditField.Value;
+                    switch app.IncludeBarrierSwitch_2.Value
+                        case 'On'
+                            
+                            errorflag = false;
+        
+                            if length(CurrentCct) < length(BarrierStr)
+                                errorflag =true;
+                                
+                            else
+                                len = length(BarrierStr);
+                                BarrierStrCurrent = CurrentCct(1:len);
+                    
+                                switch BarrierStrCurrent
+                                    case BarrierStr
+                                        errorflag = false;
+                                    otherwise
+                                        
+                                        errorflag = true;
+                                end
+                            end
+        
+                            if errorflag
+                                msgbox('The app is expecting a leading p(R1,C1) as the Include Barrier Switch is turned on. Please revise circuit string.')
+                                return
+                            end
+        
+                    end
+
                 [fit_cct, Upper_bound, Lower_Bound, Beta_Zero, CircuitUsed] = app.getWrittenCircuit();
 
                 app.FitSequentiallySwitch.Value = 'Off';
