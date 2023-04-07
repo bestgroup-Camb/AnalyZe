@@ -411,10 +411,10 @@ classdef AnalyZe < matlab.apps.AppBase
      
                                             c = uicontrol;
                                             c.String = 'Select Three Points on Semi-Circle';
-                                            c.Position = [30 10 500 50]
+                                            c.Position = [30 10 500 50];
                                             c.FontSize = 20;
                                             c.Callback = @app.plotButtonPushed;
-                                            c.Tooltip = 'Click this button when ready. Select three points on the plot (each click is registered, but won''t reflect on the plot until the last click).'
+                                            c.Tooltip = 'Click this button when ready. Select three points on the plot (each click is registered, but won''t reflect on the plot until the last click).';
                                            
                                             app.WaitForInput = true;
                                            while (app.WaitForInput == true)
@@ -1288,7 +1288,7 @@ classdef AnalyZe < matlab.apps.AppBase
             MaxValsStr = ['[',MaxValsStr,']'];
             MaxVals = eval(MaxValsStr);
 
-            A=circuit~='p' & circuit~='+' & circuit~='(' & circuit~=')' & circuit~=','
+            A=circuit~='p' & circuit~='+' & circuit~='(' & circuit~=')' & circuit~=',';
             element=circuit(A);
             CCT_Func_Str = "@(b,x) R_inf + ";
             DisplayStr = ['R+',circuit];
@@ -1334,7 +1334,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             circuit=regexprep(circuit,element(i:i+1),['R(b(',num2str(ParamCounter),',:),x)'],'once');
                             ParamCounter = ParamCounter +1;
      
-                end
+                    end
             end
             
             CCT_Func_Str = CCT_Func_Str + convertCharsToStrings(circuit);
@@ -1786,6 +1786,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     fit_blank_only = true;
                     fit_sequentially = false;
                     multi_starts = multi_starts_blank;
+
                 case 'Off'
                     fit_blank_only = false;
             end
@@ -2637,7 +2638,7 @@ classdef AnalyZe < matlab.apps.AppBase
                       'Rb','Cb','Device CCT Params','MSE','NRMSE','NMSE','AIC','BIC'});
     
                     Names = app.ResultsTable.ColumnName;
-                    columns = unique(ind(:,2))
+                    columns = unique(ind(:,2));
     
                     x = [];
                     y = [];
@@ -2651,8 +2652,8 @@ classdef AnalyZe < matlab.apps.AppBase
                         ylabel(app.FitSeriesPlot,var_y);
                         
                         DatToPlot = table2array(T(unique(ind(:,1)),[var_x, var_y])) ;
-                        x = DatToPlot(:,1)
-                        y = DatToPlot(:,2)
+                        x = DatToPlot(:,1);
+                        y = DatToPlot(:,2);
                     else
                         var_y = string(Names(columns(1)));
                             
@@ -2661,7 +2662,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         
                         DatToPlot = table2array(T(ind(:,1),var_y)) ;
                         
-                        y = DatToPlot(:,1)
+                        y = DatToPlot(:,1);
                         x = 1:length(y);
                         x = x';
                     end
@@ -2972,7 +2973,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                 '',...
                                 'Each free parameter must be assigned an absolute maximum value, in a comma separated list in the order that they appear in the circuit string.',...
                                 '',...
-                                'As an alternative to writing out the string, elements and parallel branches can be added by double clicking the appropriate entry in the list box alongside.'},'Explainer')
+                                'As an alternative to writing out the string, elements and parallel branches can be added by double clicking the appropriate entry in the list box alongside.',...
+                                '',...
+                                'To fit a measurement with a barrier, click the include barrier switch. A barrier modell will be automatically inserted. Note, when this switch is on, the app will expect the circuit string to have a leading p(R1,C1), which will be treated as the barrier.'},'Explainer')
             
                         end
                    end
@@ -4666,9 +4669,9 @@ classdef AnalyZe < matlab.apps.AppBase
                 temp_cctstr = convertStringsToChars(CurrentCCTstring);
                 lastChar = temp_cctstr(end);
  
-                Open_brackets = sum(temp_cctstr=='(')
-                Closed_brackets = sum(temp_cctstr==')')
-                Commas = sum(temp_cctstr==',')
+                Open_brackets = sum(temp_cctstr=='(');
+                Closed_brackets = sum(temp_cctstr==')');
+                Commas = sum(temp_cctstr==',');
                 switch ElemToAdd
                     case 'Add New Parallel Branch'
                     case 'Edit Adjacent Branch'
@@ -4805,14 +4808,12 @@ classdef AnalyZe < matlab.apps.AppBase
             CurrentCct = app.CircuitStringEditField.Value;
             switch app.IncludeBarrierSwitch_2.Value
                 case 'On'
-
-                    display("HERE")
                     
                     errorflag = false;
 
                     if length(CurrentCct) < length(BarrierStr)
                         errorflag =true;
-                         display("HERE2")
+                        
                     else
                         len = length(BarrierStr);
                         BarrierStrCurrent = CurrentCct(1:len);
@@ -4821,7 +4822,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             case BarrierStr
                                 errorflag = false;
                             otherwise
-                                 display("HERE3")
+                                
                                 errorflag = true;
                         end
                     end
