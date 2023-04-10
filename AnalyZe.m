@@ -64,6 +64,7 @@ classdef AnalyZe < matlab.apps.AppBase
         TimePointAUEditFieldLabel       matlab.ui.control.Label
         LoadEISDat                      matlab.ui.control.UIAxes
         AnalysisCCTFITTab               matlab.ui.container.Tab
+        SaveFigureButton                matlab.ui.control.Button
         LoadResultsButton               matlab.ui.control.Button
         HOMEButton_2                    matlab.ui.control.Button
         ClearResultsButton              matlab.ui.control.Button
@@ -168,6 +169,7 @@ classdef AnalyZe < matlab.apps.AppBase
         ConditionListBox                matlab.ui.control.ListBox
         ConditionListBoxLabel           matlab.ui.control.Label
         AnalysisTimeSeriesMagnitudeCrossSectionTab  matlab.ui.container.Tab
+        SaveFigureButton_2              matlab.ui.control.Button
         HOMEButton_3                    matlab.ui.control.Button
         RefreshDataOptionsButton_2      matlab.ui.control.Button
         TabGroup4                       matlab.ui.container.TabGroup
@@ -216,6 +218,7 @@ classdef AnalyZe < matlab.apps.AppBase
         ConditionListBox_2              matlab.ui.control.ListBox
         ConditionListBox_2Label         matlab.ui.control.Label
         AnalysisEstimateTransferFunctionTab  matlab.ui.container.Tab
+        SaveFigureButton_3              matlab.ui.control.Button
         RunningLamp_2                   matlab.ui.control.Lamp
         RunningLamp_2Label              matlab.ui.control.Label
         ProgressGuage_2                 matlab.ui.control.SemicircularGauge
@@ -357,11 +360,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             
                             selectedTab = app.CircuitToFit.SelectedTab;
                             if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.CircuitBuilderTable_MaxVals)
-                                
-%                                 cct_char = convertStringsToChars(cct_type);
-%                                 plusses = find(cct_char == '+');
-%                                 cct_blank = [cct_char(1:plusses(1)-1) cct_char(plusses(3):end)];
-%                                 cct_blank_str = convertCharsToStrings(cct_blank);
+                               
 
                                 Blank_Fits = app.MultistartFit(y_z_blank,...
                                                         freq,...
@@ -416,7 +415,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                             c.Callback = @app.plotButtonPushed;
                                             c.Tooltip = 'Click this button when ready. Select three points on the plot (each click is registered, but won''t reflect on the plot until the last click).';
                                            
-                                            app.WaitForInput = true;
+                                           app.WaitForInput = true;
                                            while (app.WaitForInput == true)
                                                drawnow()
                                            end
@@ -445,7 +444,11 @@ classdef AnalyZe < matlab.apps.AppBase
                                             
                                             nI = -1.*imag(y_z);
                                             R = real(y_z);
-                                            local_min = islocalmin(nI,'SamplePoints',R);
+                                            try
+                                                local_min = islocalmin(nI,'SamplePoints',R);
+                                            catch
+                                                local_min = islocalmin(nI);
+                                            end
                                             local_min_locs = find(local_min==true);            
                                             First_min = local_min_locs(1);
                                 
@@ -1378,6 +1381,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         
             
         end
+
     end
     
 
@@ -2681,7 +2685,13 @@ classdef AnalyZe < matlab.apps.AppBase
                         xlabel(app.FitSeriesPlot,var_x);
                         ylabel(app.FitSeriesPlot,var_y);
                         
-                        DatToPlot = table2array(T(unique(ind(:,1)),[var_x, var_y])) ;
+                        if var_x == 'Time'
+                            Tab = T(unique(ind(:,1)),[var_x, var_y]);
+                            Tab = sortrows(Tab,'Time');
+                            DatToPlot = table2array(Tab);
+                        else
+                            DatToPlot = table2array(T(unique(ind(:,1)),[var_x, var_y])) ;
+                        end
                         x = DatToPlot(:,1);
                         y = DatToPlot(:,2);
                     else
@@ -4863,6 +4873,335 @@ classdef AnalyZe < matlab.apps.AppBase
 
             end
         end
+
+        % Button pushed function: SaveFigureButton
+        function SaveFigureButtonPushed(app, event)
+            plotlist = {'Bode Fits','Nyquist Fits','QQ Imaginary','QQ Real','Residuals','K-Density Estimate','Time Series'};
+
+             [indx,tf] = listdlg('PromptString',{'Select a Plot To Save',...
+            'Only one plot can be selected at a time.',''},...
+            'SelectionMode','single','ListString',plotlist);
+
+            %Choose plot to save
+                plotName = plotlist{indx};
+
+                UserFileName = inputdlg("Enter File Name: ");
+                selpath = uigetdir();
+
+                
+                switch plotName
+                    case 'Bode Fits'
+                        axs = app.BodeResults;
+                        FullFileName = selpath + "\AnalyZeResults_BodePlot_" + string(UserFileName);
+                        yyaxis(axs,"left")
+                   case 'Nyquist Fits'
+                        axs = app.NyqResults;
+                        FullFileName = selpath + "\AnalyZeResults_NyqPlot_" + string(UserFileName);
+                        
+                    case 'QQ Imaginary'
+                        axs = app.ImagQQ;
+                        FullFileName = selpath + "\AnalyZeResults_ImagQQPlot_" + string(UserFileName);
+                    case 'QQ Real'
+                        axs = app.RealQQ;
+                        FullFileName = selpath + "\AnalyZeResults_RealQQPlot_" + string(UserFileName);
+                    case 'Residuals'
+                        axs = app.Residuals;
+                        FullFileName = selpath + "\AnalyZeResults_ResidualsPlot_" + string(UserFileName);
+                    case 'K-Density Estimate'
+                        axs = app.KDensity;
+                        FullFileName = selpath + "\AnalyZeResults_KdensityPlot_" + string(UserFileName);
+                    case 'Time Series'
+                        axs = app.FitSeriesPlot;
+                        FullFileName = selpath + "\AnalyZeResults_TimeSeriesPlot_" + string(UserFileName);
+                end
+
+            % Get File Type
+
+                 FileTypeList = {'jpeg','png','tiff','tiffn','meta','pdf','eps','epsc','eps2','epsc2','meta','svg'};
+                 [indx,tf] = listdlg('PromptString',{'Select a File Type',...
+                'Only one plot can be selected at a time.',''},...
+                'SelectionMode','single','ListString',FileTypeList);
+                FileType = FileTypeList{indx};
+
+
+            
+           % Create a temporary figure with axes.
+                fig_temp = figure;
+                fig_temp.Visible = 'off';
+                figAxes = axes(fig_temp);
+                 
+
+            % Copy all UIAxes children, take over axes limits and aspect ratio.            
+                % Copy all UIAxes children, take over axes limits and aspect ratio. 
+                
+                allChildren = axs.XAxis.Parent.Children;
+                copyobj(allChildren, figAxes)
+                figAxes.XLim = axs.XLim;
+                figAxes.XScale = axs.XScale;
+                figAxes.YLim = axs.YLim;
+                figAxes.YScale = axs.YScale;
+                figAxes.ZLim = axs.ZLim;
+                %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                try
+                    lgndName1 = axs.Legend.String{1};
+                    lgd = legend(lgndName1);
+                    lgd.Box = axs.Legend.Box;
+                    lgd.Location = axs.Legend.Location;
+                end
+                fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
+                fig_temp.CurrentAxes.XLabel.String = axs.XLabel.String;
+                fig_temp.CurrentAxes.XLabel.FontSize = axs.XLabel.FontSize;
+                fig_temp.CurrentAxes.Title.String = axs.Title.String;
+                fig_temp.CurrentAxes.Title.FontSize = axs.Title.FontSize;
+
+                switch plotName
+                    case 'Bode Fits'
+                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                        yyaxis(axs,"right")
+                        yyaxis(figAxes,"right")
+                        
+                        allChildren = axs.XAxis.Parent.Children;
+                        copyobj(allChildren, figAxes)
+                        figAxes.XLim = axs.XLim;
+                        figAxes.XScale = axs.XScale;
+                        figAxes.YLim = axs.YLim;
+                        figAxes.YScale = axs.YScale;
+                        figAxes.ZLim = axs.ZLim;
+                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                        fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                        fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
+
+                    case 'K-Density Estimate'
+                        figAxes.CameraPosition = axs.CameraPosition;
+                        figAxes.CameraViewAngle = axs.CameraViewAngle;
+
+                end
+            % Save as png and fig files.
+                saveas(fig_temp, FullFileName, FileType);
+                %saveas(fig_temp, FullFileName, 'fig');
+                fig_temp.Visible = 'on';
+                savefig(fig_temp, FullFileName);
+            % Delete the temporary figure.
+                delete(fig_temp);
+
+
+                msgbox("File Saved as " + "\AnalyZeResults_<PlotType>_" + string(UserFileName))
+             
+        end
+
+        % Value changed function: PlotStyleSwitch
+        function PlotStyleSwitchValueChanged(app, event)
+            value = app.PlotStyleSwitch.Value;
+            
+            switch value
+                case 'Surface'
+                    view(app.KDensity,-37.5 , 30);
+                case 'Contour'
+                    view(app.KDensity,0 , 90);
+            end
+        end
+
+        % Button pushed function: SaveFigureButton_2
+        function SaveFigureButton_2Pushed(app, event)
+             plotlist = {'Magnitude Cross Section','Bode Plot'};
+             [indx,tf] = listdlg('PromptString',{'Select a Plot To Save',...
+            'Only one plot can be selected at a time.',''},...
+            'SelectionMode','single','ListString',plotlist);
+
+            %Choose plot to save
+                plotName = plotlist{indx};
+
+                UserFileName = inputdlg("Enter File Name: ");
+                selpath = uigetdir();
+
+                
+                switch plotName
+                    case 'Bode Plot'
+                        axs = app.CSDataPlot;
+                        FullFileName = selpath + "\AnalyZeCrossSectionResults_BodePlot_" + string(UserFileName);
+                        yyaxis(axs,"left")
+                   case 'Magnitude Cross Section'
+                        axs = app.CSResultsPlot;
+                        FullFileName = selpath + "\AnalyZeCrossSectionResults_ResultsPlot_" + string(UserFileName);
+                        
+                end
+
+            % Get File Type
+
+                 FileTypeList = {'jpeg','png','tiff','tiffn','meta','pdf','eps','epsc','eps2','epsc2','meta','svg'};
+                 [indx,tf] = listdlg('PromptString',{'Select a File Type',...
+                'Only one plot can be selected at a time.',''},...
+                'SelectionMode','single','ListString',FileTypeList);
+                FileType = FileTypeList{indx};
+
+
+            
+           % Create a temporary figure with axes.
+                fig_temp = figure;
+                fig_temp.Visible = 'off';
+                figAxes = axes(fig_temp);
+                 
+
+            % Copy all UIAxes children, take over axes limits and aspect ratio.            
+                % Copy all UIAxes children, take over axes limits and aspect ratio. 
+                
+                allChildren = axs.XAxis.Parent.Children;
+                copyobj(allChildren, figAxes)
+                figAxes.XLim = axs.XLim;
+                figAxes.XScale = axs.XScale;
+                figAxes.YLim = axs.YLim;
+                figAxes.YScale = axs.YScale;
+                figAxes.ZLim = axs.ZLim;
+                %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                try
+                    lgndName1 = axs.Legend.String{1};
+                    lgd = legend(lgndName1);
+                    lgd.Box = axs.Legend.Box;
+                    lgd.Location = axs.Legend.Location;
+                end
+                fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
+                fig_temp.CurrentAxes.XLabel.String = axs.XLabel.String;
+                fig_temp.CurrentAxes.XLabel.FontSize = axs.XLabel.FontSize;
+                fig_temp.CurrentAxes.Title.String = axs.Title.String;
+                fig_temp.CurrentAxes.Title.FontSize = axs.Title.FontSize;
+
+                switch plotName
+                    case 'Bode Plot'
+                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                        yyaxis(axs,"right")
+                        yyaxis(figAxes,"right")
+                        
+                        allChildren = axs.XAxis.Parent.Children;
+                        copyobj(allChildren, figAxes)
+                        figAxes.XLim = axs.XLim;
+                        figAxes.XScale = axs.XScale;
+                        figAxes.YLim = axs.YLim;
+                        figAxes.YScale = axs.YScale;
+                        figAxes.ZLim = axs.ZLim;
+                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                        fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                        fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
+
+                end
+            % Save as png and fig files.
+                saveas(fig_temp, FullFileName, FileType);
+                %saveas(fig_temp, FullFileName, 'fig');
+                fig_temp.Visible = 'on';
+                savefig(fig_temp, FullFileName);
+            % Delete the temporary figure.
+                delete(fig_temp);
+
+
+                msgbox("File Saved as " + "\AnalyZeCrossSectionResults_<PlotType>_" + string(UserFileName))
+        end
+
+        % Button pushed function: SaveFigureButton_3
+        function SaveFigureButton_3Pushed(app, event)
+            plotlist = {'Bode Fits','Nyquist Fits','Pole-Zero','Time Series'};
+             [indx,tf] = listdlg('PromptString',{'Select a Plot To Save',...
+            'Only one plot can be selected at a time.',''},...
+            'SelectionMode','single','ListString',plotlist);
+
+            %Choose plot to save
+                plotName = plotlist{indx};
+
+                UserFileName = inputdlg("Enter File Name: ");
+                selpath = uigetdir();
+
+                
+                switch plotName
+                    case 'Bode Fits'
+                        axs = app.BodeResults_2;
+                        FullFileName = selpath + "\AnalyZeSysIDResults_BodePlot_" + string(UserFileName);
+                        yyaxis(axs,"left")
+                   case 'Nyquist Fits'
+                        axs = app.NyqResults_2;
+                        FullFileName = selpath + "\AnalyZeSysIDResults_NyqPlot_" + string(UserFileName);
+                   
+                    case 'Pole-Zero'
+                        axs = app.PoleZeroResults;
+                        FullFileName = selpath + "\AnalyZeSysIDResults_PoleZeroPlot_" + string(UserFileName);
+                        
+                    case 'Time Series'
+                        axs = app.FitSeriesPlot_2;
+                        FullFileName = selpath + "\AnalyZeSysIDResults_TimeSeriesPlot_" + string(UserFileName);
+                end
+
+            % Get File Type
+
+                 FileTypeList = {'jpeg','png','tiff','tiffn','meta','pdf','eps','epsc','eps2','epsc2','meta','svg'};
+                 [indx,tf] = listdlg('PromptString',{'Select a File Type',...
+                'Only one plot can be selected at a time.',''},...
+                'SelectionMode','single','ListString',FileTypeList);
+                FileType = FileTypeList{indx};
+
+
+            
+           % Create a temporary figure with axes.
+                fig_temp = figure;
+                fig_temp.Visible = 'off';
+                figAxes = axes(fig_temp);
+                 
+
+            % Copy all UIAxes children, take over axes limits and aspect ratio.            
+                % Copy all UIAxes children, take over axes limits and aspect ratio. 
+                
+                allChildren = axs.XAxis.Parent.Children;
+                copyobj(allChildren, figAxes)
+                figAxes.XLim = axs.XLim;
+                figAxes.XScale = axs.XScale;
+                figAxes.YLim = axs.YLim;
+                figAxes.YScale = axs.YScale;
+                figAxes.ZLim = axs.ZLim;
+                %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                try
+                    lgndName1 = axs.Legend.String{1};
+                    lgd = legend(lgndName1);
+                    lgd.Box = axs.Legend.Box;
+                    lgd.Location = axs.Legend.Location;
+                end
+                fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
+                fig_temp.CurrentAxes.XLabel.String = axs.XLabel.String;
+                fig_temp.CurrentAxes.XLabel.FontSize = axs.XLabel.FontSize;
+                fig_temp.CurrentAxes.Title.String = axs.Title.String;
+                fig_temp.CurrentAxes.Title.FontSize = axs.Title.FontSize;
+
+                switch plotName
+                    case 'Bode Fits'
+                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                        yyaxis(axs,"right")
+                        yyaxis(figAxes,"right")
+                        
+                        allChildren = axs.XAxis.Parent.Children;
+                        copyobj(allChildren, figAxes)
+                        figAxes.XLim = axs.XLim;
+                        figAxes.XScale = axs.XScale;
+                        figAxes.YLim = axs.YLim;
+                        figAxes.YScale = axs.YScale;
+                        figAxes.ZLim = axs.ZLim;
+                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                        fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                        fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
+
+                    case 'K-Density Estimate'
+                        figAxes.CameraPosition = axs.CameraPosition;
+                        figAxes.CameraViewAngle = axs.CameraViewAngle;
+
+                end
+            % Save as png and fig files.
+                saveas(fig_temp, FullFileName, FileType);
+                %saveas(fig_temp, FullFileName, 'fig');
+                fig_temp.Visible = 'on';
+                savefig(fig_temp, FullFileName);
+            % Delete the temporary figure.
+                delete(fig_temp);
+
+
+                msgbox("File Saved as " + "\AnalyZeSysIDResults_<PlotType>_" + string(UserFileName))
+        end
     end
 
     % Component initialization
@@ -5628,6 +5967,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create PlotStyleSwitch
             app.PlotStyleSwitch = uiswitch(app.DensityTab, 'slider');
             app.PlotStyleSwitch.Items = {'Surface', 'Contour'};
+            app.PlotStyleSwitch.ValueChangedFcn = createCallbackFcn(app, @PlotStyleSwitchValueChanged, true);
             app.PlotStyleSwitch.Position = [371 82 45 20];
             app.PlotStyleSwitch.Value = 'Surface';
 
@@ -5781,6 +6121,15 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LoadResultsButton.FontSize = 14;
             app.LoadResultsButton.Position = [792 14 114 30];
             app.LoadResultsButton.Text = 'Load Results';
+
+            % Create SaveFigureButton
+            app.SaveFigureButton = uibutton(app.AnalysisCCTFITTab, 'push');
+            app.SaveFigureButton.ButtonPushedFcn = createCallbackFcn(app, @SaveFigureButtonPushed, true);
+            app.SaveFigureButton.FontSize = 14;
+            app.SaveFigureButton.FontWeight = 'bold';
+            app.SaveFigureButton.FontColor = [0 0 1];
+            app.SaveFigureButton.Position = [897 679 100 26];
+            app.SaveFigureButton.Text = 'Save Figure';
 
             % Create AnalysisTimeSeriesMagnitudeCrossSectionTab
             app.AnalysisTimeSeriesMagnitudeCrossSectionTab = uitab(app.TabGroup);
@@ -6002,7 +6351,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create TabGroup4
             app.TabGroup4 = uitabgroup(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
-            app.TabGroup4.Position = [501 30 501 674];
+            app.TabGroup4.Position = [501 48 501 656];
 
             % Create PlotsTab_2
             app.PlotsTab_2 = uitab(app.TabGroup4);
@@ -6014,14 +6363,14 @@ classdef AnalyZe < matlab.apps.AppBase
             xlabel(app.CSResultsPlot, 'X')
             ylabel(app.CSResultsPlot, 'Y')
             zlabel(app.CSResultsPlot, 'Z')
-            app.CSResultsPlot.Position = [6 279 493 362];
+            app.CSResultsPlot.Position = [6 261 493 362];
 
             % Create CSDataPlot
             app.CSDataPlot = uiaxes(app.PlotsTab_2);
             xlabel(app.CSDataPlot, 'X')
             ylabel(app.CSDataPlot, 'Y')
             zlabel(app.CSDataPlot, 'Z')
-            app.CSDataPlot.Position = [5 65 493 225];
+            app.CSDataPlot.Position = [5 47 493 225];
 
             % Create LoadDataIntoResultsTableButton
             app.LoadDataIntoResultsTableButton = uibutton(app.PlotsTab_2, 'push');
@@ -6029,7 +6378,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LoadDataIntoResultsTableButton.FontSize = 14;
             app.LoadDataIntoResultsTableButton.FontWeight = 'bold';
             app.LoadDataIntoResultsTableButton.FontColor = [0.4667 0.6745 0.1882];
-            app.LoadDataIntoResultsTableButton.Position = [154 12 208 42];
+            app.LoadDataIntoResultsTableButton.Position = [152 8 208 33];
             app.LoadDataIntoResultsTableButton.Text = 'Load Data Into Results Table';
 
             % Create ResultsTab_2
@@ -6042,7 +6391,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResultsTable_2.RowName = {};
             app.ResultsTable_2.SelectionType = 'row';
             app.ResultsTable_2.Multiselect = 'off';
-            app.ResultsTable_2.Position = [16 130 461 509];
+            app.ResultsTable_2.Position = [16 112 461 509];
 
             % Create ClearResultsButton_2
             app.ClearResultsButton_2 = uibutton(app.ResultsTab_2, 'push');
@@ -6050,7 +6399,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ClearResultsButton_2.FontSize = 18;
             app.ClearResultsButton_2.FontWeight = 'bold';
             app.ClearResultsButton_2.FontColor = [0.851 0.3255 0.098];
-            app.ClearResultsButton_2.Position = [21 32 156 51];
+            app.ClearResultsButton_2.Position = [21 14 156 51];
             app.ClearResultsButton_2.Text = 'Clear Results';
 
             % Create SaveResultsButton_2
@@ -6058,7 +6407,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SaveResultsButton_2.ButtonPushedFcn = createCallbackFcn(app, @SaveResultsButton_2Pushed, true);
             app.SaveResultsButton_2.FontSize = 18;
             app.SaveResultsButton_2.FontWeight = 'bold';
-            app.SaveResultsButton_2.Position = [320 28 156 51];
+            app.SaveResultsButton_2.Position = [320 10 156 51];
             app.SaveResultsButton_2.Text = 'Save Results';
 
             % Create RefreshDataOptionsButton_2
@@ -6077,6 +6426,15 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HOMEButton_3.FontColor = [0 0.4471 0.7412];
             app.HOMEButton_3.Position = [176 5 131 30];
             app.HOMEButton_3.Text = 'HOME';
+
+            % Create SaveFigureButton_2
+            app.SaveFigureButton_2 = uibutton(app.AnalysisTimeSeriesMagnitudeCrossSectionTab, 'push');
+            app.SaveFigureButton_2.ButtonPushedFcn = createCallbackFcn(app, @SaveFigureButton_2Pushed, true);
+            app.SaveFigureButton_2.FontSize = 14;
+            app.SaveFigureButton_2.FontWeight = 'bold';
+            app.SaveFigureButton_2.FontColor = [0 0 1];
+            app.SaveFigureButton_2.Position = [703 9 100 26];
+            app.SaveFigureButton_2.Text = 'Save Figure';
 
             % Create AnalysisEstimateTransferFunctionTab
             app.AnalysisEstimateTransferFunctionTab = uitab(app.TabGroup);
@@ -6527,6 +6885,15 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RunningLamp_2 = uilamp(app.AnalysisEstimateTransferFunctionTab);
             app.RunningLamp_2.Position = [426 16 35 35];
             app.RunningLamp_2.Color = [1 0 0];
+
+            % Create SaveFigureButton_3
+            app.SaveFigureButton_3 = uibutton(app.AnalysisEstimateTransferFunctionTab, 'push');
+            app.SaveFigureButton_3.ButtonPushedFcn = createCallbackFcn(app, @SaveFigureButton_3Pushed, true);
+            app.SaveFigureButton_3.FontSize = 14;
+            app.SaveFigureButton_3.FontWeight = 'bold';
+            app.SaveFigureButton_3.FontColor = [0 0 1];
+            app.SaveFigureButton_3.Position = [887 679 100 26];
+            app.SaveFigureButton_3.Text = 'Save Figure';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
