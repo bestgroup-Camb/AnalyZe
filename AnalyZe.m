@@ -114,6 +114,17 @@ classdef AnalyZe < matlab.apps.AppBase
         DetectionSchemeListBox_2Label   matlab.ui.control.Label
         OutlierRemovalSwitch_2          matlab.ui.control.Switch
         OutlierRemovalSwitch_2Label     matlab.ui.control.Label
+        ResampleTab_2                   matlab.ui.container.Tab
+        qEditField_2                    matlab.ui.control.NumericEditField
+        qEditField_2Label               matlab.ui.control.Label
+        pEditField_2                    matlab.ui.control.NumericEditField
+        pEditField_2Label               matlab.ui.control.Label
+        Label_2                         matlab.ui.control.Label
+        ResampleFrequencyEditField_2    matlab.ui.control.NumericEditField
+        ResampleFrequencyEditField_2Label  matlab.ui.control.Label
+        ResampleSwitch_2                matlab.ui.control.Switch
+        ResampleSwitch_2Label           matlab.ui.control.Label
+        ResampleFactorLabel_2           matlab.ui.control.Label
         PlotMultiSeriesMeanSwitch       matlab.ui.control.Switch
         PlotMultiSeriesMeanSwitchLabel  matlab.ui.control.Label
         FlipAxesSwitch                  matlab.ui.control.Switch
@@ -201,6 +212,17 @@ classdef AnalyZe < matlab.apps.AppBase
         DetectionSchemeListBoxLabel     matlab.ui.control.Label
         OutlierRemovalSwitch            matlab.ui.control.Switch
         OutlierRemovalSwitchLabel       matlab.ui.control.Label
+        ResampleTab                     matlab.ui.container.Tab
+        ResampleFactorLabel             matlab.ui.control.Label
+        Label                           matlab.ui.control.Label
+        qEditField                      matlab.ui.control.NumericEditField
+        qEditFieldLabel                 matlab.ui.control.Label
+        pEditField                      matlab.ui.control.NumericEditField
+        pEditFieldLabel                 matlab.ui.control.Label
+        ResampleFrequencyEditField      matlab.ui.control.NumericEditField
+        ResampleFrequencyEditFieldLabel  matlab.ui.control.Label
+        ResampleSwitch                  matlab.ui.control.Switch
+        ResampleSwitchLabel             matlab.ui.control.Label
         Panel_2                         matlab.ui.container.Panel
         PlotMeanSwitch                  matlab.ui.control.Switch
         PlotMeanSwitchLabel             matlab.ui.control.Label
@@ -331,6 +353,7 @@ classdef AnalyZe < matlab.apps.AppBase
         Rinfty = 0;
         DataTableRowSelected = 1; % Description
         CumulativeCCTfitSeriesPlot; % Description
+        CumulativeCCTfitSeriesDomainPlot;
         CumulativeCCTfitSeriesDomain; % Description
         CumulativeCCTfitSeriesPlotRaw; % Description
         DatToFit_TFest; % Description
@@ -1010,8 +1033,17 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'Off'
             end
 
-            
+             switch (app.ResampleSwitch.Value)
+                case 'On'
+                    fs = app.ResampleFrequencyEditField.Value;
+                    p = app.pEditField.Value;
+                    q = app.qEditField.Value;
 
+                    [CS_local.y_z, CS_local.Time] = resample(CS_local.y_z,CS_local.Time,fs,p,q);
+
+            end
+
+          
             results = CS_local;
             
         end
@@ -2674,7 +2706,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 
                 
                 if length(ind(:,1)) >= 2
-
+                    display("HERE")
                     
                     T_c =  app.ResultsTable.Data;
                 
@@ -2757,20 +2789,49 @@ classdef AnalyZe < matlab.apps.AppBase
     
                         case 'On'
                             %hold(app.FitSeriesPlot, 'on');
-                            app.CumulativeCCTfitSeriesPlotRaw = [app.CumulativeCCTfitSeriesPlotRaw y];
-                            app.CumulativeCCTfitSeriesDomain = [app.CumulativeCCTfitSeriesDomain x];
+                            app.CumulativeCCTfitSeriesPlotRaw = [app.CumulativeCCTfitSeriesPlotRaw {y}];
+                            app.CumulativeCCTfitSeriesDomain = [app.CumulativeCCTfitSeriesDomain {x}];
                             
                         case 'Off'
                             %hold(app.FitSeriesPlot, 'off');
-                            app.CumulativeCCTfitSeriesPlotRaw = y;
-                            app.CumulativeCCTfitSeriesDomain = x;
+                            app.CumulativeCCTfitSeriesPlotRaw = {y};
+                            app.CumulativeCCTfitSeriesDomain = {x};
     
                     end
 
 
                 end
+
+               switch (app.ResampleSwitch_2.Value)
+                    case 'On'
+                        fs = app.ResampleFrequencyEditField_2.Value;
+                        p = app.pEditField_2.Value;
+                        q = app.qEditField_2.Value;
+                        
+                        temp_y = app.CumulativeCCTfitSeriesPlot;
+                        temp_x = app.CumulativeCCTfitSeriesDomainPlot;
+                        y_resampled = [];
+                        x_resampled = [];
+                    
+                          for i =1:length(temp_y)
+                                [y_resampled{i}, x_resampled{i}] = resample(temp_y{i},temp_x{i},fs,p,q);
+                          end
+
+                       app.CumulativeCCTfitSeriesPlot = y_resampled;
+                       app.CumulativeCCTfitSeriesDomainPlot = x_resampled;
+    
+               end
+
+               display(app.CumulativeCCTfitSeriesPlot)
+               display(app.CumulativeCCTfitSeriesDomainPlot)
                 
-                app.CumulativeCCTfitSeriesPlot = app.CumulativeCCTfitSeriesPlotRaw;
+               try
+                    app.CumulativeCCTfitSeriesPlot = cell2mat(app.CumulativeCCTfitSeriesPlotRaw');
+                    app.CumulativeCCTfitSeriesDomainPlot = cell2mat(app.CumulativeCCTfitSeriesDomain');
+               catch
+                   errordlg("Time Series Mismatch - You may need to engage the resampling utility.")
+                   return
+               end
                 
                 if length(app.CumulativeCCTfitSeriesPlot(:,1)) >= 2
 
@@ -2853,7 +2914,8 @@ classdef AnalyZe < matlab.apps.AppBase
                             end
 
                     end
-    
+
+   
     
                     %% Plot
                     %display(app.CumulativeCCTfitSeriesPlot)
@@ -2862,7 +2924,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         case 'On'
                             cla(app.FitSeriesPlot)
                             hold(app.FitSeriesPlot, 'On');
-                            plot(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomain , app.CumulativeCCTfitSeriesPlot , '*-','LineWidth',3)
+                            plot(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomainPlot , app.CumulativeCCTfitSeriesPlot , '*-','LineWidth',3)
     
                             switch (app.PlotMultiSeriesMeanSwitch.Value)
                                 case 'On'
@@ -2873,7 +2935,7 @@ classdef AnalyZe < matlab.apps.AppBase
             
                                         Mean = mean(app.CumulativeCCTfitSeriesPlot',"omitnan");
                                         Std = std(app.CumulativeCCTfitSeriesPlot',"omitnan");
-                                        errorbar(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomain(:,1), Mean,  Std,...
+                                        errorbar(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomainPlot(:,1), Mean,  Std,...
                                                                                "-s","MarkerSize",10,...
                                                                                "MarkerEdgeColor","blue",...
                                                                                "MarkerFaceColor",[0.65 0.85 0.90],...
@@ -2882,7 +2944,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             
                         case 'Off'
                             hold(app.FitSeriesPlot, 'off');
-                            plot(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomain(:,1) , app.CumulativeCCTfitSeriesPlot(:,1) , '*-','LineWidth',3)
+                            plot(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomainPlot(:,1) , app.CumulativeCCTfitSeriesPlot(:,1) , '*-','LineWidth',3)
     
                     end
     
@@ -6154,6 +6216,78 @@ classdef AnalyZe < matlab.apps.AppBase
             app.DetectionSchemeListBox_2.Position = [171 36 131 56];
             app.DetectionSchemeListBox_2.Value = 'median';
 
+            % Create ResampleTab_2
+            app.ResampleTab_2 = uitab(app.SeriesPlotcctFitTabGroup);
+            app.ResampleTab_2.Title = 'Resample';
+
+            % Create ResampleFactorLabel_2
+            app.ResampleFactorLabel_2 = uilabel(app.ResampleTab_2);
+            app.ResampleFactorLabel_2.FontWeight = 'bold';
+            app.ResampleFactorLabel_2.Position = [90 35 102 22];
+            app.ResampleFactorLabel_2.Text = 'Resample Factor';
+
+            % Create ResampleSwitch_2Label
+            app.ResampleSwitch_2Label = uilabel(app.ResampleTab_2);
+            app.ResampleSwitch_2Label.HorizontalAlignment = 'center';
+            app.ResampleSwitch_2Label.FontSize = 14;
+            app.ResampleSwitch_2Label.FontWeight = 'bold';
+            app.ResampleSwitch_2Label.FontColor = [0.4667 0.6745 0.1882];
+            app.ResampleSwitch_2Label.Position = [8 6 71 22];
+            app.ResampleSwitch_2Label.Text = 'Resample';
+
+            % Create ResampleSwitch_2
+            app.ResampleSwitch_2 = uiswitch(app.ResampleTab_2, 'slider');
+            app.ResampleSwitch_2.Orientation = 'vertical';
+            app.ResampleSwitch_2.Position = [31 51 20 45];
+
+            % Create ResampleFrequencyEditField_2Label
+            app.ResampleFrequencyEditField_2Label = uilabel(app.ResampleTab_2);
+            app.ResampleFrequencyEditField_2Label.HorizontalAlignment = 'right';
+            app.ResampleFrequencyEditField_2Label.FontWeight = 'bold';
+            app.ResampleFrequencyEditField_2Label.Position = [103 77 126 22];
+            app.ResampleFrequencyEditField_2Label.Text = 'Resample Frequency';
+
+            % Create ResampleFrequencyEditField_2
+            app.ResampleFrequencyEditField_2 = uieditfield(app.ResampleTab_2, 'numeric');
+            app.ResampleFrequencyEditField_2.Limits = [0 Inf];
+            app.ResampleFrequencyEditField_2.FontSize = 14;
+            app.ResampleFrequencyEditField_2.FontWeight = 'bold';
+            app.ResampleFrequencyEditField_2.Position = [240 77 38 22];
+            app.ResampleFrequencyEditField_2.Value = 1;
+
+            % Create Label_2
+            app.Label_2 = uilabel(app.ResampleTab_2);
+            app.Label_2.FontSize = 36;
+            app.Label_2.FontWeight = 'bold';
+            app.Label_2.Position = [257 25 16 47];
+            app.Label_2.Text = '/';
+
+            % Create pEditField_2Label
+            app.pEditField_2Label = uilabel(app.ResampleTab_2);
+            app.pEditField_2Label.HorizontalAlignment = 'right';
+            app.pEditField_2Label.Position = [184 37 25 22];
+            app.pEditField_2Label.Text = 'p';
+
+            % Create pEditField_2
+            app.pEditField_2 = uieditfield(app.ResampleTab_2, 'numeric');
+            app.pEditField_2.Limits = [0 Inf];
+            app.pEditField_2.FontSize = 14;
+            app.pEditField_2.Position = [214 37 38 22];
+            app.pEditField_2.Value = 1;
+
+            % Create qEditField_2Label
+            app.qEditField_2Label = uilabel(app.ResampleTab_2);
+            app.qEditField_2Label.HorizontalAlignment = 'right';
+            app.qEditField_2Label.Position = [252 38 25 22];
+            app.qEditField_2Label.Text = 'q';
+
+            % Create qEditField_2
+            app.qEditField_2 = uieditfield(app.ResampleTab_2, 'numeric');
+            app.qEditField_2.Limits = [0 Inf];
+            app.qEditField_2.FontSize = 14;
+            app.qEditField_2.Position = [282 38 38 22];
+            app.qEditField_2.Value = 1;
+
             % Create SaveResultsButton
             app.SaveResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
             app.SaveResultsButton.ButtonPushedFcn = createCallbackFcn(app, @SaveResultsButtonPushed, true);
@@ -6412,6 +6546,78 @@ classdef AnalyZe < matlab.apps.AppBase
             app.DetectionSchemeListBox.Items = {'median', 'mean', 'quartiles', 'grubbs', 'gesd'};
             app.DetectionSchemeListBox.Position = [152 45 131 56];
             app.DetectionSchemeListBox.Value = 'median';
+
+            % Create ResampleTab
+            app.ResampleTab = uitab(app.CrossSectionOptions);
+            app.ResampleTab.Title = 'Resample';
+
+            % Create ResampleSwitchLabel
+            app.ResampleSwitchLabel = uilabel(app.ResampleTab);
+            app.ResampleSwitchLabel.HorizontalAlignment = 'center';
+            app.ResampleSwitchLabel.FontSize = 14;
+            app.ResampleSwitchLabel.FontWeight = 'bold';
+            app.ResampleSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.ResampleSwitchLabel.Position = [5 7 71 22];
+            app.ResampleSwitchLabel.Text = 'Resample';
+
+            % Create ResampleSwitch
+            app.ResampleSwitch = uiswitch(app.ResampleTab, 'slider');
+            app.ResampleSwitch.Orientation = 'vertical';
+            app.ResampleSwitch.Position = [28 52 20 45];
+
+            % Create ResampleFrequencyEditFieldLabel
+            app.ResampleFrequencyEditFieldLabel = uilabel(app.ResampleTab);
+            app.ResampleFrequencyEditFieldLabel.HorizontalAlignment = 'right';
+            app.ResampleFrequencyEditFieldLabel.FontWeight = 'bold';
+            app.ResampleFrequencyEditFieldLabel.Position = [94 89 126 22];
+            app.ResampleFrequencyEditFieldLabel.Text = 'Resample Frequency';
+
+            % Create ResampleFrequencyEditField
+            app.ResampleFrequencyEditField = uieditfield(app.ResampleTab, 'numeric');
+            app.ResampleFrequencyEditField.Limits = [0 Inf];
+            app.ResampleFrequencyEditField.FontSize = 14;
+            app.ResampleFrequencyEditField.FontWeight = 'bold';
+            app.ResampleFrequencyEditField.Position = [231 89 38 22];
+            app.ResampleFrequencyEditField.Value = 1;
+
+            % Create pEditFieldLabel
+            app.pEditFieldLabel = uilabel(app.ResampleTab);
+            app.pEditFieldLabel.HorizontalAlignment = 'right';
+            app.pEditFieldLabel.Position = [156 51 25 22];
+            app.pEditFieldLabel.Text = 'p';
+
+            % Create pEditField
+            app.pEditField = uieditfield(app.ResampleTab, 'numeric');
+            app.pEditField.Limits = [0 Inf];
+            app.pEditField.FontSize = 14;
+            app.pEditField.Position = [186 51 38 22];
+            app.pEditField.Value = 1;
+
+            % Create qEditFieldLabel
+            app.qEditFieldLabel = uilabel(app.ResampleTab);
+            app.qEditFieldLabel.HorizontalAlignment = 'right';
+            app.qEditFieldLabel.Position = [224 52 25 22];
+            app.qEditFieldLabel.Text = 'q';
+
+            % Create qEditField
+            app.qEditField = uieditfield(app.ResampleTab, 'numeric');
+            app.qEditField.Limits = [0 Inf];
+            app.qEditField.FontSize = 14;
+            app.qEditField.Position = [254 52 38 22];
+            app.qEditField.Value = 1;
+
+            % Create Label
+            app.Label = uilabel(app.ResampleTab);
+            app.Label.FontSize = 36;
+            app.Label.FontWeight = 'bold';
+            app.Label.Position = [229 39 16 47];
+            app.Label.Text = '/';
+
+            % Create ResampleFactorLabel
+            app.ResampleFactorLabel = uilabel(app.ResampleTab);
+            app.ResampleFactorLabel.FontWeight = 'bold';
+            app.ResampleFactorLabel.Position = [70 51 102 22];
+            app.ResampleFactorLabel.Text = 'Resample Factor';
 
             % Create TabGroup4
             app.TabGroup4 = uitabgroup(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
