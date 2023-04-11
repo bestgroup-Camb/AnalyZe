@@ -98,20 +98,26 @@ classdef AnalyZe < matlab.apps.AppBase
         ImagQQ                          matlab.ui.control.UIAxes
         RealQQ                          matlab.ui.control.UIAxes
         SeriesPlotTab                   matlab.ui.container.Tab
-        PlotMultiSeriesMeanSwitch       matlab.ui.control.Switch
-        PlotMultiSeriesMeanSwitchLabel  matlab.ui.control.Label
-        FlipAxesSwitch                  matlab.ui.control.Switch
-        FlipAxesSwitchLabel             matlab.ui.control.Label
-        OptionsPanel                    matlab.ui.container.Panel
-        NormalizationSchemeListBox_2    matlab.ui.control.ListBox
-        NormalizationSchemeListBox_2Label  matlab.ui.control.Label
-        SwitchAreaNormType              matlab.ui.control.Switch
+        SeriesPlotcctFitTabGroup        matlab.ui.container.TabGroup
+        NormalizationTab_3              matlab.ui.container.Tab
+        NormalizationSchemeListBox_6    matlab.ui.control.ListBox
+        NormalizationSchemeListBox_6Label  matlab.ui.control.Label
         AreaNormalizeSwitch             matlab.ui.control.Switch
         AreaNormalizeSwitchLabel        matlab.ui.control.Label
         Areacm2EditField                matlab.ui.control.NumericEditField
         Areacm2EditFieldLabel           matlab.ui.control.Label
-        ZScoreNormalizeSwitch_FitSeries  matlab.ui.control.Switch
-        ZScoreNormalizeLabel            matlab.ui.control.Label
+        ZScoreNormalizeSwitch_FitSeries_3  matlab.ui.control.Switch
+        ZScoreNormalizeLabel_3          matlab.ui.control.Label
+        SwitchAreaNormType              matlab.ui.control.Switch
+        OutlierRemovalTab_2             matlab.ui.container.Tab
+        DetectionSchemeListBox_2        matlab.ui.control.ListBox
+        DetectionSchemeListBox_2Label   matlab.ui.control.Label
+        OutlierRemovalSwitch_2          matlab.ui.control.Switch
+        OutlierRemovalSwitch_2Label     matlab.ui.control.Label
+        PlotMultiSeriesMeanSwitch       matlab.ui.control.Switch
+        PlotMultiSeriesMeanSwitchLabel  matlab.ui.control.Label
+        FlipAxesSwitch                  matlab.ui.control.Switch
+        FlipAxesSwitchLabel             matlab.ui.control.Label
         HoldPlotsSwitch_FitSeries       matlab.ui.control.ToggleSwitch
         HoldPlotsSwitch_2Label_2        matlab.ui.control.Label
         PlotFromTableSelectionButton    matlab.ui.control.Button
@@ -842,6 +848,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                             CS_i.CSResults = app.getCS(false,CS_Freq,(Ind));
                                             app.CrossSectionResultsCumulative(i) = CS_i;
 
+
+                                            display(CrossSectionCollated)
+                                            display(CS_i.CSResults.y_z)
                                             CrossSectionCollated = [CrossSectionCollated; CS_i.CSResults.y_z];
 
                                             if isreal(CS_i.CSResults.y_z)
@@ -2763,9 +2772,21 @@ classdef AnalyZe < matlab.apps.AppBase
                 
                 if length(app.CumulativeCCTfitSeriesPlot(:,1)) >= 2
 
-                     switch app.ZScoreNormalizeSwitch_FitSeries.Value
+                     switch (app.OutlierRemovalSwitch_2.Value)
                         case 'On'
-                          Scheme = string(app.NormalizationSchemeListBox_2.Value);
+                            scheme =  string(app.DetectionSchemeListBox_2.Value);
+                            temp_y = app.CumulativeCCTfitSeriesPlot;
+                            Outliers = isoutlier(temp_y,scheme);
+                            
+                            temp_y(Outliers) = missing; 
+
+                            app.CumulativeCCTfitSeriesPlot = temp_y;
+                              
+                    end
+
+                     switch app.ZScoreNormalizeSwitch_FitSeries_3.Value
+                        case 'On'
+                          Scheme = string(app.NormalizationSchemeListBox_6.Value);
     
                           temp_y = app.CumulativeCCTfitSeriesPlot;
                               for i =1:length(temp_y(1,:))
@@ -2848,8 +2869,8 @@ classdef AnalyZe < matlab.apps.AppBase
                                           lines(i).LineWidth = 1.0;
                                         end
             
-                                        Mean = mean(app.CumulativeCCTfitSeriesPlot' );
-                                        Std = std(app.CumulativeCCTfitSeriesPlot');
+                                        Mean = mean(app.CumulativeCCTfitSeriesPlot',"omitnan");
+                                        Std = std(app.CumulativeCCTfitSeriesPlot',"omitnan");
                                         errorbar(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomain(:,1), Mean,  Std,...
                                                                                "-s","MarkerSize",10,...
                                                                                "MarkerEdgeColor","blue",...
@@ -6015,61 +6036,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HoldPlotsSwitch_FitSeries.Orientation = 'horizontal';
             app.HoldPlotsSwitch_FitSeries.Position = [35 43 97 43];
 
-            % Create OptionsPanel
-            app.OptionsPanel = uipanel(app.SeriesPlotTab);
-            app.OptionsPanel.Title = 'Options';
-            app.OptionsPanel.Position = [127 442 347 153];
-
-            % Create ZScoreNormalizeLabel
-            app.ZScoreNormalizeLabel = uilabel(app.OptionsPanel);
-            app.ZScoreNormalizeLabel.HorizontalAlignment = 'center';
-            app.ZScoreNormalizeLabel.Position = [2 8 63 30];
-            app.ZScoreNormalizeLabel.Text = {''; ' Normalize'};
-
-            % Create ZScoreNormalizeSwitch_FitSeries
-            app.ZScoreNormalizeSwitch_FitSeries = uiswitch(app.OptionsPanel, 'slider');
-            app.ZScoreNormalizeSwitch_FitSeries.Orientation = 'vertical';
-            app.ZScoreNormalizeSwitch_FitSeries.Position = [23 58 20 45];
-
-            % Create Areacm2EditFieldLabel
-            app.Areacm2EditFieldLabel = uilabel(app.OptionsPanel);
-            app.Areacm2EditFieldLabel.HorizontalAlignment = 'right';
-            app.Areacm2EditFieldLabel.Position = [198 43 70 22];
-            app.Areacm2EditFieldLabel.Text = 'Area (cm^2)';
-
-            % Create Areacm2EditField
-            app.Areacm2EditField = uieditfield(app.OptionsPanel, 'numeric');
-            app.Areacm2EditField.Position = [283 42 54 22];
-            app.Areacm2EditField.Value = 1;
-
-            % Create AreaNormalizeSwitchLabel
-            app.AreaNormalizeSwitchLabel = uilabel(app.OptionsPanel);
-            app.AreaNormalizeSwitchLabel.HorizontalAlignment = 'center';
-            app.AreaNormalizeSwitchLabel.Position = [224 107 87 22];
-            app.AreaNormalizeSwitchLabel.Text = 'Area Normalize';
-
-            % Create AreaNormalizeSwitch
-            app.AreaNormalizeSwitch = uiswitch(app.OptionsPanel, 'slider');
-            app.AreaNormalizeSwitch.Position = [238 78 70 31];
-
-            % Create SwitchAreaNormType
-            app.SwitchAreaNormType = uiswitch(app.OptionsPanel, 'slider');
-            app.SwitchAreaNormType.Items = {'*A', '*sqrt(A)'};
-            app.SwitchAreaNormType.Position = [238 18 45 20];
-            app.SwitchAreaNormType.Value = '*A';
-
-            % Create NormalizationSchemeListBox_2Label
-            app.NormalizationSchemeListBox_2Label = uilabel(app.OptionsPanel);
-            app.NormalizationSchemeListBox_2Label.HorizontalAlignment = 'right';
-            app.NormalizationSchemeListBox_2Label.Position = [61 25 126 22];
-            app.NormalizationSchemeListBox_2Label.Text = 'Normalization Scheme';
-
-            % Create NormalizationSchemeListBox_2
-            app.NormalizationSchemeListBox_2 = uilistbox(app.OptionsPanel);
-            app.NormalizationSchemeListBox_2.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
-            app.NormalizationSchemeListBox_2.Position = [72 47 100 56];
-            app.NormalizationSchemeListBox_2.Value = 'zscore';
-
             % Create FlipAxesSwitchLabel
             app.FlipAxesSwitchLabel = uilabel(app.SeriesPlotTab);
             app.FlipAxesSwitchLabel.HorizontalAlignment = 'center';
@@ -6089,6 +6055,102 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create PlotMultiSeriesMeanSwitch
             app.PlotMultiSeriesMeanSwitch = uiswitch(app.SeriesPlotTab, 'slider');
             app.PlotMultiSeriesMeanSwitch.Position = [393 53 45 20];
+
+            % Create SeriesPlotcctFitTabGroup
+            app.SeriesPlotcctFitTabGroup = uitabgroup(app.SeriesPlotTab);
+            app.SeriesPlotcctFitTabGroup.Position = [131 446 343 150];
+
+            % Create NormalizationTab_3
+            app.NormalizationTab_3 = uitab(app.SeriesPlotcctFitTabGroup);
+            app.NormalizationTab_3.Title = 'Normalization';
+
+            % Create SwitchAreaNormType
+            app.SwitchAreaNormType = uiswitch(app.NormalizationTab_3, 'slider');
+            app.SwitchAreaNormType.Items = {'*A', '*sqrt(A)'};
+            app.SwitchAreaNormType.Position = [244 6 45 20];
+            app.SwitchAreaNormType.Value = '*A';
+
+            % Create ZScoreNormalizeLabel_3
+            app.ZScoreNormalizeLabel_3 = uilabel(app.NormalizationTab_3);
+            app.ZScoreNormalizeLabel_3.HorizontalAlignment = 'center';
+            app.ZScoreNormalizeLabel_3.FontSize = 14;
+            app.ZScoreNormalizeLabel_3.FontWeight = 'bold';
+            app.ZScoreNormalizeLabel_3.FontColor = [0.4667 0.6745 0.1882];
+            app.ZScoreNormalizeLabel_3.Position = [2 0 76 34];
+            app.ZScoreNormalizeLabel_3.Text = {''; ' Normalize'};
+
+            % Create ZScoreNormalizeSwitch_FitSeries_3
+            app.ZScoreNormalizeSwitch_FitSeries_3 = uiswitch(app.NormalizationTab_3, 'slider');
+            app.ZScoreNormalizeSwitch_FitSeries_3.Orientation = 'vertical';
+            app.ZScoreNormalizeSwitch_FitSeries_3.FontWeight = 'bold';
+            app.ZScoreNormalizeSwitch_FitSeries_3.Position = [26 36 29 65];
+
+            % Create Areacm2EditFieldLabel
+            app.Areacm2EditFieldLabel = uilabel(app.NormalizationTab_3);
+            app.Areacm2EditFieldLabel.HorizontalAlignment = 'right';
+            app.Areacm2EditFieldLabel.Position = [204 31 70 22];
+            app.Areacm2EditFieldLabel.Text = 'Area (cm^2)';
+
+            % Create Areacm2EditField
+            app.Areacm2EditField = uieditfield(app.NormalizationTab_3, 'numeric');
+            app.Areacm2EditField.Position = [289 30 54 22];
+            app.Areacm2EditField.Value = 1;
+
+            % Create AreaNormalizeSwitchLabel
+            app.AreaNormalizeSwitchLabel = uilabel(app.NormalizationTab_3);
+            app.AreaNormalizeSwitchLabel.HorizontalAlignment = 'center';
+            app.AreaNormalizeSwitchLabel.FontSize = 14;
+            app.AreaNormalizeSwitchLabel.FontWeight = 'bold';
+            app.AreaNormalizeSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.AreaNormalizeSwitchLabel.Position = [223 99 107 22];
+            app.AreaNormalizeSwitchLabel.Text = 'Area Normalize';
+
+            % Create AreaNormalizeSwitch
+            app.AreaNormalizeSwitch = uiswitch(app.NormalizationTab_3, 'slider');
+            app.AreaNormalizeSwitch.FontWeight = 'bold';
+            app.AreaNormalizeSwitch.Position = [244 66 70 31];
+
+            % Create NormalizationSchemeListBox_6Label
+            app.NormalizationSchemeListBox_6Label = uilabel(app.NormalizationTab_3);
+            app.NormalizationSchemeListBox_6Label.HorizontalAlignment = 'right';
+            app.NormalizationSchemeListBox_6Label.Position = [67 13 126 22];
+            app.NormalizationSchemeListBox_6Label.Text = 'Normalization Scheme';
+
+            % Create NormalizationSchemeListBox_6
+            app.NormalizationSchemeListBox_6 = uilistbox(app.NormalizationTab_3);
+            app.NormalizationSchemeListBox_6.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
+            app.NormalizationSchemeListBox_6.Position = [78 35 100 56];
+            app.NormalizationSchemeListBox_6.Value = 'zscore';
+
+            % Create OutlierRemovalTab_2
+            app.OutlierRemovalTab_2 = uitab(app.SeriesPlotcctFitTabGroup);
+            app.OutlierRemovalTab_2.Title = 'Outlier Removal';
+
+            % Create OutlierRemovalSwitch_2Label
+            app.OutlierRemovalSwitch_2Label = uilabel(app.OutlierRemovalTab_2);
+            app.OutlierRemovalSwitch_2Label.HorizontalAlignment = 'center';
+            app.OutlierRemovalSwitch_2Label.FontSize = 14;
+            app.OutlierRemovalSwitch_2Label.FontWeight = 'bold';
+            app.OutlierRemovalSwitch_2Label.FontColor = [0.4667 0.6745 0.1882];
+            app.OutlierRemovalSwitch_2Label.Position = [22 28 112 22];
+            app.OutlierRemovalSwitch_2Label.Text = 'Outlier Removal';
+
+            % Create OutlierRemovalSwitch_2
+            app.OutlierRemovalSwitch_2 = uiswitch(app.OutlierRemovalTab_2, 'slider');
+            app.OutlierRemovalSwitch_2.FontWeight = 'bold';
+            app.OutlierRemovalSwitch_2.Position = [45 55 65 29];
+
+            % Create DetectionSchemeListBox_2Label
+            app.DetectionSchemeListBox_2Label = uilabel(app.OutlierRemovalTab_2);
+            app.DetectionSchemeListBox_2Label.HorizontalAlignment = 'right';
+            app.DetectionSchemeListBox_2Label.Position = [183 10 103 22];
+            app.DetectionSchemeListBox_2Label.Text = 'Detection Scheme';
+
+            % Create DetectionSchemeListBox_2
+            app.DetectionSchemeListBox_2 = uilistbox(app.OutlierRemovalTab_2);
+            app.DetectionSchemeListBox_2.Items = {'median', 'mean', 'quartiles', 'grubbs', 'gesd'};
+            app.DetectionSchemeListBox_2.Position = [171 36 131 56];
+            app.DetectionSchemeListBox_2.Value = 'median';
 
             % Create SaveResultsButton
             app.SaveResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
