@@ -980,6 +980,16 @@ classdef AnalyZe < matlab.apps.AppBase
 
             end
 
+            switch (app.OutlierRemovalSwitch.Value)
+                case 'On'
+                    scheme =  string(app.DetectionSchemeListBox.Value);
+                    
+                    Outliers = isoutlier(abs(CS_local.y_z),scheme);
+                    
+                    CS_local.y_z(Outliers) = missing; 
+                      
+            end
+
             switch (app.NormalizeSwitch.Value)
                 case 'On'
                     Scheme = string(app.NormalizationSchemeListBox_5.Value);
@@ -1000,15 +1010,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'Off'
             end
 
-            switch (app.OutlierRemovalSwitch.Value)
-                case 'On'
-                    scheme =  string(app.DetectionSchemeListBox.Value);
-                    
-                    Outliers = isoutlier(abs(CS_local.y_z),scheme);
-                    
-                    CS_local.y_z(Outliers) = missing; 
-                      
-            end
+            
 
             results = CS_local;
             
