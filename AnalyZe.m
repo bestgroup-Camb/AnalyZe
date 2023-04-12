@@ -766,14 +766,12 @@ classdef AnalyZe < matlab.apps.AppBase
             CS_Freq = CS_val;
 
             Dat_full = app.DatToCrossSection;
-            
+                
             CurrentSelection = true;
             CS_local = app.getCS(CurrentSelection,CS_Freq);
-
+                
             %% Store Results
                     Dat_i = Dat_full(1);
-                    
-                    
 
                       switch (app.OverlayTimeSeriesSwitch.Value)
                           case 'On'
@@ -811,7 +809,7 @@ classdef AnalyZe < matlab.apps.AppBase
                               switch (app.WaterFallSwitch.Value)
                                   case 'On'
                                         
-                                        app.CS_xline = xline(app.CSDataPlot,CS_Freq,'LineWidth',3);
+                                      app.CS_xline = xline(app.CSDataPlot,CS_Freq,'LineWidth',3);
 
                                       app.CrossSectionResultsCurrentCondition(end+1) = struct('Name', {Dat_i.Name},...
                                           'ExperimentNumber', {Dat_i.ExperimentNumber},...
@@ -864,17 +862,20 @@ classdef AnalyZe < matlab.apps.AppBase
                                         CrossSectionCollated = [];
 
                                         for (i=1:length(app.CrossSectionResultsCumulative))
+
                                             CS_i = app.CrossSectionResultsCumulative(i);
                                             
                                             Ind = CS_i.Indexes;
                                           
                                             CS_i.CSResults = app.getCS(false,CS_Freq,(Ind));
                                             app.CrossSectionResultsCumulative(i) = CS_i;
-
-
-                                            display(CrossSectionCollated)
-                                            display(CS_i.CSResults.y_z)
-                                            CrossSectionCollated = [CrossSectionCollated; CS_i.CSResults.y_z];
+                                            
+                                            try
+                                                CrossSectionCollated = [CrossSectionCollated; CS_i.CSResults.y_z];
+                                            catch
+                                                errordlg("Time Series Mismatch - You may need to engage to Resampling Utility")
+                                                return
+                                            end
 
                                             if isreal(CS_i.CSResults.y_z)
                                                 plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2)
@@ -965,6 +966,9 @@ classdef AnalyZe < matlab.apps.AppBase
                     Dat = Dat(Indexes{1});
                         Dat = Dat(Indexes{2});
                             Dat = Dat(Indexes{3});
+                                Dat = Dat(Indexes{4});
+                                    Dat = Dat(Indexes{5});
+                                        Dat = Dat(Indexes{6});
 
                 Dat_full = Dat;
                 
@@ -2433,71 +2437,109 @@ classdef AnalyZe < matlab.apps.AppBase
                 app.ChosenDataTable_2.Data = [app.ChosenDataTable_2.Data; newData];
             end
 
-           app.DatToCrossSection = Dat;
-           app.CrossSectionIndex = IndexRecord;
-            
-           if (length(Dat)>0)
-                Dat_1 = Dat(1);
-                Dat_1_EIS = Dat_1.Data;
-                Dat_1_Freq = Dat_1_EIS.FrequencyHz;
-                app.ChosenFreq = Dat_1_Freq;
+            %% Process and Plot
 
-                %app.CrossSectionFrequencySlider.Limits = [min(Dat_1_Freq), max(Dat_1_Freq)];
-%                 app.CrossSectionFrequencySlider.Limits = [0, 1];
-%                 app.CrossSectionFrequencySlider.MajorTicksMode = 'manual';
-%                 app.CrossSectionFrequencySlider.MajorTicks = linspace(0,1,5);
-%                 app.CrossSectionFrequencySlider.MajorTickLabelsMode = 'manual';
-%                 a = (log10(min(Dat_1_Freq)));
-%                 b = (log10(max(Dat_1_Freq)));
-%                 app.CrossSectionFrequencySlider.MajorTickLabels =  compose("%5.0e",logspace(a,b,5));
-                
-                app.CrossSectionFrequencySlider.Limits = [0, 1];
-                app.CrossSectionFrequencySlider.MajorTicksMode = 'manual';
-                app.CrossSectionFrequencySlider.MajorTicks = linspace(0,1,5);
-                app.CrossSectionFrequencySlider.MajorTickLabelsMode = 'manual';
-                min_f = min(Dat_1_Freq);
-                max_f = max(Dat_1_Freq);
-                a = (log10(min(Dat_1_Freq)));
-                b = (log10(max(Dat_1_Freq)));
-                lin_vals = linspace(0,1,5);
-                app.CrossSectionFrequencySlider.MajorTickLabels =  compose("%5.0e", ( (10.^(lin_vals.*log10(max_f)))+min_f-1 ) );
-
-                %app.CrossSectionFrequencySlider.Value = (max(Dat_1_Freq)+min(Dat_1_Freq))/2;
-                 app.CrossSectionFrequencySlider.Value = 0.5;
-                app.HzEditField.Value = app.getSliderValue(0.5);
-                val = app.getSliderValue(0.5);
-                CrossSection(app,val,true);
-
-
-                %%Plot
-
-                 cla(app.CSDataPlot,'reset')
-
-                for (i = 1:length(Dat))
-                    Dat_i = Dat(i);
-                    Dat_i_EIS = Dat_i.Data;
-                    Freq = Dat_i_EIS.FrequencyHz;
-                    Mod = Dat_i_EIS.Z2;
-                    Arg = Dat_i_EIS.Phase;
-
-                   
-                    
-                                    
-                    yyaxis(app.CSDataPlot, 'left')
-                    plot(app.CSDataPlot, Freq, Mod, '-r','LineWidth',1)
-                    set(app.CSDataPlot,'YScale','log')
-                    set(app.CSDataPlot,'XScale','log')
-                    xlabel(app.CSDataPlot,'Frequency (Hz)');
-                    ylabel(app.CSDataPlot,'Magnitude, |Z|, (\Omega )');
-                    hold(app.CSDataPlot, 'on')
-                        
-                         yyaxis(app.CSDataPlot, 'right')
-                           ylabel(app.CSDataPlot,'-Phase, \angle Z (deg)');
-                         plot(app.CSDataPlot, Freq, Arg, '-g','LineWidth',1)
-                         set(app.BodeResults,'YScale','linear')
-                    %hold(app.CSDataPlot, 'off')
+                Conditions = "";
+                Exp = "";
+                Well = "";
+                for (i=1:length(Dat))
+                    Conditions(i) = {Dat(i).Name};
+                    Exp(i) = {Dat(i).ExperimentNumber};
+                    Well(i) = {Dat(i).Well};
                 end
-           end
+                Conditions_u = unique(Conditions);
+                Exp_u = unique(Exp);
+                Well_u = unique(Well);
+
+
+           for c = 1:length(Conditions_u)
+               for e = 1:length(Exp_u)
+                   for w = 1:length(Well_u)
+
+                       Conditions = "";
+                        Exp = "";
+                        Well = "";
+                        for (i=1:length(Dat))
+                            Conditions(i) = {Dat(i).Name};
+                            Exp(i) = {Dat(i).ExperimentNumber};
+                            Well(i) = {Dat(i).Well};
+                        end
+
+                       Dat_n = Dat;
+                       Indexes = find(Conditions == Conditions_u(c));
+                       Dat_n = Dat_n(Indexes);
+                       Exp = Exp(Indexes);
+                       Well = Well(Indexes);
+                       IndexRecord{4} = Indexes;
+                       Indexes = find(Exp == Exp_u(e));
+                       Dat_n = Dat_n(Indexes);
+                       Well = Well(Indexes);
+                       IndexRecord{5} = Indexes;
+                       Indexes = find(Well == Well_u(w));
+                       Dat_n = Dat_n(Indexes);
+                       IndexRecord{6} = Indexes;
+
+                       app.DatToCrossSection = Dat_n;
+
+                       app.CrossSectionIndex = IndexRecord;
+                        
+                       if (length(Dat_n)>0)
+                            Dat_1 = Dat_n(1);
+                            Dat_1_EIS = Dat_1.Data;
+                            Dat_1_Freq = Dat_1_EIS.FrequencyHz;
+                            app.ChosenFreq = Dat_1_Freq;
+                            
+                            app.CrossSectionFrequencySlider.Limits = [0, 1];
+                            app.CrossSectionFrequencySlider.MajorTicksMode = 'manual';
+                            app.CrossSectionFrequencySlider.MajorTicks = linspace(0,1,5);
+                            app.CrossSectionFrequencySlider.MajorTickLabelsMode = 'manual';
+                            min_f = min(Dat_1_Freq);
+                            max_f = max(Dat_1_Freq);
+                            a = (log10(min(Dat_1_Freq)));
+                            b = (log10(max(Dat_1_Freq)));
+                            lin_vals = linspace(0,1,5);
+                            app.CrossSectionFrequencySlider.MajorTickLabels =  compose("%5.0e", ( (10.^(lin_vals.*log10(max_f)))+min_f-1 ) );
+            
+                            app.CrossSectionFrequencySlider.Value = 0.5;
+                            app.HzEditField.Value = app.getSliderValue(0.5);
+                            val = app.getSliderValue(0.5);
+                     
+                            CrossSection(app,val,true);
+            
+            
+                            %%Plot
+            
+                             cla(app.CSDataPlot,'reset')
+            
+                            for (i = 1:length(Dat_n))
+                                Dat_i = Dat_n(i);
+                                Dat_i_EIS = Dat_i.Data;
+                                Freq = Dat_i_EIS.FrequencyHz;
+                                Mod = Dat_i_EIS.Z2;
+                                Arg = Dat_i_EIS.Phase;
+            
+                               
+                                
+                                                
+                                yyaxis(app.CSDataPlot, 'left')
+                                plot(app.CSDataPlot, Freq, Mod, '-r','LineWidth',1)
+                                set(app.CSDataPlot,'YScale','log')
+                                set(app.CSDataPlot,'XScale','log')
+                                xlabel(app.CSDataPlot,'Frequency (Hz)');
+                                ylabel(app.CSDataPlot,'Magnitude, |Z|, (\Omega )');
+                                hold(app.CSDataPlot, 'on')
+                                    
+                                     yyaxis(app.CSDataPlot, 'right')
+                                       ylabel(app.CSDataPlot,'-Phase, \angle Z (deg)');
+                                     plot(app.CSDataPlot, Freq, Arg, '-g','LineWidth',1)
+                                     set(app.CSDataPlot,'YScale','linear')
+                                %hold(app.CSDataPlot, 'off')
+                            end
+                       end
+
+                   end %for w
+               end %for e
+           end %for c
 
            
         end
@@ -2706,7 +2748,6 @@ classdef AnalyZe < matlab.apps.AppBase
                 
                 
                 if length(ind(:,1)) >= 2
-                    display("HERE")
                     
                     T_c =  app.ResultsTable.Data;
                 
@@ -2802,6 +2843,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
                 end
 
+               app.CumulativeCCTfitSeriesPlot = app.CumulativeCCTfitSeriesPlotRaw;
+               app.CumulativeCCTfitSeriesDomainPlot = app.CumulativeCCTfitSeriesDomain;
+
                switch (app.ResampleSwitch_2.Value)
                     case 'On'
                         fs = app.ResampleFrequencyEditField_2.Value;
@@ -2814,24 +2858,28 @@ classdef AnalyZe < matlab.apps.AppBase
                         x_resampled = [];
                     
                           for i =1:length(temp_y)
-                                [y_resampled{i}, x_resampled{i}] = resample(temp_y{i},temp_x{i},fs,p,q);
+                                [y_resampled_temp, x_resampled_temp] = resample(temp_y{i},temp_x{i},fs,p,q);
+                                y_resampled = [y_resampled {y_resampled_temp}];
+                                x_resampled = [x_resampled {x_resampled_temp}];
                           end
 
                        app.CumulativeCCTfitSeriesPlot = y_resampled;
                        app.CumulativeCCTfitSeriesDomainPlot = x_resampled;
     
                end
-
-               display(app.CumulativeCCTfitSeriesPlot)
-               display(app.CumulativeCCTfitSeriesDomainPlot)
-                
+               
                try
-                    app.CumulativeCCTfitSeriesPlot = cell2mat(app.CumulativeCCTfitSeriesPlotRaw');
-                    app.CumulativeCCTfitSeriesDomainPlot = cell2mat(app.CumulativeCCTfitSeriesDomain');
+                    app.CumulativeCCTfitSeriesPlot = cell2mat(app.CumulativeCCTfitSeriesPlot);
+                    app.CumulativeCCTfitSeriesDomainPlot = cell2mat(app.CumulativeCCTfitSeriesDomainPlot);
                catch
+                   if length(ind(:,1)) >= 2
+                        app.CumulativeCCTfitSeriesPlotRaw = app.CumulativeCCTfitSeriesPlotRaw(1:end-1);
+                        app.CumulativeCCTfitSeriesDomain = app.CumulativeCCTfitSeriesDomain(1:end-1);
+                   end
                    errordlg("Time Series Mismatch - You may need to engage the resampling utility.")
                    return
                end
+
                 
                 if length(app.CumulativeCCTfitSeriesPlot(:,1)) >= 2
 
@@ -5287,6 +5335,16 @@ classdef AnalyZe < matlab.apps.AppBase
 
                 msgbox("File Saved as " + "\AnalyZeSysIDResults_<PlotType>_" + string(UserFileName))
         end
+
+        % Value changed function: OverlayTimeSeriesSwitch
+        function OverlayTimeSeriesSwitchValueChanged(app, event)
+            value = app.OverlayTimeSeriesSwitch.Value;
+            switch value
+                case 'On'
+                    app.CrossSectionResultsCumulative = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {},'Indexes',{});% Description
+                    app.CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});
+            end
+        end
     end
 
     % Component initialization
@@ -6448,6 +6506,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create OverlayTimeSeriesSwitch
             app.OverlayTimeSeriesSwitch = uiswitch(app.Panel_2, 'toggle');
             app.OverlayTimeSeriesSwitch.Orientation = 'horizontal';
+            app.OverlayTimeSeriesSwitch.ValueChangedFcn = createCallbackFcn(app, @OverlayTimeSeriesSwitchValueChanged, true);
             app.OverlayTimeSeriesSwitch.FontWeight = 'bold';
             app.OverlayTimeSeriesSwitch.Position = [31 127 77 34];
 
