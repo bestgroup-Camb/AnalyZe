@@ -135,6 +135,7 @@ classdef AnalyZe < matlab.apps.AppBase
         FitSeriesPlot                   matlab.ui.control.UIAxes
         RefreshDataOptionsButton        matlab.ui.control.Button
         FittingParams                   matlab.ui.container.Panel
+        AbortButton                     matlab.ui.control.StateButton
         TabGroup7                       matlab.ui.container.TabGroup
         SeriesResistanceEstimateTab     matlab.ui.container.Tab
         AlternateRestimationListBox     matlab.ui.control.ListBox
@@ -213,14 +214,14 @@ classdef AnalyZe < matlab.apps.AppBase
         OutlierRemovalSwitch            matlab.ui.control.Switch
         OutlierRemovalSwitchLabel       matlab.ui.control.Label
         ResampleTab                     matlab.ui.container.Tab
-        ResampleFactorLabel             matlab.ui.control.Label
+        IntermediateResampleFactorLabel  matlab.ui.control.Label
         Label                           matlab.ui.control.Label
         qEditField                      matlab.ui.control.NumericEditField
         qEditFieldLabel                 matlab.ui.control.Label
         pEditField                      matlab.ui.control.NumericEditField
         pEditFieldLabel                 matlab.ui.control.Label
-        ResampleFrequencyEditField      matlab.ui.control.NumericEditField
-        ResampleFrequencyEditFieldLabel  matlab.ui.control.Label
+        FinalResampleFrequencyEditField  matlab.ui.control.NumericEditField
+        FinalResampleFrequencyEditFieldLabel  matlab.ui.control.Label
         ResampleSwitch                  matlab.ui.control.Switch
         ResampleSwitchLabel             matlab.ui.control.Label
         Panel_2                         matlab.ui.container.Panel
@@ -876,13 +877,15 @@ classdef AnalyZe < matlab.apps.AppBase
                                                 errordlg("Time Series Mismatch - You may need to engage to Resampling Utility")
                                                 return
                                             end
-
+                                            
+                                            Disp_Name_i = CS_i.Name + ", " + CS_i.ExperimentNumber + ", " + CS_i.Well;
                                             if isreal(CS_i.CSResults.y_z)
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
                                             else
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
                                             end
                                             hold(app.CSResultsPlot, 'on');
+                                            legend(app.CSResultsPlot)
                                         end
                                         
                                         switch (app.PlotMeanSwitch.Value)
@@ -899,7 +902,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                                                                                                        "-s","MarkerSize",10,...
                                                                                                                        "MarkerEdgeColor","blue",...
                                                                                                                        "MarkerFaceColor",[0.65 0.85 0.90],...
-                                                                                                                       'LineWidth',3)
+                                                                                                                       'LineWidth',3,...
+                                                                                                                       'DisplayName','\mu ({\pm}1\sigma)')
+                                                legend(app.CSResultsPlot)
                                         end
 
                                     else
@@ -1039,7 +1044,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
              switch (app.ResampleSwitch.Value)
                 case 'On'
-                    fs = app.ResampleFrequencyEditField.Value;
+                    fs = app.FinalResampleFrequencyEditField.Value;
                     p = app.pEditField.Value;
                     q = app.qEditField.Value;
 
@@ -1809,7 +1814,9 @@ classdef AnalyZe < matlab.apps.AppBase
         % Button pushed function: GoButton
         function GoButtonPushed(app, event)
     
-           %% Assemble Parameters
+            app.AbortButton.Value = false;
+
+            %% Assemble Parameters
          
 
             Dat_full = app.DatToFit;
@@ -1927,6 +1934,10 @@ classdef AnalyZe < matlab.apps.AppBase
 
             Fits_local = [];
             for (i = 1:NumDays)
+
+                if app.AbortButton.Value
+                    break
+                end
 
                 app.ProgressGuage.Value = i;
 
@@ -2366,8 +2377,8 @@ classdef AnalyZe < matlab.apps.AppBase
                flag = app.TutorialMode;
                if flag
                     
-                   answer = questdlg('Select the time series to examine. Use the slider or the edit box to interactively change the frequency of cross section. Enable Overlay Time Series to iteratively overlay different series at the same frequency. Only new data is added to the multi-series mean.' ,...
-                                        'Plot a Fitting Result',...
+                   answer = questdlg('Select the time series to examine. Use the slider or the edit box to interactively change the frequency of cross section. Enable Overlay Time Series to iteratively overlay different series at the same frequency. Only new data is added to the multi-series mean. When using the Select All feature, all data series will be added to the mean calculation, when the Overly Series switch is On. If the Overly switch is already engaged, using the Select All feature may duplicate data which already contributes to the mean (the mean calculation DOES NOT check for uniqueness of the data entries). Toggle the Overlay Switch to reset the mean calculation.' ,...
+                                        'Plot a Time Series of single frequency impedance magnitudes',...
                                        'Continue','Cancel','Continue');
                end
                    switch answer
@@ -2456,9 +2467,9 @@ classdef AnalyZe < matlab.apps.AppBase
                for e = 1:length(Exp_u)
                    for w = 1:length(Well_u)
 
-                       Conditions = "";
-                        Exp = "";
-                        Well = "";
+                       Conditions = "None";
+                        Exp = "None";
+                        Well = "None";
                         for (i=1:length(Dat))
                             Conditions(i) = {Dat(i).Name};
                             Exp(i) = {Dat(i).ExperimentNumber};
@@ -2478,12 +2489,14 @@ classdef AnalyZe < matlab.apps.AppBase
                        Indexes = find(Well == Well_u(w));
                        Dat_n = Dat_n(Indexes);
                        IndexRecord{6} = Indexes;
-
-                       app.DatToCrossSection = Dat_n;
-
-                       app.CrossSectionIndex = IndexRecord;
+                        
+                       
+                       
                         
                        if (length(Dat_n)>0)
+                            app.DatToCrossSection = Dat_n;
+                            app.CrossSectionIndex = IndexRecord;
+
                             Dat_1 = Dat_n(1);
                             Dat_1_EIS = Dat_1.Data;
                             Dat_1_Freq = Dat_1_EIS.FrequencyHz;
@@ -5341,6 +5354,14 @@ classdef AnalyZe < matlab.apps.AppBase
             value = app.OverlayTimeSeriesSwitch.Value;
             switch value
                 case 'On'
+                    msgbox("Series Mean Calculation Reset - Toggle the overlay switch to reset data contributing to mean.")
+                    cla(app.CSDataPlot,'reset')
+                    cla(app.CSResultsPlot,'reset')
+                    app.CrossSectionResultsCumulative = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {},'Indexes',{});% Description
+                    app.CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});
+                case 'Off'
+                    cla(app.CSDataPlot,'reset')
+                    cla(app.CSResultsPlot,'reset')
                     app.CrossSectionResultsCumulative = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {},'Indexes',{});% Description
                     app.CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});
             end
@@ -5715,7 +5736,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.GoButton.FontSize = 24;
             app.GoButton.FontWeight = 'bold';
             app.GoButton.FontColor = [0.4667 0.6745 0.1882];
-            app.GoButton.Position = [169 7 123 38];
+            app.GoButton.Position = [142 6 123 38];
             app.GoButton.Text = 'Go!';
 
             % Create RunningLampLabel
@@ -5864,7 +5885,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ProgressGuage
             app.ProgressGuage = uigauge(app.FittingParams, 'semicircular');
             app.ProgressGuage.FontSize = 9;
-            app.ProgressGuage.Position = [42 8 70 38];
+            app.ProgressGuage.Position = [7 7 70 38];
 
             % Create TabGroup7
             app.TabGroup7 = uitabgroup(app.FittingParams);
@@ -5946,6 +5967,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FitBlankOnlyExcludeBarrierSwitch.ValueChangedFcn = createCallbackFcn(app, @FitBlankOnlyExcludeBarrierSwitchValueChanged, true);
             app.FitBlankOnlyExcludeBarrierSwitch.Tooltip = {'Fit the circuit excluding the barrier R//C'};
             app.FitBlankOnlyExcludeBarrierSwitch.Position = [201 31 45 20];
+
+            % Create AbortButton
+            app.AbortButton = uibutton(app.FittingParams, 'state');
+            app.AbortButton.Text = 'Abort';
+            app.AbortButton.FontSize = 18;
+            app.AbortButton.FontWeight = 'bold';
+            app.AbortButton.FontColor = [0.6353 0.0784 0.1843];
+            app.AbortButton.Position = [277 7 63 30];
 
             % Create RefreshDataOptionsButton
             app.RefreshDataOptionsButton = uibutton(app.AnalysisCCTFITTab, 'push');
@@ -6150,12 +6179,16 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create HoldPlotsSwitch_2Label_2
             app.HoldPlotsSwitch_2Label_2 = uilabel(app.SeriesPlotTab);
             app.HoldPlotsSwitch_2Label_2.HorizontalAlignment = 'center';
-            app.HoldPlotsSwitch_2Label_2.Position = [54 17 59 22];
+            app.HoldPlotsSwitch_2Label_2.FontSize = 18;
+            app.HoldPlotsSwitch_2Label_2.FontWeight = 'bold';
+            app.HoldPlotsSwitch_2Label_2.FontColor = [0.4667 0.6745 0.1882];
+            app.HoldPlotsSwitch_2Label_2.Position = [37 16 94 23];
             app.HoldPlotsSwitch_2Label_2.Text = 'Hold Plots';
 
             % Create HoldPlotsSwitch_FitSeries
             app.HoldPlotsSwitch_FitSeries = uiswitch(app.SeriesPlotTab, 'toggle');
             app.HoldPlotsSwitch_FitSeries.Orientation = 'horizontal';
+            app.HoldPlotsSwitch_FitSeries.FontSize = 18;
             app.HoldPlotsSwitch_FitSeries.Position = [35 43 97 43];
 
             % Create FlipAxesSwitchLabel
@@ -6171,12 +6204,14 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create PlotMultiSeriesMeanSwitchLabel
             app.PlotMultiSeriesMeanSwitchLabel = uilabel(app.SeriesPlotTab);
             app.PlotMultiSeriesMeanSwitchLabel.HorizontalAlignment = 'center';
-            app.PlotMultiSeriesMeanSwitchLabel.Position = [353 16 126 22];
+            app.PlotMultiSeriesMeanSwitchLabel.FontSize = 18;
+            app.PlotMultiSeriesMeanSwitchLabel.Position = [286 15 186 23];
             app.PlotMultiSeriesMeanSwitchLabel.Text = 'Plot Multi-Series Mean';
 
             % Create PlotMultiSeriesMeanSwitch
             app.PlotMultiSeriesMeanSwitch = uiswitch(app.SeriesPlotTab, 'slider');
-            app.PlotMultiSeriesMeanSwitch.Position = [393 53 45 20];
+            app.PlotMultiSeriesMeanSwitch.FontSize = 18;
+            app.PlotMultiSeriesMeanSwitch.Position = [346 53 68 30];
 
             % Create SeriesPlotcctFitTabGroup
             app.SeriesPlotcctFitTabGroup = uitabgroup(app.SeriesPlotTab);
@@ -6492,7 +6527,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create Panel_2
             app.Panel_2 = uipanel(app.CrossSectionParametersPanel);
-            app.Panel_2.Position = [327 133 138 165];
+            app.Panel_2.Position = [327 107 138 196];
 
             % Create OverlayTimeSeriesSwitchLabel
             app.OverlayTimeSeriesSwitchLabel = uilabel(app.Panel_2);
@@ -6500,7 +6535,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OverlayTimeSeriesSwitchLabel.FontSize = 14;
             app.OverlayTimeSeriesSwitchLabel.FontWeight = 'bold';
             app.OverlayTimeSeriesSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.OverlayTimeSeriesSwitchLabel.Position = [0 101 139 22];
+            app.OverlayTimeSeriesSwitchLabel.Position = [-1 123 139 22];
             app.OverlayTimeSeriesSwitchLabel.Text = 'Overlay Time Series';
 
             % Create OverlayTimeSeriesSwitch
@@ -6508,27 +6543,27 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OverlayTimeSeriesSwitch.Orientation = 'horizontal';
             app.OverlayTimeSeriesSwitch.ValueChangedFcn = createCallbackFcn(app, @OverlayTimeSeriesSwitchValueChanged, true);
             app.OverlayTimeSeriesSwitch.FontWeight = 'bold';
-            app.OverlayTimeSeriesSwitch.Position = [31 127 77 34];
+            app.OverlayTimeSeriesSwitch.Position = [33 149 72 32];
 
             % Create WaterFallSwitchLabel
             app.WaterFallSwitchLabel = uilabel(app.Panel_2);
             app.WaterFallSwitchLabel.HorizontalAlignment = 'center';
-            app.WaterFallSwitchLabel.Position = [38 -1 56 22];
+            app.WaterFallSwitchLabel.Position = [38 9 56 22];
             app.WaterFallSwitchLabel.Text = 'WaterFall';
 
             % Create WaterFallSwitch
             app.WaterFallSwitch = uiswitch(app.Panel_2, 'slider');
-            app.WaterFallSwitch.Position = [44 23 45 20];
+            app.WaterFallSwitch.Position = [44 32 45 20];
 
             % Create PlotMeanSwitchLabel
             app.PlotMeanSwitchLabel = uilabel(app.Panel_2);
             app.PlotMeanSwitchLabel.HorizontalAlignment = 'center';
-            app.PlotMeanSwitchLabel.Position = [37 50 59 22];
+            app.PlotMeanSwitchLabel.Position = [37 59 59 22];
             app.PlotMeanSwitchLabel.Text = 'Plot Mean';
 
             % Create PlotMeanSwitch
             app.PlotMeanSwitch = uiswitch(app.Panel_2, 'slider');
-            app.PlotMeanSwitch.Position = [44 74 45 20];
+            app.PlotMeanSwitch.Position = [44 83 45 20];
 
             % Create CrossSectionOptions
             app.CrossSectionOptions = uitabgroup(app.CrossSectionParametersPanel);
@@ -6624,20 +6659,20 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResampleSwitch.Orientation = 'vertical';
             app.ResampleSwitch.Position = [28 52 20 45];
 
-            % Create ResampleFrequencyEditFieldLabel
-            app.ResampleFrequencyEditFieldLabel = uilabel(app.ResampleTab);
-            app.ResampleFrequencyEditFieldLabel.HorizontalAlignment = 'right';
-            app.ResampleFrequencyEditFieldLabel.FontWeight = 'bold';
-            app.ResampleFrequencyEditFieldLabel.Position = [94 89 126 22];
-            app.ResampleFrequencyEditFieldLabel.Text = 'Resample Frequency';
+            % Create FinalResampleFrequencyEditFieldLabel
+            app.FinalResampleFrequencyEditFieldLabel = uilabel(app.ResampleTab);
+            app.FinalResampleFrequencyEditFieldLabel.HorizontalAlignment = 'right';
+            app.FinalResampleFrequencyEditFieldLabel.FontWeight = 'bold';
+            app.FinalResampleFrequencyEditFieldLabel.Position = [63 89 157 22];
+            app.FinalResampleFrequencyEditFieldLabel.Text = 'Final Resample Frequency';
 
-            % Create ResampleFrequencyEditField
-            app.ResampleFrequencyEditField = uieditfield(app.ResampleTab, 'numeric');
-            app.ResampleFrequencyEditField.Limits = [0 Inf];
-            app.ResampleFrequencyEditField.FontSize = 14;
-            app.ResampleFrequencyEditField.FontWeight = 'bold';
-            app.ResampleFrequencyEditField.Position = [231 89 38 22];
-            app.ResampleFrequencyEditField.Value = 1;
+            % Create FinalResampleFrequencyEditField
+            app.FinalResampleFrequencyEditField = uieditfield(app.ResampleTab, 'numeric');
+            app.FinalResampleFrequencyEditField.Limits = [0 Inf];
+            app.FinalResampleFrequencyEditField.FontSize = 14;
+            app.FinalResampleFrequencyEditField.FontWeight = 'bold';
+            app.FinalResampleFrequencyEditField.Position = [231 89 38 22];
+            app.FinalResampleFrequencyEditField.Value = 1;
 
             % Create pEditFieldLabel
             app.pEditFieldLabel = uilabel(app.ResampleTab);
@@ -6672,11 +6707,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Label.Position = [229 39 16 47];
             app.Label.Text = '/';
 
-            % Create ResampleFactorLabel
-            app.ResampleFactorLabel = uilabel(app.ResampleTab);
-            app.ResampleFactorLabel.FontWeight = 'bold';
-            app.ResampleFactorLabel.Position = [70 51 102 22];
-            app.ResampleFactorLabel.Text = 'Resample Factor';
+            % Create IntermediateResampleFactorLabel
+            app.IntermediateResampleFactorLabel = uilabel(app.ResampleTab);
+            app.IntermediateResampleFactorLabel.FontWeight = 'bold';
+            app.IntermediateResampleFactorLabel.Position = [69 46 102 30];
+            app.IntermediateResampleFactorLabel.Text = {'Intermediate'; 'Resample Factor'};
 
             % Create TabGroup4
             app.TabGroup4 = uitabgroup(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
