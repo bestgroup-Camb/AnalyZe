@@ -5692,6 +5692,26 @@ classdef AnalyZe < matlab.apps.AppBase
             selectedTab = app.CCTFitOptionsTabGroup.SelectedTab;
             app.UpdateRecursiveFitButton();
         end
+
+        % Value changed function: RecursiveTimeRegularizationSwitch
+        function RecursiveTimeRegularizationSwitchValueChanged(app, event)
+            value = app.RecursiveTimeRegularizationSwitch.Value;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                flag = app.TutorialMode;
+                   
+                   if flag
+                        msgbox("Regularisation adds a priori information into the regression and should be used with care." + newline +...
+                            "The regularisation term in the objective function is of the form Lambda*||D(Xb|_i)||n" + newline +...
+                            "     - Lambda is the tuning hyperparameter and it is increased linearly from zero to the user defined value with each iteration." + newline +...
+                            "     - Xb is the set of barrier parameters (Rb or Cb) Xb={xb(t)|t=1:t_end}"+newline+...
+                            "     - Xb_i is the set of barrier parmeters where the ith parameter is a the free parameter in the current regression and the ~ith parameters are those values from the preceeding iteration."+newline+...
+                            "     - D() is either unity or the d/dt operator"+newline+...
+                            "     - ||()||n is the ln-norm: n==1 for sparsity (Lasso), n==2 for smoothness (Ridge)"+newline+...
+                            " The algorithm iterates m times over the entire time set; the set Xb is updated element-wise as each element is re-fit.",'Heads-Up - Regularisation')
+                   end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        end
     end
 
     % Component initialization
@@ -6311,6 +6331,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create RecursiveTimeRegularizationSwitch
             app.RecursiveTimeRegularizationSwitch = uiswitch(app.RecursiveTimeRegularizationTab, 'slider');
             app.RecursiveTimeRegularizationSwitch.Orientation = 'vertical';
+            app.RecursiveTimeRegularizationSwitch.ValueChangedFcn = createCallbackFcn(app, @RecursiveTimeRegularizationSwitchValueChanged, true);
             app.RecursiveTimeRegularizationSwitch.Tooltip = {'Fit the data with the circuit sans barrier first, then refit the data by fitting only the barrier parameters and keeping the pre-fit non-barrier parameters constant.'};
             app.RecursiveTimeRegularizationSwitch.Position = [10 25 21 48];
 
