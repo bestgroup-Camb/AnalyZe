@@ -71,10 +71,14 @@ classdef AnalyZe < matlab.apps.AppBase
         SaveResultsButton               matlab.ui.control.Button
         TabGroup2                       matlab.ui.container.TabGroup
         PlotsTab                        matlab.ui.container.Tab
+        AuxCCTFitResults                matlab.ui.container.TabGroup
+        Nyquist                         matlab.ui.container.Tab
+        NyqResults                      matlab.ui.control.UIAxes
+        RecursiveTimeReg                matlab.ui.container.Tab
+        RecursiveTimeRegPlot            matlab.ui.control.UIAxes
         PlotResultsSelectionButton      matlab.ui.control.Button
         HoldPlotsSwitch                 matlab.ui.control.ToggleSwitch
         HoldPlotsSwitchLabel            matlab.ui.control.Label
-        NyqResults                      matlab.ui.control.UIAxes
         BodeResults                     matlab.ui.control.UIAxes
         ResultsTab                      matlab.ui.container.Tab
         ResultsTable                    matlab.ui.control.Table
@@ -136,7 +140,7 @@ classdef AnalyZe < matlab.apps.AppBase
         RefreshDataOptionsButton        matlab.ui.control.Button
         FittingParams                   matlab.ui.container.Panel
         AbortButton                     matlab.ui.control.StateButton
-        TabGroup7                       matlab.ui.container.TabGroup
+        CCTFitOptionsTabGroup           matlab.ui.container.TabGroup
         SeriesResistanceEstimateTab     matlab.ui.container.Tab
         AlternateRestimationListBox     matlab.ui.control.ListBox
         AlternateRestimationListBoxLabel  matlab.ui.control.Label
@@ -149,6 +153,15 @@ classdef AnalyZe < matlab.apps.AppBase
         FitSequentiallySwitchLabel      matlab.ui.control.Label
         BlankFitMultiStartsEditField    matlab.ui.control.NumericEditField
         BlankFitMultiStartsEditFieldLabel  matlab.ui.control.Label
+        RecursiveTimeRegularizationTab  matlab.ui.container.Tab
+        RegSchemeListBox                matlab.ui.control.ListBox
+        RegSchemeListBoxLabel           matlab.ui.control.Label
+        NumIterationsSpinner            matlab.ui.control.Spinner
+        NumIterationsSpinnerLabel       matlab.ui.control.Label
+        LambdaEditField                 matlab.ui.control.NumericEditField
+        LambdaEditFieldLabel            matlab.ui.control.Label
+        RecursiveTimeRegularizationSwitch  matlab.ui.control.Switch
+        RecursiveTimeRegularizationLabel  matlab.ui.control.Label
         ProgressGuage                   matlab.ui.control.SemicircularGauge
         CircuitToFit                    matlab.ui.container.TabGroup
         SelectACircuitTab               matlab.ui.container.Tab
@@ -365,21 +378,27 @@ classdef AnalyZe < matlab.apps.AppBase
         CumulativeSysIDSeriesDomain; % Description
         CumulativeSysIDSeriesPlot; % Description
         TutorialMode = true; % Description
+        BetaRecursiveSeries = struct('Rb',[],'Cb',[]); % Description
     end
     
     methods (Access = private)
         
         
-        function out = MultistartFit(app, y_z,freq,multi_starts,cct_type,sequential_Fit,blank_fit, varargin)
+        function out = MultistartFit(app, y_z,freq,multi_starts,cct_type,sequential_Fit,blank_fit, recursive_regression, varargin)
             %UNTITLED12 Summary of this function goes here
             %   Detailed explanation goes here
             % Variable Arguments:
-            %                   y_z_blank
-            %                   multi_starts_blank
-            %                   UpperBounds
-            %                   LowerBounds
-            %                   Beta Zero
-                        
+            %        1           y_z_blank
+            %        2           multi_starts_blank
+            %        3           UpperBounds
+            %        4           LowerBounds
+            %        5           Beta Zero
+            %        6           Recursive settings - R.Lambda,
+            %                                         R.NumIterations
+            %                                         R.CurrentIteration
+            %                                         R.CurrentTimePoint
+            %                                         R.TimeVector
+                    
                     %% Sequential Fitting
                     
                         Blank_Fits = [];
@@ -397,7 +416,8 @@ classdef AnalyZe < matlab.apps.AppBase
                                                         multi_starts_blank,...
                                                         cct_type,...
                                                         false,... %sequetial fit
-                                                        true,...
+                                                        true,... %blank fit
+                                                        false,... %recursive regression fit
                                                         [],...
                                                         [],...
                                                         varargin{3},...
@@ -411,7 +431,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                                         multi_starts_blank,...
                                                         cct_type,...
                                                         false,... %sequetial fit
-                                                        true); %blank fit
+                                                        true,... %blank fit
+                                                        false... %recursive regression
+                                                        ); 
                             end
                            
             
@@ -734,8 +756,56 @@ classdef AnalyZe < matlab.apps.AppBase
                         ms.Display = 'iter';
                         ms.PlotFcn = @gsplotbestf;
                        % ms.StartPointsToRun = 'bounds';
-            
-                        [bet,fval] = run(ms,problem,multi_starts)
+                        
+                        if recursive_regression
+
+                                        %        6           Recursive settings - R.Lambda,
+                                        %                                         R.NumIterations
+                                        %                                         R.CurrentIteration
+                                        %                                         R.CurrentTimePoint
+                                        %                                         R.TimeVector
+
+                            Beta_series = app.BetaRecursiveSeries;
+                            Beta_Rb = Beta_series.Rb;
+                            Beta_Cb = Beta_series.Cb;
+
+                            RecursiveSettings = varargin{6};
+
+                            Recursive_Lambda_progression = linspace(0,RecursiveSettings.Lambda,RecursiveSettings.NumIterations);
+                            Beta_swap_i = @(Iter,b,Beta,index) [Beta(1:Iter-1), b(index), Beta(Iter+1:end)];  
+                            
+                            switch app.RegSchemeListBox.Value
+                                case 'Smoothness'
+                                    CCT_Regularization = @(Iter,b) Recursive_Lambda_progression(Iter).*( norm(Beta_swap_i(Iter,b,Beta_Rb(:).',1) ,2) + norm(Beta_swap_i(Iter,b,Beta_Cb(:).',2) ,2) );
+                                case 'Sparsity'
+                                    CCT_Regularization = @(Iter,b) Recursive_Lambda_progression(Iter).*( norm(Beta_swap_i(Iter,b,Beta_Rb(:).',1) ,1) + norm(Beta_swap_i(Iter,b,Beta_Cb(:).',2) ,1));
+                                case 'd/dt Smoothness'
+                                    CCT_Regularization = @(Iter,b) Recursive_Lambda_progression(Iter).*( norm( diff(Beta_swap_i( Iter,b, Beta_Rb(:).' ,1)) ,2) + norm( diff(Beta_swap_i( Iter,b, Beta_Cb(:).' ,1)) ,2) );
+                                case 'd/dt Sparsity'
+                                    CCT_Regularization = @(Iter,b) Recursive_Lambda_progression(Iter).*( norm( diff(Beta_swap_i( Iter,b, Beta_Rb(:).' ,1)) ,1) + norm( diff(Beta_swap_i( Iter,b, Beta_Cb(:).' ,1)) ,1) );
+                            end
+
+                            CCT_Fn_Regularized = @(b) CCT_Fn_Lik(b) + CCT_Regularization(RecursiveSettings.CurrentIteration,b);
+                            problem = createOptimProblem('fmincon','objective',...
+                                    CCT_Fn_Regularized,'x0',beta0,'lb',lb,'ub',ub);
+
+                        end
+
+
+                    %%%%%%%%%%%%%%%%%%%%%
+                            [bet,fval] = run(ms,problem,multi_starts)
+                    %%%%%%%%%%%%%%%%%%%%%
+                        
+                    if recursive_regression
+                        Beta_Rb(RecursiveSettings.CurrentTimePoint) = bet(1);
+                        Beta_Cb(RecursiveSettings.CurrentTimePoint) = bet(2);
+                        Beta_series.Rb = Beta_Rb;
+                        Beta_series.Cb = Beta_Cb;
+                        app.BetaRecursiveSeries = Beta_series;
+
+                    end
+
+
             
             %% OUTPUT
             
@@ -1412,6 +1482,68 @@ classdef AnalyZe < matlab.apps.AppBase
 %             end
 %             z=1./(temp_sum);
 %         end
+        
+        function results = UpdateRecursiveFitButton(app)
+
+            selectedTab = app.CCTFitOptionsTabGroup.SelectedTab;
+            switch selectedTab
+                case app.RecursiveTimeRegularizationTab
+                    BuildACircuitBarrier = false;
+                        switch app.IncludeBarrierSwitch.Value
+                            case 'On'
+                                BuildACircuitBarrier = true;
+                            case 'Off'
+                                BuildACircuitBarrier = false;
+                        end
+                    WriteACircuitBarrier = false;
+                        switch app.IncludeBarrierSwitch_2.Value
+                                case 'On'
+                                    WriteACircuitBarrier = true;
+                                case 'Off'
+                                    WriteACircuitBarrier = false;
+                        end
+                    FitBlankOnly = false;
+                        switch app.FitBlankOnlyExcludeBarrierSwitch.Value
+                                case 'On'
+                                    FitBlankOnly = true;
+                                case 'Off'
+                                    FitBlankOnly = false;
+                        end
+
+                    switch app.CircuitToFit.SelectedTab
+                        case app.SelectACircuitTab
+                            if FitBlankOnly
+                                app.RecursiveTimeRegularizationSwitch.Value = 'Off';
+                                app.RecursiveTimeRegularizationSwitch.Enable = false;
+                            else
+                                app.RecursiveTimeRegularizationSwitch.Enable = true;
+                            end
+                        case app.BuildACircuitTab
+                            if ~BuildACircuitBarrier
+                                app.RecursiveTimeRegularizationSwitch.Value = 'Off';
+                                app.RecursiveTimeRegularizationSwitch.Enable = false;
+                            else
+                                app.RecursiveTimeRegularizationSwitch.Enable = true;
+                            end
+                        case app.BuildACircuitMaxValuesTab
+                            if ~BuildACircuitBarrier
+                                app.RecursiveTimeRegularizationSwitch.Value = 'Off';
+                                app.RecursiveTimeRegularizationSwitch.Enable = false;
+                            else
+                                app.RecursiveTimeRegularizationSwitch.Enable = true;
+                            end
+                        case app.WriteACircuitTab
+                            if ~WriteACircuitBarrier
+                                app.RecursiveTimeRegularizationSwitch.Value = 'Off';
+                                app.RecursiveTimeRegularizationSwitch.Enable = false;
+                            else
+                                app.RecursiveTimeRegularizationSwitch.Enable = true;
+                            end
+                        
+                    end
+            end
+            
+        end
     end
     
     methods (Access = public)
@@ -1925,6 +2057,55 @@ classdef AnalyZe < matlab.apps.AppBase
                 fit_sequentially = false;
             
             end
+
+            %% Recursive Regularization Fit
+                                        %        6           Recursive settings - R.Lambda,
+                                        %                                         R.NumIterations
+                                        %                                         R.CurrentIteration
+                                        %                                         R.CurrentTimePoint
+                                        %                                         R.TimeVector
+
+            switch app.RecursiveTimeRegularizationSwitch.Value
+                case 'On'
+                    fit_recursive_regularization = true;
+                    Recursive_Settings = [];
+                    Recursive_Settings.Lambda = app.LambdaEditField.Value;
+                    Recursive_Settings.NumIterations = app.NumIterationsSpinner.Value;
+                    Recursive_Settings.CurrentIteration = 1;
+                    Recursive_Settings.CurrentTimePoint = 1;
+                    app.BetaRecursiveSeries.Rb = zeros(NumDays,1);
+                    app.BetaRecursiveSeries.Cb = zeros(NumDays,1);
+                    
+                    for t = 1:NumDays
+                        Dat_i = Dat_full(t);
+                        Recursive_Settings.TimeVector(t) = Dat_i.Time;
+                    end
+
+                    cla(app.RecursiveTimeRegPlot)
+                    hold(app.RecursiveTimeRegPlot,"on")
+                    yyaxis(app.RecursiveTimeRegPlot,'right')
+                    cla(app.RecursiveTimeRegPlot)
+                    hold(app.RecursiveTimeRegPlot,"on")
+                    yyaxis(app.RecursiveTimeRegPlot,'left')
+                    
+                case 'Off'
+                    fit_recursive_regularization = false;
+                    Recursive_Settings = [];
+                    Recursive_Settings.Lambda = 0;
+                    Recursive_Settings.NumIterations = 1;
+                    Recursive_Settings.CurrentIteration = 1;
+                    Recursive_Settings.CurrentTimePoint = 1;
+                    app.BetaRecursiveSeries.Rb = zeros(NumDays,1);
+                    app.BetaRecursiveSeries.Cb = zeros(NumDays,1);
+                    Recursive_Settings.TimeVector = [];
+
+                    cla(app.RecursiveTimeRegPlot)
+                    hold(app.RecursiveTimeRegPlot,"off")
+                    yyaxis(app.RecursiveTimeRegPlot,'right')
+                    cla(app.RecursiveTimeRegPlot)
+                    hold(app.RecursiveTimeRegPlot,"off")
+                    yyaxis(app.RecursiveTimeRegPlot,'left')
+            end
         
             %% Fit CCT
        
@@ -1933,8 +2114,14 @@ classdef AnalyZe < matlab.apps.AppBase
             drawnow()
 
             Fits_local = [];
-            for (i = 1:NumDays)
+            
+            for r = 1:Recursive_Settings.NumIterations
 
+                Recursive_Settings.CurrentIteration = r;
+                
+                for (i = 1:NumDays)
+
+                    
                 if app.AbortButton.Value
                     break
                 end
@@ -1946,6 +2133,9 @@ classdef AnalyZe < matlab.apps.AppBase
                 y_z_i = Dat_i_EIS.Z - 1j*Dat_i_EIS.Z1;
                 freq_i = Dat_i_EIS.FrequencyHz;
                
+                Recursive_Settings.CurrentTimePoint = i;
+                Recursive_Settings.TimeVector(i) = Dat_i.Time;
+
                 selectedTab = app.CircuitToFit.SelectedTab;
 
                 if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.CircuitBuilderTable_MaxVals) 
@@ -1964,11 +2154,13 @@ classdef AnalyZe < matlab.apps.AppBase
                                             fit_cct,... %cct type
                                             fit_sequentially,... %fit blank first
                                             fit_blank_only, ... %fit blank now
+                                            fit_recursive_regularization,...
                                             y_z_i,... %y_z blank
                                             multi_starts_blank,... %multi starts
                                             Upper_bound,...
                                             Lower_Bound,...
-                                            Beta_Zero...
+                                            Beta_Zero,...
+                                            Recursive_Settings...
                                             ); 
 
                 elseif (selectedTab == app.WriteACircuitTab)
@@ -1987,11 +2179,13 @@ classdef AnalyZe < matlab.apps.AppBase
                                             fit_cct,... %cct type
                                             fit_sequentially,... %fit blank first
                                             fit_blank_only, ... %fit blank now
+                                            fit_recursive_regularization,...
                                             y_z_i,... %y_z blank
                                             multi_starts_blank,... %multi starts
                                             Upper_bound,...
                                             Lower_Bound,...
-                                            Beta_Zero...
+                                            Beta_Zero,...
+                                            Recursive_Settings...
                                             ); 
 
                 else
@@ -2001,8 +2195,13 @@ classdef AnalyZe < matlab.apps.AppBase
                                             fit_cct,... %cct type
                                             fit_sequentially,... %fit blank first
                                             fit_blank_only, ... %fit blank now
+                                            fit_recursive_regularization,...
                                             y_z_i,... %y_z blank
-                                            multi_starts_blank... %multi starts
+                                            multi_starts_blank,... %multi starts
+                                            [],...
+                                            [],...
+                                            [],...
+                                            Recursive_Settings...
                                             ); 
 
                     
@@ -2010,7 +2209,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
                  
 
-                 %% Store Results
+                 if r == Recursive_Settings.NumIterations
+                    
+                     %% Store Results
                       app.Fits(end+1) = struct('Name', {Dat_i.Name},...
                           'Time', {Dat_i.Time},...
                           'ExperimentNumber', {Dat_i.ExperimentNumber},...
@@ -2084,6 +2285,8 @@ classdef AnalyZe < matlab.apps.AppBase
                      DataToAddToTable = [app.ResultsTable.Data; newData];
                      app.ResultsTable.Data = DataToAddToTable;
 
+                 end
+
 
                   %% plot Results
                     
@@ -2140,8 +2343,31 @@ classdef AnalyZe < matlab.apps.AppBase
 
                     drawnow()
                     
+                end
+
+                        if app.AbortButton.Value
+                            break
+                        end
+                            
+                        app.BetaRecursiveSeries.Rb = app.BetaRecursiveSeries.Rb(:);
+                        app.BetaRecursiveSeries.Cb = app.BetaRecursiveSeries.Cb(:);
+                        
+                         sorted = (sortrows([Recursive_Settings.TimeVector',app.BetaRecursiveSeries.Rb,app.BetaRecursiveSeries.Cb], 1))';
+                        % reassigning sorted values
+                        Recursive_Settings.TimeVector = sorted(1,:);
+                        app.BetaRecursiveSeries.Rb = sorted(2,:);
+                        app.BetaRecursiveSeries.Cb = sorted(3,:);
+
+                         yyaxis(app.RecursiveTimeRegPlot,'left')
+                        plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,app.BetaRecursiveSeries.Rb', '*-','LineWidth',1.2*Recursive_Settings.CurrentIteration,'DisplayName',"Rb, Iteration: " + int2str(Recursive_Settings.CurrentIteration))
+                        ylabel(app.RecursiveTimeRegPlot,"Rb")
+                        xlabel(app.RecursiveTimeRegPlot,"Time")
+
+                        yyaxis(app.RecursiveTimeRegPlot,'right')
+                        plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,app.BetaRecursiveSeries.Cb', '*-','LineWidth',1.2*Recursive_Settings.CurrentIteration,'DisplayName',"Cb, Iteration: " + int2str(Recursive_Settings.CurrentIteration))
+                        ylabel(app.RecursiveTimeRegPlot,"Cb")
+                        yyaxis(app.RecursiveTimeRegPlot,'left')
             end
-            
             app.RunningLamp.Color = 'red';
             drawnow()
 
@@ -2174,8 +2400,13 @@ classdef AnalyZe < matlab.apps.AppBase
              app.ResultsTable.Data = [];
              app.ProgressGuage.Limits = [0,1];
              app.ProgressGuage.Value = 0;
-             
 
+             yyaxis(app.RecursiveTimeRegPlot,"left")
+             cla(app.RecursiveTimeRegPlot)
+             yyaxis(app.RecursiveTimeRegPlot,"right")
+             cla(app.RecursiveTimeRegPlot)
+             yyaxis(app.RecursiveTimeRegPlot,"left")
+             
              app.Fits = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'FitsResults', {},'RawData', {});
              
              f = msgbox("Results Cleared!");
@@ -3166,6 +3397,12 @@ classdef AnalyZe < matlab.apps.AppBase
                         end
                    end
 
+             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                app.UpdateRecursiveFitButton();
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
             
         end
@@ -3291,6 +3528,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'On'
                     app.FitSequentiallySwitch.Value = 'Off';
                     app.FitBlankOnlyExcludeBarrierSwitch.Value = 'Off';
+
                 case 'Off'
                    
             end
@@ -3320,6 +3558,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
 
 
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                app.UpdateRecursiveFitButton();
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     
@@ -4985,6 +5226,12 @@ classdef AnalyZe < matlab.apps.AppBase
                     msgbox('Any leading p(R1,C1) statement will now be considered as part of the system (non-barrier) part of the model')
 
             end
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                app.UpdateRecursiveFitButton();
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
 
         % Value changed function: CircuitStringEditField
@@ -5365,6 +5612,12 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.CrossSectionResultsCumulative = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {},'Indexes',{});% Description
                     app.CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});
             end
+        end
+
+        % Selection change function: CCTFitOptionsTabGroup
+        function CCTFitOptionsTabGroupSelectionChanged(app, event)
+            selectedTab = app.CCTFitOptionsTabGroup.SelectedTab;
+            app.UpdateRecursiveFitButton();
         end
     end
 
@@ -5887,12 +6140,13 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ProgressGuage.FontSize = 9;
             app.ProgressGuage.Position = [7 7 70 38];
 
-            % Create TabGroup7
-            app.TabGroup7 = uitabgroup(app.FittingParams);
-            app.TabGroup7.Position = [152 205 317 121];
+            % Create CCTFitOptionsTabGroup
+            app.CCTFitOptionsTabGroup = uitabgroup(app.FittingParams);
+            app.CCTFitOptionsTabGroup.SelectionChangedFcn = createCallbackFcn(app, @CCTFitOptionsTabGroupSelectionChanged, true);
+            app.CCTFitOptionsTabGroup.Position = [152 205 317 121];
 
             % Create SeriesResistanceEstimateTab
-            app.SeriesResistanceEstimateTab = uitab(app.TabGroup7);
+            app.SeriesResistanceEstimateTab = uitab(app.CCTFitOptionsTabGroup);
             app.SeriesResistanceEstimateTab.Title = 'Series Resistance Estimate';
 
             % Create RSeriesResistanceSwitchLabel
@@ -5926,7 +6180,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.AlternateRestimationListBox.Value = 'Semi-circle Fit';
 
             % Create SequentialBarrierFittingTab
-            app.SequentialBarrierFittingTab = uitab(app.TabGroup7);
+            app.SequentialBarrierFittingTab = uitab(app.CCTFitOptionsTabGroup);
             app.SequentialBarrierFittingTab.Title = 'Sequential Barrier Fitting';
 
             % Create BlankFitMultiStartsEditFieldLabel
@@ -5968,6 +6222,60 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FitBlankOnlyExcludeBarrierSwitch.Tooltip = {'Fit the circuit excluding the barrier R//C'};
             app.FitBlankOnlyExcludeBarrierSwitch.Position = [201 31 45 20];
 
+            % Create RecursiveTimeRegularizationTab
+            app.RecursiveTimeRegularizationTab = uitab(app.CCTFitOptionsTabGroup);
+            app.RecursiveTimeRegularizationTab.Title = 'Recursive Time Regularization';
+
+            % Create RecursiveTimeRegularizationLabel
+            app.RecursiveTimeRegularizationLabel = uilabel(app.RecursiveTimeRegularizationTab);
+            app.RecursiveTimeRegularizationLabel.HorizontalAlignment = 'center';
+            app.RecursiveTimeRegularizationLabel.FontSize = 14;
+            app.RecursiveTimeRegularizationLabel.FontWeight = 'bold';
+            app.RecursiveTimeRegularizationLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.RecursiveTimeRegularizationLabel.Position = [33 4 102 52];
+            app.RecursiveTimeRegularizationLabel.Text = {'Recursive'; 'Time '; 'Regularization'};
+
+            % Create RecursiveTimeRegularizationSwitch
+            app.RecursiveTimeRegularizationSwitch = uiswitch(app.RecursiveTimeRegularizationTab, 'slider');
+            app.RecursiveTimeRegularizationSwitch.Orientation = 'vertical';
+            app.RecursiveTimeRegularizationSwitch.Tooltip = {'Fit the data with the circuit sans barrier first, then refit the data by fitting only the barrier parameters and keeping the pre-fit non-barrier parameters constant.'};
+            app.RecursiveTimeRegularizationSwitch.Position = [10 25 21 48];
+
+            % Create LambdaEditFieldLabel
+            app.LambdaEditFieldLabel = uilabel(app.RecursiveTimeRegularizationTab);
+            app.LambdaEditFieldLabel.HorizontalAlignment = 'right';
+            app.LambdaEditFieldLabel.Position = [67 69 48 22];
+            app.LambdaEditFieldLabel.Text = 'Lambda';
+
+            % Create LambdaEditField
+            app.LambdaEditField = uieditfield(app.RecursiveTimeRegularizationTab, 'numeric');
+            app.LambdaEditField.Limits = [0 Inf];
+            app.LambdaEditField.Position = [121 69 44 22];
+
+            % Create NumIterationsSpinnerLabel
+            app.NumIterationsSpinnerLabel = uilabel(app.RecursiveTimeRegularizationTab);
+            app.NumIterationsSpinnerLabel.HorizontalAlignment = 'right';
+            app.NumIterationsSpinnerLabel.Position = [165 69 83 22];
+            app.NumIterationsSpinnerLabel.Text = 'Num Iterations';
+
+            % Create NumIterationsSpinner
+            app.NumIterationsSpinner = uispinner(app.RecursiveTimeRegularizationTab);
+            app.NumIterationsSpinner.Limits = [1 Inf];
+            app.NumIterationsSpinner.Position = [252 69 60 22];
+            app.NumIterationsSpinner.Value = 1;
+
+            % Create RegSchemeListBoxLabel
+            app.RegSchemeListBoxLabel = uilabel(app.RecursiveTimeRegularizationTab);
+            app.RegSchemeListBoxLabel.HorizontalAlignment = 'right';
+            app.RegSchemeListBoxLabel.Position = [130 18 49 30];
+            app.RegSchemeListBoxLabel.Text = {'Reg'; 'Scheme'};
+
+            % Create RegSchemeListBox
+            app.RegSchemeListBox = uilistbox(app.RecursiveTimeRegularizationTab);
+            app.RegSchemeListBox.Items = {'Smoothness', 'Sparsity', 'd/dt Smoothness', 'd/dt Sparsity'};
+            app.RegSchemeListBox.Position = [187 4 121 60];
+            app.RegSchemeListBox.Value = 'Smoothness';
+
             % Create AbortButton
             app.AbortButton = uibutton(app.FittingParams, 'state');
             app.AbortButton.Text = 'Abort';
@@ -5997,14 +6305,7 @@ classdef AnalyZe < matlab.apps.AppBase
             xlabel(app.BodeResults, 'X')
             ylabel(app.BodeResults, 'Y')
             zlabel(app.BodeResults, 'Z')
-            app.BodeResults.Position = [1 285 458 315];
-
-            % Create NyqResults
-            app.NyqResults = uiaxes(app.PlotsTab);
-            xlabel(app.NyqResults, 'X')
-            ylabel(app.NyqResults, 'Y')
-            zlabel(app.NyqResults, 'Z')
-            app.NyqResults.Position = [107 6 349 281];
+            app.BodeResults.Position = [10 335 470 265];
 
             % Create HoldPlotsSwitchLabel
             app.HoldPlotsSwitchLabel = uilabel(app.PlotsTab);
@@ -6027,6 +6328,32 @@ classdef AnalyZe < matlab.apps.AppBase
             app.PlotResultsSelectionButton.FontColor = [0.302 0.7451 0.9333];
             app.PlotResultsSelectionButton.Position = [6 33 100 74];
             app.PlotResultsSelectionButton.Text = {'Plot'; 'Results'; 'Selection'};
+
+            % Create AuxCCTFitResults
+            app.AuxCCTFitResults = uitabgroup(app.PlotsTab);
+            app.AuxCCTFitResults.Position = [109 4 370 316];
+
+            % Create Nyquist
+            app.Nyquist = uitab(app.AuxCCTFitResults);
+            app.Nyquist.Title = 'Nyquist';
+
+            % Create NyqResults
+            app.NyqResults = uiaxes(app.Nyquist);
+            xlabel(app.NyqResults, 'X')
+            ylabel(app.NyqResults, 'Y')
+            zlabel(app.NyqResults, 'Z')
+            app.NyqResults.Position = [7 9 355 276];
+
+            % Create RecursiveTimeReg
+            app.RecursiveTimeReg = uitab(app.AuxCCTFitResults);
+            app.RecursiveTimeReg.Title = 'Recursive Time Regularization';
+
+            % Create RecursiveTimeRegPlot
+            app.RecursiveTimeRegPlot = uiaxes(app.RecursiveTimeReg);
+            xlabel(app.RecursiveTimeRegPlot, 'X')
+            ylabel(app.RecursiveTimeRegPlot, 'Y')
+            zlabel(app.RecursiveTimeRegPlot, 'Z')
+            app.RecursiveTimeRegPlot.Position = [7 7 359 281];
 
             % Create ResultsTab
             app.ResultsTab = uitab(app.TabGroup2);
