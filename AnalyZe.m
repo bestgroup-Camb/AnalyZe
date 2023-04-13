@@ -2108,38 +2108,9 @@ classdef AnalyZe < matlab.apps.AppBase
                     hold(app.RecursiveTimeRegPlot,"off")
                     yyaxis(app.RecursiveTimeRegPlot,'left')
             end
-        
-            %% Fit CCT
-       
 
-            app.RunningLamp.Color = 'green';
-            drawnow()
 
-            Fits_local = [];
-            ProblemSetUpString_i = "";
-            
-            for r = 1:Recursive_Settings.NumIterations
-
-                Recursive_Settings.CurrentIteration = r;
-                
-                for (i = 1:NumDays)
-
-                    
-                if app.AbortButton.Value
-                    break
-                end
-
-                app.ProgressGuage.Value = i;
-
-                Dat_i = Dat_full(i);
-                Dat_i_EIS = Dat_i.Data;
-                y_z_i = Dat_i_EIS.Z - 1j*Dat_i_EIS.Z1;
-                freq_i = Dat_i_EIS.FrequencyHz;
-               
-                Recursive_Settings.CurrentTimePoint = i;
-                Recursive_Settings.TimeVector(i) = Dat_i.Time;
-
-                %% Build Problem string
+               %% Build Problem string
                 ProblemSetUpString_i = "";
                 ProblemSetUpString_i = ProblemSetUpString_i + CircuitUsed + newline +...
                                             "     User Set MaxVals: " + num2str(Upper_bound) + newline +...
@@ -2170,7 +2141,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                                 "     Lambda: " + string(Recursive_Settings.Lambda) + newline +...
                                                 "     Number of Iterations: " + string(Recursive_Settings.NumIterations) + newline +...
                                                 "     Regularization Scheme: " + string(app.RegSchemeListBox.Value) + newline +...
-                                                "     Time Vector: " + string(Recursive_Settings.TimeVector) + newline;
+                                                "     Time Vector: " + num2str(Recursive_Settings.TimeVector) + newline;
                     end  
                     
                     ProblemSetUpString_i = ProblemSetUpString_i + "Series Resistance Estimate: ";
@@ -2180,6 +2151,37 @@ classdef AnalyZe < matlab.apps.AppBase
                         case 'Alternate'
                              ProblemSetUpString_i = ProblemSetUpString_i + app.AlternateRestimationListBox.Value + newline;
                     end
+        
+            %% Fit CCT
+       
+
+            app.RunningLamp.Color = 'green';
+            drawnow()
+
+            Fits_local = [];
+            %ProblemSetUpString_i = "";
+            
+            for r = 1:Recursive_Settings.NumIterations
+
+                Recursive_Settings.CurrentIteration = r;
+                
+                for (i = 1:NumDays)
+
+                    
+                if app.AbortButton.Value
+                    break
+                end
+
+                app.ProgressGuage.Value = i;
+
+                Dat_i = Dat_full(i);
+                Dat_i_EIS = Dat_i.Data;
+                y_z_i = Dat_i_EIS.Z - 1j*Dat_i_EIS.Z1;
+                freq_i = Dat_i_EIS.FrequencyHz;
+               
+                Recursive_Settings.CurrentTimePoint = i;
+                Recursive_Settings.TimeVector(i) = Dat_i.Time;
+
 
                 %% Run MultiStart
 
