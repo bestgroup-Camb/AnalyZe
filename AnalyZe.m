@@ -75,6 +75,8 @@ classdef AnalyZe < matlab.apps.AppBase
         Nyquist                         matlab.ui.container.Tab
         NyqResults                      matlab.ui.control.UIAxes
         RecursiveTimeReg                matlab.ui.container.Tab
+        RecursiveTimeRegLogSwitch_2     matlab.ui.control.Switch
+        RecursiveTimeRegLogSwitch       matlab.ui.control.Switch
         RecursiveTimeRegPlot            matlab.ui.control.UIAxes
         ProblemSetuplogTab              matlab.ui.container.Tab
         CCTFitProblemLog                matlab.ui.control.TextArea
@@ -2109,7 +2111,11 @@ classdef AnalyZe < matlab.apps.AppBase
                     yyaxis(app.RecursiveTimeRegPlot,'left')
             end
 
-
+                BetaRecursiveSeriesLog = [];
+                BetaRecursiveSeriesLog.Rb = [];
+                BetaRecursiveSeriesLog.Cb = [];
+                %BetaRecursiveSeriesLog.Rb = zeros(NumDays,1,1);
+                %BetaRecursiveSeriesLog.Cb = zeros(NumDays,1,1);
                %% Build Problem string
                 ProblemSetUpString_i = "";
                 ProblemSetUpString_i = ProblemSetUpString_i + CircuitUsed + newline +...
@@ -2411,15 +2417,41 @@ classdef AnalyZe < matlab.apps.AppBase
                         app.BetaRecursiveSeries.Rb = sorted(2,:);
                         app.BetaRecursiveSeries.Cb = sorted(3,:);
 
-                         yyaxis(app.RecursiveTimeRegPlot,'left')
-                        plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,app.BetaRecursiveSeries.Rb', '*-','LineWidth',1.2*Recursive_Settings.CurrentIteration,'DisplayName',"Rb, Iteration: " + int2str(Recursive_Settings.CurrentIteration))
-                        ylabel(app.RecursiveTimeRegPlot,"Rb")
-                        xlabel(app.RecursiveTimeRegPlot,"Time")
-
+                        BetaRecursiveSeriesLog.Rb = [BetaRecursiveSeriesLog.Rb;app.BetaRecursiveSeries.Rb];
+                        BetaRecursiveSeriesLog.Cb = [BetaRecursiveSeriesLog.Cb;app.BetaRecursiveSeries.Cb];
+                        
+                        cla(app.RecursiveTimeRegPlot,"reset")
                         yyaxis(app.RecursiveTimeRegPlot,'right')
-                        plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,app.BetaRecursiveSeries.Cb', '*-','LineWidth',1.2*Recursive_Settings.CurrentIteration,'DisplayName',"Cb, Iteration: " + int2str(Recursive_Settings.CurrentIteration))
-                        ylabel(app.RecursiveTimeRegPlot,"Cb")
+                        cla(app.RecursiveTimeRegPlot,"reset")
                         yyaxis(app.RecursiveTimeRegPlot,'left')
+                        cla(app.RecursiveTimeRegPlot,"reset")
+                    
+                        switch app.RecursiveTimeRegLogSwitch.Value
+                            case 'Overlay'
+                                hold(app.RecursiveTimeRegPlot,'on')
+                                for r_plot = 1:r
+                                    yyaxis(app.RecursiveTimeRegPlot,'left')
+                                    plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Rb(r_plot,:), '*-','LineWidth',3*(r/Recursive_Settings.NumIterations))
+                                    ylabel(app.RecursiveTimeRegPlot,"Rb")
+                                    xlabel(app.RecursiveTimeRegPlot,"Time")
+            
+                                    yyaxis(app.RecursiveTimeRegPlot,'right')
+                                    plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Cb(r_plot,:), '*-','LineWidth',3*(r/Recursive_Settings.NumIterations))
+                                    ylabel(app.RecursiveTimeRegPlot,"Cb")
+                                    yyaxis(app.RecursiveTimeRegPlot,'left')
+                                end
+                                hold(app.RecursiveTimeRegPlot,'off')
+                            case 'Ribbon'
+                                
+                                switch app.RecursiveTimeRegLogSwitch_2.Value
+                                    case 'Rb'
+                                        ribbon(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Rb')
+                                    case 'Cb'
+                                        ribbon(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Cb')
+                                end
+
+                                %colormap(app.RecursiveTimeRegPlot,turbo)
+                        end
             end
             app.RunningLamp.Color = 'red';
             drawnow()
@@ -2428,8 +2460,6 @@ classdef AnalyZe < matlab.apps.AppBase
             %% Update Problem log
             
             CurrentLog = app.CCTFitProblemLog.Value;
-            display(string(CurrentLog))
-          display(ProblemSetUpString_i)
             app.CCTFitProblemLog.Value = [string(CurrentLog); newline + ProblemSetUpString_i]; 
             
 
@@ -5701,8 +5731,9 @@ classdef AnalyZe < matlab.apps.AppBase
                    
                    if flag
                         msgbox("Regularisation adds a priori information into the regression and should be used with care." + newline +...
+                            "Regularisation adds an additional penalty (superimposed on the fitness) to impose a priori information onto the problem. In this case, penalize deviations from smoothness or sparsity in the time or velocity domains."+newline+...
                             "The regularisation term in the objective function is of the form Lambda*||D(Xb|_i)||n" + newline +...
-                            "     - Lambda is the tuning hyperparameter and it is increased linearly from zero to the user defined value with each iteration." + newline +...
+                            "     - Lambda is the tuning hyperparameter and it is increased linearly from zero to the user defined value with each iteration. A smaller value of Lambda is more conservative." + newline +...
                             "     - Xb is the set of barrier parameters (Rb or Cb) Xb={xb(t)|t=1:t_end}"+newline+...
                             "     - Xb_i is the set of barrier parmeters where the ith parameter is a the free parameter in the current regression and the ~ith parameters are those values from the preceeding iteration."+newline+...
                             "     - D() is either unity or the d/dt operator"+newline+...
@@ -5711,6 +5742,18 @@ classdef AnalyZe < matlab.apps.AppBase
                    end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+        end
+
+        % Value changed function: RecursiveTimeRegLogSwitch
+        function RecursiveTimeRegLogSwitchValueChanged(app, event)
+            value = app.RecursiveTimeRegLogSwitch.Value;
+            switch value
+                case 'Ribbon'
+                    app.RecursiveTimeRegLogSwitch_2.Enable = true;
+                    
+                case 'Overlay'
+                    app.RecursiveTimeRegLogSwitch_2.Enable = false;
+            end
         end
     end
 
@@ -6448,7 +6491,20 @@ classdef AnalyZe < matlab.apps.AppBase
             xlabel(app.RecursiveTimeRegPlot, 'X')
             ylabel(app.RecursiveTimeRegPlot, 'Y')
             zlabel(app.RecursiveTimeRegPlot, 'Z')
-            app.RecursiveTimeRegPlot.Position = [7 7 359 281];
+            app.RecursiveTimeRegPlot.Position = [7 33 359 255];
+
+            % Create RecursiveTimeRegLogSwitch
+            app.RecursiveTimeRegLogSwitch = uiswitch(app.RecursiveTimeReg, 'slider');
+            app.RecursiveTimeRegLogSwitch.Items = {'Ribbon', 'Overlay'};
+            app.RecursiveTimeRegLogSwitch.ValueChangedFcn = createCallbackFcn(app, @RecursiveTimeRegLogSwitchValueChanged, true);
+            app.RecursiveTimeRegLogSwitch.Position = [103 6 45 20];
+            app.RecursiveTimeRegLogSwitch.Value = 'Ribbon';
+
+            % Create RecursiveTimeRegLogSwitch_2
+            app.RecursiveTimeRegLogSwitch_2 = uiswitch(app.RecursiveTimeReg, 'slider');
+            app.RecursiveTimeRegLogSwitch_2.Items = {'Rb', 'Cb'};
+            app.RecursiveTimeRegLogSwitch_2.Position = [291 8 45 20];
+            app.RecursiveTimeRegLogSwitch_2.Value = 'Rb';
 
             % Create ProblemSetuplogTab
             app.ProblemSetuplogTab = uitab(app.AuxCCTFitResults);
