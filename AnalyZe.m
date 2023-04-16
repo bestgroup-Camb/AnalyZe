@@ -383,6 +383,7 @@ classdef AnalyZe < matlab.apps.AppBase
         CumulativeSysIDSeriesPlot; % Description
         TutorialMode = true; % Description
         BetaRecursiveSeries = struct('Rb',[],'Cb',[]); % Description
+        FitsResultsTableMarkings = []; % Description
     end
     
     methods (Access = private)
@@ -744,7 +745,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         Real_Scale = weighting; % 1./real(y_z);
                         Imag_Scale = weighting; % 1./imag(y_z);
                         CCT_Fn_Lik = @(b) (sum( Real_Scale.*freq_Scale.*(real(y_z) - real(CCT_Fn(b,2*pi.*freq))).^2 ) ) + (sum( Imag_Scale.*freq_Scale.*(imag(y_z) - imag(CCT_Fn(b,2*pi.*freq))).^2 ) );% - 100.*log10(Upper-b(1))+ 1e3*norm(b-MaxLik,2)^2 %+ 0.001*(b(1)-500)^2
-            
+                                        
                             A = [];
                             b = [];
                             Aeq = [];
@@ -769,6 +770,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                         %                                         R.CurrentTimePoint
                                         %                                         R.TimeVector
 
+                                   
                             Beta_series = app.BetaRecursiveSeries;
                             Beta_Rb = Beta_series.Rb;
                             Beta_Cb = Beta_series.Cb;
@@ -776,7 +778,10 @@ classdef AnalyZe < matlab.apps.AppBase
                             RecursiveSettings = varargin{6};
 
                             Recursive_Lambda_progression = linspace(0,RecursiveSettings.Lambda,RecursiveSettings.NumIterations);
-                            Beta_swap_i = @(Iter,b,Beta,index) normalize([Beta(1:Iter-1), b(index), Beta(Iter+1:end)],'range');  
+                            Beta_swap_i = @(Iter,b,Beta,index) normalize([Beta(1:Iter-1), b(index), Beta(Iter+1:end)],'range'); 
+                            Beta_TimeSorted = @(b) (sortrows([RecursiveSettings.TimeVector,b], 1))';
+                            dBeta_dt = @(b_sorted) diff(b_sorted(2,:))./diff(b_sorted(1,:));
+
                             
                             switch app.RegSchemeListBox.Value
                                 case 'Smoothness'
@@ -784,9 +789,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                 case 'Sparsity'
                                     CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm(Beta_swap_i(TimeIter,b,Beta_Rb(:).',1) ,1) + norm(Beta_swap_i(TimeIter,b,Beta_Cb(:).',2) ,1));
                                 case 'd/dt Smoothness'
-                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( diff(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1)) ,2) + norm( diff(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,1)) ,2) );
+                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,2) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,1))) ,2) );
                                 case 'd/dt Sparsity'
-                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( diff(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1)) ,1) + norm( diff(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,1)) ,1) );
+                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,1) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,1))) ,1) );
                             end
 
                             CCT_Fn_Regularized = @(b) CCT_Fn_Lik(b) + CCT_Regularization(RecursiveSettings.CurrentIteration,b,RecursiveSettings.CurrentTimePoint);
@@ -1949,6 +1954,27 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Button pushed function: GoButton
         function GoButtonPushed(app, event)
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                answer = 'Continue';
+               flag = app.TutorialMode;
+               if flag
+                    
+                   answer = questdlg({'The circuit fitting algorithm relies primarily on the Multi-Start optimization routine.',...
+                                        'The routine optimizes the circuit model fit by simultaneously varying all supplied circuit parameters in the usual way.',...
+                                        '     - The general form of the objective function is sum((Re(Resid)/(|Z|^2))^2)+sum((Im(Resid)/(|Z|^2))^2)',...
+                                        'An initial condition space is defined by the origin and the max values provided; the MultiStart algorithm minimizes the objective function N times, where N is the number of MultiStarts provided and each iteration uses an intial condition for a set of N uniformly distributed points in the intitial condition space.',...
+                                        'An exception is made for the irreducible series resistance, which is estimated from the highst frequency datapoint by default and held constant during the optimization - alternative approaches are selectable.',...
+                                        '',...
+                                        'The results table and plots are populated with the fitting output. To mark and unmark a result, click a cell in the row and press the ''m'' or ''u'' keys respectively. Marked rows are excluded from the time series plot. '},...
+                                        'Fit an Equivalent Circuit',...
+                                       'Continue','Cancel','Continue');
+               end
+                   switch answer
+                       case 'Cancel'
+                           return
+                   end
+             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
             app.AbortButton.Value = false;
 
@@ -2141,7 +2167,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         ProblemSetUpString_i = ProblemSetUpString_i + "Engage Select-A-Circuit: False"  + newline;
                     end
                       
-                    ProblemSetUpString_i = ProblemSetUpString_i + "Recusive Time Regularization " + string(fit_recursive_regularization) + newline;
+                    ProblemSetUpString_i = ProblemSetUpString_i + "Recusive Time Regularization (" + string(fit_recursive_regularization) + ") " + newline;
                     if fit_recursive_regularization
                         ProblemSetUpString_i = ProblemSetUpString_i + ...
                                                 "     Lambda: " + string(Recursive_Settings.Lambda) + newline +...
@@ -2278,6 +2304,8 @@ classdef AnalyZe < matlab.apps.AppBase
                           'RawData', [y_z_i freq_i]...
                           );
 
+                      app.FitsResultsTableMarkings(end+1) = false;
+
                       
                   %% Add Table Entry
                         Results = Fits_local{i};
@@ -2408,6 +2436,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             break
                         end
                             
+                     if fit_recursive_regularization
                         app.BetaRecursiveSeries.Rb = app.BetaRecursiveSeries.Rb(:);
                         app.BetaRecursiveSeries.Cb = app.BetaRecursiveSeries.Cb(:);
                         
@@ -2431,12 +2460,12 @@ classdef AnalyZe < matlab.apps.AppBase
                                 hold(app.RecursiveTimeRegPlot,'on')
                                 for r_plot = 1:r
                                     yyaxis(app.RecursiveTimeRegPlot,'left')
-                                    plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Rb(r_plot,:), '*-','LineWidth',3*(r/Recursive_Settings.NumIterations))
+                                    plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Rb(r_plot,:), '*-','LineWidth',5*(r/Recursive_Settings.NumIterations))
                                     ylabel(app.RecursiveTimeRegPlot,"Rb")
                                     xlabel(app.RecursiveTimeRegPlot,"Time")
             
                                     yyaxis(app.RecursiveTimeRegPlot,'right')
-                                    plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Cb(r_plot,:), '*-','LineWidth',3*(r/Recursive_Settings.NumIterations))
+                                    plot(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Cb(r_plot,:), '*-','LineWidth',5*(r/Recursive_Settings.NumIterations))
                                     ylabel(app.RecursiveTimeRegPlot,"Cb")
                                     yyaxis(app.RecursiveTimeRegPlot,'left')
                                 end
@@ -2449,9 +2478,10 @@ classdef AnalyZe < matlab.apps.AppBase
                                     case 'Cb'
                                         ribbon(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Cb')
                                 end
-
+                                view(app.RecursiveTimeRegPlot,[60,30])
                                 %colormap(app.RecursiveTimeRegPlot,turbo)
                         end
+                     end
             end
             app.RunningLamp.Color = 'red';
             drawnow()
@@ -2489,6 +2519,7 @@ classdef AnalyZe < matlab.apps.AppBase
              app.ProgressGuage.Limits = [0,1];
              app.ProgressGuage.Value = 0;
 
+             cla(app.RecursiveTimeRegPlot,"reset")
              yyaxis(app.RecursiveTimeRegPlot,"left")
              cla(app.RecursiveTimeRegPlot)
              yyaxis(app.RecursiveTimeRegPlot,"right")
@@ -2498,7 +2529,7 @@ classdef AnalyZe < matlab.apps.AppBase
              app.CCTFitProblemLog.Value = "";
              
              app.Fits = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'FitsResults', {},'RawData', {});
-             
+             app.FitsResultsTableMarkings = [];
              f = msgbox("Results Cleared!");
        
              
@@ -3069,7 +3100,8 @@ classdef AnalyZe < matlab.apps.AppBase
                flag = app.TutorialMode;
                if flag
                     
-                   answer = questdlg('Highlight a series of cells in a column of the results table to plot (or two series in different columns to plot against each other). Select Hold Plots to overlay plots - with each plot command the currently selected series will be added to the mean. Select a single cell to continue to replot the currently overlayed series (with different plot options) without adding additional data' ,...
+                   answer = questdlg("Highlight a series of cells in a column of the results table to plot (or two series in different columns to plot against each other). Select Hold Plots to overlay plots - with each plot command the currently selected series will be added to the mean. Select a single cell to continue to replot the currently overlayed series (with different plot options) without adding additional data" + newline +...
+                                        "To exclude a row from plotting, click on a cell in the row and press the 'm' key to mark the row for exclusion and the 'u' key to unmark a marked row.",...
                                         'Plot a Fitting Result',...
                                        'Continue','Cancel','Continue');
                end
@@ -3078,7 +3110,19 @@ classdef AnalyZe < matlab.apps.AppBase
                            return
                    end
 
+                display(app.FitsResultsTableMarkings)
+
                 ind = app.ResultTableCellsSelected;
+                ind_temp = ind
+                row_count = 1;
+                for r = 1:length(ind(:,1))
+                    row = ind(r,1);
+                    if ~app.FitsResultsTableMarkings(row)
+                        ind_temp(row_count,:) = ind(r,:);
+                        row_count = row_count+1;
+                    end
+                end
+                ind = ind_temp
                 
                 
                 if length(ind(:,1)) >= 2
@@ -3484,6 +3528,20 @@ classdef AnalyZe < matlab.apps.AppBase
                                 '',...
                                 'To fit a measurement with a barrier, click the include barrier switch. A barrier modell will be automatically inserted. Note, when this switch is on, the app will expect the circuit string to have a leading p(R1,C1), which will be treated as the barrier.'},'Explainer')
             
+                        elseif (selectedTab == app.BuildACircuitTab) || (selectedTab == app.BuildACircuitMaxValuesTab)
+                            msgbox({'Enter the circuit parameters according to the circuit layout by selecting an element and entering the corresponding symbol. Series elements along the middle row, parallel elements in rows one and three. Columns one and two are protected.',...
+                                    '',...
+                                    'Allowed circuit elements are:',...
+                                        'R - Resistance',...
+                                        'C - Capacitance',...
+                                        'L - Inductance',...
+                                        'Q - Constant Phase Element',...
+                                        'W - Warburg Element',...
+                                        'Each Circuit value needs to be assigned a maximum in the Max Values tab!',...
+                                        'Enter the maximum allowed values for each circuit parameter. Use the same locations as the Build-A-Circuit table',...
+                                        '',...
+                                        'The R in column two is uneditable and models the irreducible series resistance.',...
+                                        'Engage the Include Barrier switch to add in the R//C circuit modelling the biological barrier.'},'Explainer')
                         end
                    end
 
@@ -3760,6 +3818,8 @@ classdef AnalyZe < matlab.apps.AppBase
                                     DataToAddToTable = [app.ResultsTable.Data; newData];
                                     app.ResultsTable.Data = DataToAddToTable;
                                 end
+
+                                app.FitsResultsTableMarkings(end+1) = false;
   
                         end
 
@@ -3821,6 +3881,8 @@ classdef AnalyZe < matlab.apps.AppBase
                                     DataToAddToTable = [app.ResultsTable.Data; newData];
                                     app.ResultsTable.Data = DataToAddToTable;
                                 end
+
+                                app.FitsResultsTableMarkings(end+1) = false;
                                
                             
                         end
@@ -5755,6 +5817,36 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.RecursiveTimeRegLogSwitch_2.Enable = false;
             end
         end
+
+        % Double-clicked callback: ResultsTable
+        function ResultsTableDoubleClicked(app, event)
+            displayRow = event.InteractionInformation.DisplayRow;
+            displayColumn = event.InteractionInformation.DisplayColumn;
+            
+        end
+
+        % Key press function: ResultsTable
+        function ResultsTableKeyPress(app, event)
+            key = event.Key;
+            s_unmark = uistyle('BackgroundColor','white');
+            s_marked = uistyle('BackgroundColor','red');
+
+            ind = app.ResultTableCellsSelected;
+
+            switch key
+                case 'm'
+                    addStyle(app.ResultsTable,s_marked,'row',ind(1));
+                    app.FitsResultsTableMarkings(ind(1)) = true;
+                case 'u'
+                    addStyle(app.ResultsTable,s_unmark,'row',ind(1));
+                    app.FitsResultsTableMarkings(ind(1)) = false;
+            end
+        end
+
+        % Button down function: ResultsTable
+        function ResultsTableButtonDown(app, event)
+            
+        end
     end
 
     % Component initialization
@@ -6524,6 +6616,9 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResultsTable.ColumnName = {'Circuit'; 'Condition'; 'Exp'; 'Well'; 'Time'; 'Rb'; 'Cb'; 'Device CCT Params'; 'MSE'; 'NRMSE'; 'NMSE'; 'AIC'; 'BIC'};
             app.ResultsTable.RowName = {};
             app.ResultsTable.CellSelectionCallback = createCallbackFcn(app, @ResultsTableCellSelection, true);
+            app.ResultsTable.DoubleClickedFcn = createCallbackFcn(app, @ResultsTableDoubleClicked, true);
+            app.ResultsTable.ButtonDownFcn = createCallbackFcn(app, @ResultsTableButtonDown, true);
+            app.ResultsTable.KeyPressFcn = createCallbackFcn(app, @ResultsTableKeyPress, true);
             app.ResultsTable.Position = [11 20 461 570];
 
             % Create FitDiagnosticTab
