@@ -3110,10 +3110,9 @@ classdef AnalyZe < matlab.apps.AppBase
                            return
                    end
 
-                display(app.FitsResultsTableMarkings)
-
+                
                 ind = app.ResultTableCellsSelected;
-                ind_temp = ind
+                ind_temp = ind;
                 row_count = 1;
                 for r = 1:length(ind(:,1))
                     row = ind(r,1);
@@ -3122,7 +3121,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         row_count = row_count+1;
                     end
                 end
-                ind = ind_temp
+                ind = ind_temp;
                 
                 
                 if length(ind(:,1)) >= 2
@@ -3149,13 +3148,40 @@ classdef AnalyZe < matlab.apps.AppBase
                         
                         if var_x == 'Time'
                             Tab = T(unique(ind(:,1)),[var_x, var_y]);
-                            Tab = sortrows(Tab,'Time');
-                            DatToPlot = table2array(Tab);
+                            Tab = sortrows(Tab,'Time'); 
                         else
-                            DatToPlot = table2array(T(unique(ind(:,1)),[var_x, var_y])) ;
+                            Tab = T(unique(ind(:,1)),[var_x, var_y]); 
                         end
-                        x = DatToPlot(:,1);
-                        y = DatToPlot(:,2);
+
+                        switch var_y
+                            case 'Device CCT Params'
+                                prompt = {'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'};
+                                dlgtitle = 'Choose Param';
+                                dims = [1 40];
+                                definput = {'1'};
+                                
+                                answer = inputdlg(prompt,dlgtitle,dims,definput);
+                                Index = round(str2double(answer));
+
+                                DatToPlot = table2array(T(unique(ind(:,1)),var_y)) ;
+                                y = DatToPlot(:,1);
+                                
+                                y_temp = [];
+                                for i = 1:length(y)
+                                    temp = eval(y{i});
+                                    y_temp(i) = temp(Index);
+                                end
+                                y = y_temp';
+
+                                DatToPlot = table2array(T(unique(ind(:,1)),var_x)) ;
+                                x = DatToPlot(:,1);
+
+                            otherwise
+                                DatToPlot = table2array( Tab ) ;
+                                x = DatToPlot(:,1);
+                                y = DatToPlot(:,2);
+                        end
+     
                     else
                         var_y = string(Names(columns(1)));
                             
@@ -3167,26 +3193,28 @@ classdef AnalyZe < matlab.apps.AppBase
                         y = DatToPlot(:,1);
                         x = 1:length(y);
                         x = x';
+
+                        switch var_y
+                            case 'Device CCT Params'
+                                prompt = {'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'};
+                                dlgtitle = 'Choose Param';
+                                dims = [1 40];
+                                definput = {'1'};
+                                
+                                answer = inputdlg(prompt,dlgtitle,dims,definput);
+                                Index = round(str2double(answer));
+                                
+                                y_temp = [];
+                                for i = 1:length(y)
+                                    temp = eval(y{i});
+                                    y_temp(i) = temp(Index);
+                                end
+                                y = y_temp';
+                                
+                        end
                     end
 
-                    switch var_y
-                        case 'Device CCT Params'
-                            prompt = {'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'};
-                            dlgtitle = 'Choose Param';
-                            dims = [1 40];
-                            definput = {'1'};
-                            
-                            answer = inputdlg(prompt,dlgtitle,dims,definput);
-                            Index = round(str2double(answer));
-                            
-                            y_temp = [];
-                            for i = 1:length(y)
-                                temp = eval(y{i});
-                                y_temp(i) = temp(Index);
-                            end
-                            y = y_temp';
-                            assignin('base','y',y)
-                    end
+                    
 
 
     
@@ -5830,6 +5858,7 @@ classdef AnalyZe < matlab.apps.AppBase
             key = event.Key;
             s_unmark = uistyle('BackgroundColor','white');
             s_marked = uistyle('BackgroundColor','red');
+            s_accept = uistyle('FontColor',"#77AC30",'BackgroundColor','white');
 
             ind = app.ResultTableCellsSelected;
 
@@ -5840,6 +5869,8 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'u'
                     addStyle(app.ResultsTable,s_unmark,'row',ind(1));
                     app.FitsResultsTableMarkings(ind(1)) = false;
+                case 'a'
+                    addStyle(app.ResultsTable,s_accept,'row',ind(1));
             end
         end
 
