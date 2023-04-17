@@ -87,6 +87,8 @@ classdef AnalyZe < matlab.apps.AppBase
         ResultsTab                      matlab.ui.container.Tab
         ResultsTable                    matlab.ui.control.Table
         FitDiagnosticTab                matlab.ui.container.Tab
+        LabelPlotsSwitch                matlab.ui.control.Switch
+        LabelPlotsSwitchLabel           matlab.ui.control.Label
         HoldPlotsSwitch_FitDiagnostics  matlab.ui.control.ToggleSwitch
         HoldPlotsSwitch_2Label          matlab.ui.control.Label
         TabGroup3                       matlab.ui.container.TabGroup
@@ -387,6 +389,7 @@ classdef AnalyZe < matlab.apps.AppBase
         BetaRecursiveSeries = struct('Rb',[],'Cb',[]); % Description
         FitsResultsTableMarkings = []; % Description
         CumulativeCCTFitDisplayNames; % Description
+        CumulativeCCTFitDiagnosticDisplayNames = []; % Description
     end
     
     methods (Access = private)
@@ -1971,7 +1974,10 @@ classdef AnalyZe < matlab.apps.AppBase
                                         '',...
                                         'The results table and plots are populated with the fitting output. To mark and unmark a result, click a cell in the row and press the ''m'' or ''u'' keys respectively. Marked rows are excluded from the time series plot. Use ''a'' to mark a cell with green text - no effect ',...
                                         '',...
-                                        'If included, the barrier model (R//C) parameters R and C are split into independent columns (if included in the model, otherwise marked as NaN). The remaining parameters are are stored as a character array in the Device CCT Params column in the order that they appear in the circuit string. The irreducible series resistance is always the last value.'},...
+                                        'NOTE: If included, the barrier model (R//C) parameters R and C are split into independent columns (if included in the model, otherwise marked as NaN). The remaining parameters are are stored as a character array in the Device CCT Params column in the order that they appear in the circuit string. The irreducible series resistance is always the last value, irrespective of its position in the circuit string',...
+                                        'For Example,',...
+                                        '     The circuit string R--(R//C)--C--Q (Or equivalently R+p(R,C)+C+Q  ) models the irreducible series/electrolyte resistance, a barrier, R//C, and two additional parameters in series, C and Q, which model the remainder of the system.',...
+                                        '     The Device CCT Params column will contain the values [C,Q,alpha,R], where alpha is the secondary parameter for the constant phase element, Q, and R is the series resistance. The barrier parameters will be stored in Rb and Cb columns respectively.'},...
                                         'Fit an Equivalent Circuit',...
                                        'Continue','Cancel','Continue');
                end
@@ -2637,7 +2643,7 @@ classdef AnalyZe < matlab.apps.AppBase
                flag = app.TutorialMode;
                if flag
                     
-                   answer = questdlg('Select any cell in the results table - the fit diagnostic associated with that row will be plotted.',...
+                   answer = questdlg('Select any cell in the results table - the fit diagnostic associated with that row will be plotted. Select multiple cells to perform statics over multiple fits. Use the keys ''m'' and ''u'' while selecting a single cell in the results table to mark (and unmark) a row for exclusion from the analysis. ',...
                                         'Plot a Fitting Diagnostic',...
                                        'Continue','Cancel','Continue');
                end
@@ -2652,18 +2658,57 @@ classdef AnalyZe < matlab.apps.AppBase
                    msgbox('Select a cell in the results table to plot the fit diagnostics result associated with that row.')
                    error('No result selected.')
                end
+            
+            SelectedRows = unique(app.ResultTableCellsSelected(:,1));
+            
+                row_count = 1;
+                SelectedRows_temp = SelectedRows;
+                for r = 1:length(SelectedRows)
+                    row = SelectedRows(r);
+                    if ~app.FitsResultsTableMarkings(row)
+                        SelectedRows_temp(row_count) = row;
+                        row_count = row_count+1;
+                    end
+                end
+                SelectedRows = SelectedRows_temp;
+            
 
-            SelectedFits = app.Fits(app.ResultTableRowSelected);
+            SelectedFits = app.Fits(SelectedRows);
+                display(SelectedRows)
+            Res = [];
 
-            LocalResults = SelectedFits.FitsResults;
-            Fits_y_z = LocalResults{4};
-            Data_Raw = SelectedFits.RawData;
-            Data_y_z = Data_Raw(:,1);
+            for rows = 1:length(SelectedRows)
+                LocalResults = SelectedFits.FitsResults;
+                Fits_y_z = LocalResults{4};
+                Data_Raw = SelectedFits.RawData;
+                Data_y_z = Data_Raw(:,1);
+                Res_temp = Data_y_z - Fits_y_z;
 
-            Res = Data_y_z - Fits_y_z;
-
+                Res = [Res;Res_temp];
+            end
+            
             switch app.HoldPlotsSwitch_FitDiagnostics.Value
                 case 'On'
+                    definput = {[num2str(length(app.CumulativeCCTFitDiagnosticDisplayNames)+1)]};
+                case 'Off'
+                    definput = {[num2str(length(app.CumulativeCCTFitDiagnosticDisplayNames))]};
+            end
+            switch app.LabelPlotsSwitch.Value
+                case 'On'
+                    prompt = {'Enter the data series display name'};
+                                dlgtitle = 'Label Data Series';
+                                dims = [1 40];
+                                
+                                answer = inputdlg(prompt,dlgtitle,dims,definput);
+                                DisplayName_temp = answer;
+                case 'Off'
+                    DisplayName_temp = definput;
+            end
+            
+            switch app.HoldPlotsSwitch_FitDiagnostics.Value
+                case 'On'
+                    app.CumulativeCCTFitDiagnosticDisplayNames = [app.CumulativeCCTFitDiagnosticDisplayNames DisplayName_temp];
+
                     hold(app.RealQQ, 'on');
                     hold(app.ImagQQ, 'on');
                     hold(app.KDensity, 'on');
@@ -2679,10 +2724,16 @@ classdef AnalyZe < matlab.apps.AppBase
                         end
                     
                 case 'Off'
+                    app.CumulativeCCTFitDiagnosticDisplayNames = DisplayName_temp;
+
                     hold(app.RealQQ, 'off');
+                    cla(app.RealQQ,"reset");
                     hold(app.ImagQQ, 'off');
+                    cla(app.ImagQQ,"reset");
                     hold(app.KDensity, 'off');
+                    cla(app.KDensity,"reset");
                     hold(app.Residuals, 'off');
+                    cla(app.Residuals,"reset");
 
                     app.FitDiagnosticQQColourCounter = 1;
                     app.KDensityFits_ColourMapCounter = 1;
@@ -2690,15 +2741,23 @@ classdef AnalyZe < matlab.apps.AppBase
 
 
             scatter(app.Residuals, real(Res) ,imag(Res),'*');
+            grid(app.Residuals,'on');
 
             cmap = hsv(6);
-
+                display(DisplayName_temp)
             qq1 = qqplot(app.RealQQ, real(Res) );
             title(app.RealQQ, 'QQ Plot Re(Residuals)')
             qq1(1).MarkerEdgeColor = cmap(end-app.FitDiagnosticQQColourCounter,:);
+                qq1(1).DisplayName = convertStringsToChars( DisplayName_temp{:});
+                qq1(2).HandleVisibility ="off";
+                qq1(3).HandleVisibility ="off";
+
             qq2 = qqplot(app.ImagQQ, imag(Res) );
             title(app.ImagQQ, 'QQ Plot Im(Residuals)')
             qq2(1).MarkerEdgeColor = cmap(end-app.FitDiagnosticQQColourCounter,:);
+                qq2(1).DisplayName = convertStringsToChars( DisplayName_temp{:} );
+                qq2(2).HandleVisibility ="off";
+                qq2(3).HandleVisibility ="off";
 
             gridx1 = -app.RealAxisWidthEditField.Value:app.GranularityEditField.Value:app.RealAxisWidthEditField.Value;
             gridx2 = -app.ImagAxisWidthEditField.Value:app.GranularityEditField.Value:app.ImagAxisWidthEditField.Value;
@@ -2707,12 +2766,13 @@ classdef AnalyZe < matlab.apps.AppBase
             x2 = x2(:);
             xi = [x1 x2];
 
-            FaceAlfa = 1 - (1/app.KDensityFits_ColourMapCounter);
+            
+            %FaceAlfa = 1 - (1/app.KDensityFits_ColourMapCounter);
             switch app.PlotStyleSwitch.Value
                 case 'Surface'
                     ksdensity(app.KDensity, [ real(Res) imag(Res) ], xi)
                 case 'Contour'
-                    ksdensity(app.KDensity, [ real(Res) imag(Res) ], xi, 'PlotFcn','contour')
+                    ksdensity(app.KDensity, [ real(Res) imag(Res) ], xi,  'PlotFcn','contour')
             end
 %             ColourMaps  = {colormap(app.KDensity,parula),...
 %                 colormap(app.KDensity,autumn),...
@@ -2722,8 +2782,23 @@ classdef AnalyZe < matlab.apps.AppBase
 %                 colormap(app.KDensity,hot)...
 %                 };
 %             colormap(app.KDensity,ColourMaps{app.KDensityFits_ColourMapCounter})
+                
+            %colormap(app.KDensity,app.ColourMapListBox.Value);
+ 
 
+            switch app.LabelPlotsSwitch.Value
+                case 'On'
+                    legend(app.Residuals,app.CumulativeCCTFitDiagnosticDisplayNames);
+                    legend(app.RealQQ);
+                    legend(app.ImagQQ);
+                    legend(app.KDensity,app.CumulativeCCTFitDiagnosticDisplayNames);
 
+                case 'Off'
+                    legend(app.Residuals,'off');
+                    legend(app.RealQQ,'off');
+                    legend(app.ImagQQ,'off');
+                    legend(app.KDensity,'off');
+            end
 
         end
 
@@ -3160,17 +3235,35 @@ classdef AnalyZe < matlab.apps.AppBase
 
                         switch var_y
                             case 'Device CCT Params'
-                                prompt = {'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'};
+                                DatToPlot = table2array(T(unique(ind(:,1)),var_y)) ;
+                                y = DatToPlot(:,1);
+
+                                FirstRowCCT = T(unique(ind(1,1)),['circuit']);
+                                CCTToPlot = table2array(FirstRowCCT);
+                                first_y = eval(y{1});
+                                NumParams = length(first_y);
+
+                                prompt = {['The circuit parameters, excluding the barrier parameters, Rb and Cb, are listed in this column. The parameters are listed in order of appearance in the circuit string, with the exception of the series resisitance, which is always the last parameter. ',...
+                                    newline,...
+                                    newline,...
+                                    'The circuit string for the first entry is: ',CCTToPlot{1},...
+                                    newline,... 
+                                    newline,...
+                                    'There are ', num2str(NumParams), ' Parameters available to plot, index =', num2str(NumParams), ' corresponds to the final parameter, the series system (electrolyte) resistance. ',...
+                                    newline,...
+                                    newline,...
+                                    'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'] };
                                 dlgtitle = 'Choose Param';
                                 dims = [1 40];
                                 definput = {'1'};
                                 
                                 answer = inputdlg(prompt,dlgtitle,dims,definput);
+                                if isempty(answer)
+                                    return
+                                end
                                 Index = round(str2double(answer));
 
-                                DatToPlot = table2array(T(unique(ind(:,1)),var_y)) ;
-                                y = DatToPlot(:,1);
-                                
+                                                               
                                 y_temp = [];
                                 for i = 1:length(y)
                                     temp = eval(y{i});
@@ -3201,12 +3294,29 @@ classdef AnalyZe < matlab.apps.AppBase
 
                         switch var_y
                             case 'Device CCT Params'
-                                prompt = {'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'};
+                                 FirstRowCCT = T(unique(ind(1,1)),['circuit']);
+                                CCTToPlot = table2array(FirstRowCCT);
+                                first_y = eval(y{1});
+                                NumParams = length(first_y);
+
+                                prompt = {['The circuit parameters, excluding the barrier parameters, Rb and Cb, are listed in this column. The parameters are listed in order of appearance in the circuit string, with the exception of the series resisitance, which is always the last parameter. ',...
+                                    newline,...
+                                    newline,...
+                                    'The circuit string for the first entry is: ',CCTToPlot{1},...
+                                    newline,... 
+                                    newline,...
+                                    'There are ', num2str(NumParams), ' Parameters available to plot, index =', num2str(NumParams), ' corresponds to the final parameter, the series system (electrolyte) resistance. ',...
+                                    newline,...
+                                    newline,...
+                                    'Enter the Index of the Parameter you wish to plot (Indexes start at 1):'] };
                                 dlgtitle = 'Choose Param';
                                 dims = [1 40];
                                 definput = {'1'};
                                 
                                 answer = inputdlg(prompt,dlgtitle,dims,definput);
+                                if isempty(answer)
+                                    return
+                                end
                                 Index = round(str2double(answer));
                                 
                                 y_temp = [];
@@ -5893,8 +6003,8 @@ classdef AnalyZe < matlab.apps.AppBase
         % Key press function: ResultsTable
         function ResultsTableKeyPress(app, event)
             key = event.Key;
-            s_unmark = uistyle('BackgroundColor','white');
-            s_marked = uistyle('BackgroundColor','red');
+            s_unmark = uistyle('FontColor','black','BackgroundColor','white');
+            s_marked = uistyle('FontColor','black','BackgroundColor','red');
             s_accept = uistyle('FontColor',"#77AC30",'BackgroundColor','white');
 
             ind = app.ResultTableCellsSelected;
@@ -5908,6 +6018,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.FitsResultsTableMarkings(ind(1)) = false;
                 case 'a'
                     addStyle(app.ResultsTable,s_accept,'row',ind(1));
+                    app.FitsResultsTableMarkings(ind(1)) = false;
             end
         end
 
@@ -6412,9 +6523,10 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create RLabel
             app.RLabel = uilabel(app.WriteACircuitTab);
+            app.RLabel.FontSize = 18;
             app.RLabel.FontWeight = 'bold';
             app.RLabel.FontColor = [0.6353 0.0784 0.1843];
-            app.RLabel.Position = [261 91 29 22];
+            app.RLabel.Position = [259 91 41 23];
             app.RLabel.Text = '+R∞';
 
             % Create IncludeBarrierSwitch_2Label
@@ -6717,7 +6829,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.UpdateDiagnosticPlotsButton.FontWeight = 'bold';
             app.UpdateDiagnosticPlotsButton.FontColor = [0.4667 0.6745 0.1882];
             app.UpdateDiagnosticPlotsButton.Tooltip = {'First select any cell in the Results table - by clicking ''Update Diagnostic Plots'' the fitness diagnostics for that fitting instance (row) will be added to the plots.'};
-            app.UpdateDiagnosticPlotsButton.Position = [97 553 176 38];
+            app.UpdateDiagnosticPlotsButton.Position = [153 552 176 38];
             app.UpdateDiagnosticPlotsButton.Text = 'Update Diagnostic Plots';
 
             % Create TabGroup3
@@ -6784,27 +6896,39 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create PlotStyleSwitchLabel
             app.PlotStyleSwitchLabel = uilabel(app.DensityTab);
             app.PlotStyleSwitchLabel.HorizontalAlignment = 'center';
-            app.PlotStyleSwitchLabel.Position = [367 45 55 22];
+            app.PlotStyleSwitchLabel.FontWeight = 'bold';
+            app.PlotStyleSwitchLabel.Position = [365 62 59 22];
             app.PlotStyleSwitchLabel.Text = 'Plot Style';
 
             % Create PlotStyleSwitch
             app.PlotStyleSwitch = uiswitch(app.DensityTab, 'slider');
             app.PlotStyleSwitch.Items = {'Surface', 'Contour'};
             app.PlotStyleSwitch.ValueChangedFcn = createCallbackFcn(app, @PlotStyleSwitchValueChanged, true);
-            app.PlotStyleSwitch.Position = [371 82 45 20];
+            app.PlotStyleSwitch.Position = [371 89 45 20];
             app.PlotStyleSwitch.Value = 'Surface';
 
             % Create HoldPlotsSwitch_2Label
             app.HoldPlotsSwitch_2Label = uilabel(app.FitDiagnosticTab);
             app.HoldPlotsSwitch_2Label.HorizontalAlignment = 'center';
             app.HoldPlotsSwitch_2Label.FontWeight = 'bold';
-            app.HoldPlotsSwitch_2Label.Position = [318 536 64 22];
+            app.HoldPlotsSwitch_2Label.Position = [376 536 64 22];
             app.HoldPlotsSwitch_2Label.Text = 'Hold Plots';
 
             % Create HoldPlotsSwitch_FitDiagnostics
             app.HoldPlotsSwitch_FitDiagnostics = uiswitch(app.FitDiagnosticTab, 'toggle');
             app.HoldPlotsSwitch_FitDiagnostics.Orientation = 'horizontal';
-            app.HoldPlotsSwitch_FitDiagnostics.Position = [315 557 67 30];
+            app.HoldPlotsSwitch_FitDiagnostics.Position = [373 557 67 30];
+
+            % Create LabelPlotsSwitchLabel
+            app.LabelPlotsSwitchLabel = uilabel(app.FitDiagnosticTab);
+            app.LabelPlotsSwitchLabel.HorizontalAlignment = 'center';
+            app.LabelPlotsSwitchLabel.FontWeight = 'bold';
+            app.LabelPlotsSwitchLabel.Position = [56 537 69 22];
+            app.LabelPlotsSwitchLabel.Text = 'Label Plots';
+
+            % Create LabelPlotsSwitch
+            app.LabelPlotsSwitch = uiswitch(app.FitDiagnosticTab, 'slider');
+            app.LabelPlotsSwitch.Position = [67 561 45 20];
 
             % Create SeriesPlotTab
             app.SeriesPlotTab = uitab(app.TabGroup2);
@@ -6845,7 +6969,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create FlipAxesSwitchLabel
             app.FlipAxesSwitchLabel = uilabel(app.SeriesPlotTab);
             app.FlipAxesSwitchLabel.HorizontalAlignment = 'center';
-            app.FlipAxesSwitchLabel.Position = [39 469 54 22];
+            app.FlipAxesSwitchLabel.FontWeight = 'bold';
+            app.FlipAxesSwitchLabel.Position = [37 469 58 22];
             app.FlipAxesSwitchLabel.Text = 'Flip Axes';
 
             % Create FlipAxesSwitch
@@ -7035,7 +7160,9 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create LabelDataSeriesSwitchLabel
             app.LabelDataSeriesSwitchLabel = uilabel(app.SeriesPlotTab);
             app.LabelDataSeriesSwitchLabel.HorizontalAlignment = 'center';
-            app.LabelDataSeriesSwitchLabel.Position = [16 423 100 22];
+            app.LabelDataSeriesSwitchLabel.FontWeight = 'bold';
+            app.LabelDataSeriesSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.LabelDataSeriesSwitchLabel.Position = [14 423 105 22];
             app.LabelDataSeriesSwitchLabel.Text = 'Label Data Series';
 
             % Create LabelDataSeriesSwitch
