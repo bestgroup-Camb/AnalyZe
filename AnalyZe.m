@@ -106,6 +106,8 @@ classdef AnalyZe < matlab.apps.AppBase
         ImagQQ                          matlab.ui.control.UIAxes
         RealQQ                          matlab.ui.control.UIAxes
         SeriesPlotTab                   matlab.ui.container.Tab
+        LabelDataSeriesSwitch           matlab.ui.control.Switch
+        LabelDataSeriesSwitchLabel      matlab.ui.control.Label
         SeriesPlotcctFitTabGroup        matlab.ui.container.TabGroup
         NormalizationTab_3              matlab.ui.container.Tab
         NormalizationSchemeListBox_6    matlab.ui.control.ListBox
@@ -384,6 +386,7 @@ classdef AnalyZe < matlab.apps.AppBase
         TutorialMode = true; % Description
         BetaRecursiveSeries = struct('Rb',[],'Cb',[]); % Description
         FitsResultsTableMarkings = []; % Description
+        CumulativeCCTFitDisplayNames; % Description
     end
     
     methods (Access = private)
@@ -1966,7 +1969,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                         'An initial condition space is defined by the origin and the max values provided; the MultiStart algorithm minimizes the objective function N times, where N is the number of MultiStarts provided and each iteration uses an intial condition for a set of N uniformly distributed points in the intitial condition space.',...
                                         'An exception is made for the irreducible series resistance, which is estimated from the highst frequency datapoint by default and held constant during the optimization - alternative approaches are selectable.',...
                                         '',...
-                                        'The results table and plots are populated with the fitting output. To mark and unmark a result, click a cell in the row and press the ''m'' or ''u'' keys respectively. Marked rows are excluded from the time series plot. '},...
+                                        'The results table and plots are populated with the fitting output. To mark and unmark a result, click a cell in the row and press the ''m'' or ''u'' keys respectively. Marked rows are excluded from the time series plot. Use ''a'' to mark a cell with green text - no effect ',...
+                                        '',...
+                                        'If included, the barrier model (R//C) parameters R and C are split into independent columns (if included in the model, otherwise marked as NaN). The remaining parameters are are stored as a character array in the Device CCT Params column in the order that they appear in the circuit string. The irreducible series resistance is always the last value.'},...
                                         'Fit an Equivalent Circuit',...
                                        'Continue','Cancel','Continue');
                end
@@ -3231,18 +3236,43 @@ classdef AnalyZe < matlab.apps.AppBase
                             xlabel(app.FitSeriesPlot, ylab);
                             ylabel(app.FitSeriesPlot, xlab);
                     end
-    
+                    
+                    DisplayName_temp = [];
+                    switch app.HoldPlotsSwitch_FitSeries.Value
+                        case 'On'
+                            definput = {['Data Series: ' , num2str(length(app.CumulativeCCTfitSeriesPlotRaw)+1)]};
+                        case 'Off'
+                            definput = {['Data Series: ' , num2str(length(app.CumulativeCCTfitSeriesPlotRaw))]};
+                    end
+                    switch app.LabelDataSeriesSwitch.Value
+                        case 'On'
+                                prompt = {'Enter the data series display name'};
+                                dlgtitle = 'Label Data Series';
+                                dims = [1 40];
+                                
+                                
+                                answer = inputdlg(prompt,dlgtitle,dims,definput);
+                                DisplayName_temp = answer;
+                                
+                        case 'Off'
+                               DisplayName_temp = definput;
+                    end
+                        
                     switch app.HoldPlotsSwitch_FitSeries.Value
     
                         case 'On'
-                            %hold(app.FitSeriesPlot, 'on');
+                            
                             app.CumulativeCCTfitSeriesPlotRaw = [app.CumulativeCCTfitSeriesPlotRaw {y}];
                             app.CumulativeCCTfitSeriesDomain = [app.CumulativeCCTfitSeriesDomain {x}];
+
+                            app.CumulativeCCTFitDisplayNames = [app.CumulativeCCTFitDisplayNames DisplayName_temp];
                             
                         case 'Off'
-                            %hold(app.FitSeriesPlot, 'off');
+                            
                             app.CumulativeCCTfitSeriesPlotRaw = {y};
                             app.CumulativeCCTfitSeriesDomain = {x};
+
+                            app.CumulativeCCTFitDisplayNames = DisplayName_temp;
     
                     end
 
@@ -3400,6 +3430,13 @@ classdef AnalyZe < matlab.apps.AppBase
                             hold(app.FitSeriesPlot, 'off');
                             plot(app.FitSeriesPlot, app.CumulativeCCTfitSeriesDomainPlot(:,1) , app.CumulativeCCTfitSeriesPlot(:,1) , '*-','LineWidth',3)
     
+                    end
+
+                    switch app.LabelDataSeriesSwitch.Value
+                        case 'On'
+                            legend(app.FitSeriesPlot,app.CumulativeCCTFitDisplayNames)
+                        case 'Off'
+                            legend(app.FitSeriesPlot,'off')
                     end
     
                     grid(app.FitSeriesPlot, 'on')
@@ -6648,6 +6685,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResultsTable.RowName = {};
             app.ResultsTable.CellSelectionCallback = createCallbackFcn(app, @ResultsTableCellSelection, true);
             app.ResultsTable.DoubleClickedFcn = createCallbackFcn(app, @ResultsTableDoubleClicked, true);
+            app.ResultsTable.Tooltip = {'''m'' - mark for exclusion'; '''a'' - mark to accept'; '''u'' - unmark'};
             app.ResultsTable.ButtonDownFcn = createCallbackFcn(app, @ResultsTableButtonDown, true);
             app.ResultsTable.KeyPressFcn = createCallbackFcn(app, @ResultsTableKeyPress, true);
             app.ResultsTable.Position = [11 20 461 570];
@@ -6777,7 +6815,7 @@ classdef AnalyZe < matlab.apps.AppBase
             xlabel(app.FitSeriesPlot, 'X')
             ylabel(app.FitSeriesPlot, 'Y')
             zlabel(app.FitSeriesPlot, 'Z')
-            app.FitSeriesPlot.Position = [10 97 470 341];
+            app.FitSeriesPlot.Position = [10 87 470 341];
 
             % Create PlotFromTableSelectionButton
             app.PlotFromTableSelectionButton = uibutton(app.SeriesPlotTab, 'push');
@@ -6786,7 +6824,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.PlotFromTableSelectionButton.FontWeight = 'bold';
             app.PlotFromTableSelectionButton.FontColor = [0.4667 0.6745 0.1882];
             app.PlotFromTableSelectionButton.Tooltip = {'First highlight two columns in the Results table - clicking ''Plot From Table Selection'' will plot one data series against the other.'};
-            app.PlotFromTableSelectionButton.Position = [19 516 93 74];
+            app.PlotFromTableSelectionButton.Position = [19 521 93 74];
             app.PlotFromTableSelectionButton.Text = {'Plot From '; 'Table'; ' Selection'};
 
             % Create HoldPlotsSwitch_2Label_2
@@ -6807,12 +6845,12 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create FlipAxesSwitchLabel
             app.FlipAxesSwitchLabel = uilabel(app.SeriesPlotTab);
             app.FlipAxesSwitchLabel.HorizontalAlignment = 'center';
-            app.FlipAxesSwitchLabel.Position = [39 458 54 22];
+            app.FlipAxesSwitchLabel.Position = [39 469 54 22];
             app.FlipAxesSwitchLabel.Text = 'Flip Axes';
 
             % Create FlipAxesSwitch
             app.FlipAxesSwitch = uiswitch(app.SeriesPlotTab, 'slider');
-            app.FlipAxesSwitch.Position = [43 483 45 20];
+            app.FlipAxesSwitch.Position = [43 494 45 20];
 
             % Create PlotMultiSeriesMeanSwitchLabel
             app.PlotMultiSeriesMeanSwitchLabel = uilabel(app.SeriesPlotTab);
@@ -6993,6 +7031,16 @@ classdef AnalyZe < matlab.apps.AppBase
             app.qEditField_2.FontSize = 14;
             app.qEditField_2.Position = [282 38 38 22];
             app.qEditField_2.Value = 1;
+
+            % Create LabelDataSeriesSwitchLabel
+            app.LabelDataSeriesSwitchLabel = uilabel(app.SeriesPlotTab);
+            app.LabelDataSeriesSwitchLabel.HorizontalAlignment = 'center';
+            app.LabelDataSeriesSwitchLabel.Position = [16 423 100 22];
+            app.LabelDataSeriesSwitchLabel.Text = 'Label Data Series';
+
+            % Create LabelDataSeriesSwitch
+            app.LabelDataSeriesSwitch = uiswitch(app.SeriesPlotTab, 'slider');
+            app.LabelDataSeriesSwitch.Position = [43 448 45 20];
 
             % Create SaveResultsButton
             app.SaveResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
