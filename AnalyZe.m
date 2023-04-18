@@ -1739,12 +1739,19 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Button pushed function: LoadFromPreviousSaveButton
         function LoadFromPreviousSaveButtonPushed(app, event)
-             [file,path] = uigetfile('AnalyZeData*.mat');
+             [file,path] = uigetfile('AnalyZeData*');
             if isequal(file,0)
                %disp('User selected Cancel');
             else
                %disp(['User selected ', fullfile(path,file)]);
-
+                    [~,~,anExt]=fileparts(file);
+                    idx = find(strcmp(anExt,{'.mat'})) ;
+                    if isempty(idx)
+                        errordlg("Please select a .mat file","Unsupported File Type")
+                        return
+                    end
+                    
+                                
                var = load(fullfile(path,file));
                app.Data = [app.Data var.SavedData];
             end
@@ -2674,7 +2681,7 @@ classdef AnalyZe < matlab.apps.AppBase
             
 
             SelectedFits = app.Fits(SelectedRows);
-                display(SelectedRows)
+                
             Res = [];
 
             for rows = 1:length(SelectedRows)
@@ -2744,7 +2751,7 @@ classdef AnalyZe < matlab.apps.AppBase
             grid(app.Residuals,'on');
 
             cmap = hsv(6);
-                display(DisplayName_temp)
+                
             qq1 = qqplot(app.RealQQ, real(Res) );
             title(app.RealQQ, 'QQ Plot Re(Residuals)')
             qq1(1).MarkerEdgeColor = cmap(end-app.FitDiagnosticQQColourCounter,:);
@@ -3919,18 +3926,30 @@ classdef AnalyZe < matlab.apps.AppBase
                end
 
 
-            [file,path] = uigetfile('AnalyZeResults*.mat','Select AnalyZe Results MAT file:');
+            [file,path] = uigetfile('AnalyZeResults*','Select AnalyZe Results MAT file:');
             if isequal(file,0)
                %disp('User selected Cancel');
             else
                %disp(['User selected ', fullfile(path,file)]);
+                    [~,~,anExt]=fileparts(file);
+                    idx = find(strcmp(anExt,{'.mat'})) ;
+                    if isempty(idx)
+                        errordlg("Please select a .mat file","Unsupported File Type")
+                        return
+                    end
 
-               [file2,path2] = uigetfile(convertStringsToChars(string(path) + "\AnalyZeResults*.csv"),'Now Select AnalyZe Results CSV file:');
+               [file2,path2] = uigetfile(convertStringsToChars(string(path) + "\AnalyZeResults*" ),'Now Select AnalyZe Results CSV file:');
 
                if isequal(file2,0)
                    %disp('User selected Cancel')
                else
                    %disp(['User Selected ', fullfile(path2,file2)]);
+                       [~,~,anExt]=fileparts(file2);
+                        idx = find(strcmp(anExt,{'.csv'})) ;
+                        if isempty(idx)
+                            errordlg("Please select the .csv file which corresponds to the previously selected .mat file","Unsupported File Type")
+                            return
+                        end
                   
                    %%Read in .mat file
                     var = load(fullfile(path,file));
@@ -5229,18 +5248,30 @@ classdef AnalyZe < matlab.apps.AppBase
                end
             
             
-            [file,path] = uigetfile('AnalyZeSysIDResults*.mat','Select AnalyZe Results MAT file:');
+            [file,path] = uigetfile('AnalyZeSysIDResults*','Select AnalyZe Results MAT file:');
             if isequal(file,0)
                %disp('User selected Cancel');
             else
                %disp(['User selected ', fullfile(path,file)]);
+                    [~,~,anExt]=fileparts(file);
+                    idx = find(strcmp(anExt,{'.mat'})) ;
+                    if isempty(idx)
+                        errordlg("Please select a .mat file","Unsupported File Type")
+                        return
+                    end
 
-               [file2,path2] = uigetfile(convertStringsToChars(string(path) + "\AnalyZeSysIDResults*.csv"),'Now Select AnalyZe Results CSV file:');
+               [file2,path2] = uigetfile(convertStringsToChars(string(path) + "\AnalyZeSysIDResults*"),'Now Select AnalyZe Results CSV file:');
 
                if isequal(file2,0)
                    %disp('User selected Cancel')
                else
                    %disp(['User Selected ', fullfile(path2,file2)]);
+                        [~,~,anExt]=fileparts(file2);
+                        idx = find(strcmp(anExt,{'.csv'})) ;
+                        if isempty(idx)
+                            errordlg("Please select the .csv file corresponding to the previously selected .mat file","Unsupported File Type")
+                            return
+                        end
                   
                    %%Read in .mat file
                     var = load(fullfile(path,file));
@@ -5666,8 +5697,17 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
                 % Copy all UIAxes children, take over axes limits and aspect ratio. 
-                
-                allChildren = axs.XAxis.Parent.Children;
+                allChildren = findall(axs,'Type','Line');%axs.XAxis.Parent.Children;
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Scatter');
+                    end
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Contour');
+                    end
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Surface');
+                    end
+    
                 copyobj(allChildren, figAxes)
                 figAxes.XLim = axs.XLim;
                 figAxes.XScale = axs.XScale;
@@ -5678,13 +5718,14 @@ classdef AnalyZe < matlab.apps.AppBase
                 try
                     lgnd_names= [];
                     for l= 1:length(axs.Legend.String)
-                        lgndName_l = axs.Legend.String{l}
-                        lgnd_names = [lgnd_names;lgndName_l]
+                        lgndName_l = axs.Legend.String{l};
+                        lgnd_names = [lgnd_names;{lgndName_l}];
                     end
                     %lgndName1 = axs.Legend.String{1};
-                    lgd = legend(figAxes,lgnd_names)
+                    lgd = legend(figAxes,lgnd_names);
                     lgd.Box = axs.Legend.Box;
-                    lgd.Location = axs.Legend.Location;
+                    lgd.Position = axs.Legend.Position;
+                    lgd.Visible = "on";
                 end
                 fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
                 fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
@@ -5699,7 +5740,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         yyaxis(axs,"right")
                         yyaxis(figAxes,"right")
                         
-                        allChildren = axs.XAxis.Parent.Children;
+                        allChildren = findall(axs,'Type','Line'); %axs.XAxis.Parent.Children;
                         copyobj(allChildren, figAxes)
                         figAxes.XLim = axs.XLim;
                         figAxes.XScale = axs.XScale;
@@ -5784,7 +5825,16 @@ classdef AnalyZe < matlab.apps.AppBase
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
                 % Copy all UIAxes children, take over axes limits and aspect ratio. 
                 
-                allChildren = axs.XAxis.Parent.Children;
+                allChildren = findall(axs,'Type','Line');%axs.XAxis.Parent.Children;
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Scatter');
+                    end
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Contour');
+                    end
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Surface');
+                    end
                 copyobj(allChildren, figAxes)
                 figAxes.XLim = axs.XLim;
                 figAxes.XScale = axs.XScale;
@@ -5795,13 +5845,14 @@ classdef AnalyZe < matlab.apps.AppBase
                 try
                     lgnd_names= [];
                     for l= 1:length(axs.Legend.String)
-                        lgndName_l = axs.Legend.String{l}
-                        lgnd_names = [lgnd_names;lgndName_l]
+                        lgndName_l = axs.Legend.String{l};
+                        lgnd_names = [lgnd_names;{lgndName_l}];
                     end
                     %lgndName1 = axs.Legend.String{1};
-                    lgd = legend(figAxes,lgnd_names)
+                    lgd = legend(figAxes,lgnd_names);
                     lgd.Box = axs.Legend.Box;
-                    lgd.Location = axs.Legend.Location;
+                    lgd.Position = axs.Legend.Position;
+                    lgd.Visible = "on";
                 end
                 fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
                 fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
@@ -5816,7 +5867,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         yyaxis(axs,"right")
                         yyaxis(figAxes,"right")
                         
-                        allChildren = axs.XAxis.Parent.Children;
+                        allChildren = findall(axs,'Type','Line'); %axs.XAxis.Parent.Children;
                         copyobj(allChildren, figAxes)
                         figAxes.XLim = axs.XLim;
                         figAxes.XScale = axs.XScale;
@@ -5891,7 +5942,16 @@ classdef AnalyZe < matlab.apps.AppBase
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
                 % Copy all UIAxes children, take over axes limits and aspect ratio. 
                 
-                allChildren = axs.XAxis.Parent.Children;
+                allChildren = findall(axs,'Type','Line');%axs.XAxis.Parent.Children;
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Scatter');
+                    end
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Contour');
+                    end
+                    if isempty(allChildren)
+                        allChildren = findall(axs,'Type','Surface');
+                    end
                 copyobj(allChildren, figAxes)
                 figAxes.XLim = axs.XLim;
                 figAxes.XScale = axs.XScale;
@@ -5902,13 +5962,14 @@ classdef AnalyZe < matlab.apps.AppBase
                 try
                     lgnd_names= [];
                     for l= 1:length(axs.Legend.String)
-                        lgndName_l = axs.Legend.String{l}
-                        lgnd_names = [lgnd_names;lgndName_l]
+                        lgndName_l = axs.Legend.String{l};
+                        lgnd_names = [lgnd_names;{lgndName_l}];
                     end
                     %lgndName1 = axs.Legend.String{1};
-                    lgd = legend(figAxes,lgnd_names)
+                    lgd = legend(figAxes,lgnd_names);
                     lgd.Box = axs.Legend.Box;
-                    lgd.Location = axs.Legend.Location;
+                    lgd.Position = axs.Legend.Position;
+                    lgd.Visible = "on";
                 end
                 fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
                 fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
@@ -5923,7 +5984,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         yyaxis(axs,"right")
                         yyaxis(figAxes,"right")
                         
-                        allChildren = axs.XAxis.Parent.Children;
+                        allChildren = findall(axs,'Type','Line'); %axs.XAxis.Parent.Children;
                         copyobj(allChildren, figAxes)
                         figAxes.XLim = axs.XLim;
                         figAxes.XScale = axs.XScale;
