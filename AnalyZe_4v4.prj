@@ -1,19 +1,19 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="1043566473" file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe_4v3.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe" name="AnalyZe_4v3" target="target.mlapps" target-name="Package App">
-    <param.appname>AnalyZe_4v3</param.appname>
+  <configuration build-checksum="123960828" file="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe_4v4.prj" location="C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe" name="AnalyZe_4v4" target="target.mlapps" target-name="Package App">
+    <param.appname>AnalyZe_4v4</param.appname>
     <param.authnamewatermark>Douglas van Niekerk</param.authnamewatermark>
     <param.email>dcv24@cam.ac.uk</param.email>
     <param.company>BEST Group</param.company>
-    <param.icon>${PROJECT_ROOT}\AnalyZe_4v3_resources\icon_24.png</param.icon>
+    <param.icon>${PROJECT_ROOT}\AnalyZe_4v4_resources\icon_24.png</param.icon>
     <param.icons>
-      <file>${PROJECT_ROOT}\AnalyZe_4v3_resources\icon_48.png</file>
-      <file>${PROJECT_ROOT}\AnalyZe_4v3_resources\icon_24.png</file>
-      <file>${PROJECT_ROOT}\AnalyZe_4v3_resources\icon_16.png</file>
+      <file>${PROJECT_ROOT}\AnalyZe_4v4_resources\icon_48.png</file>
+      <file>${PROJECT_ROOT}\AnalyZe_4v4_resources\icon_24.png</file>
+      <file>${PROJECT_ROOT}\AnalyZe_4v4_resources\icon_16.png</file>
     </param.icons>
     <param.summary>AnalyZe - A MATLAB app for processing EIS data in particular for monitoring biological barriers.</param.summary>
     <param.description>Current functionality includes rudimentary data handling, equivalent circuit fitting, goodness of fit analysis, regression diagnostic, simple magnitude cross section time series analysis and transfer function estimation for time series pole drift analysis.</param.description>
-    <param.screenshot>C:\Users\dougl\AppData\Local\Temp\tpd03f0a9c_ffb5_4cba_8cde_0b4977ee32f6.png</param.screenshot>
-    <param.version>4.3</param.version>
+    <param.screenshot>C:\Users\dougl\AppData\Local\Temp\tpcc59cb1c_d235_43c6_a42f_76457b3948e4.png</param.screenshot>
+    <param.version>4.4</param.version>
     <param.products.name>
       <item>MATLAB</item>
       <item>Control System Toolbox</item>
