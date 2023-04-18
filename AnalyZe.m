@@ -5676,8 +5676,13 @@ classdef AnalyZe < matlab.apps.AppBase
                 figAxes.ZLim = axs.ZLim;
                 %figAxes.DataAspectRatio = axs.DataAspectRatio;
                 try
-                    lgndName1 = axs.Legend.String{1};
-                    lgd = legend(lgndName1);
+                    lgnd_names= [];
+                    for l= 1:length(axs.Legend.String)
+                        lgndName_l = axs.Legend.String{l}
+                        lgnd_names = [lgnd_names;lgndName_l]
+                    end
+                    %lgndName1 = axs.Legend.String{1};
+                    lgd = legend(figAxes,lgnd_names)
                     lgd.Box = axs.Legend.Box;
                     lgd.Location = axs.Legend.Location;
                 end
@@ -5788,8 +5793,13 @@ classdef AnalyZe < matlab.apps.AppBase
                 figAxes.ZLim = axs.ZLim;
                 %figAxes.DataAspectRatio = axs.DataAspectRatio;
                 try
-                    lgndName1 = axs.Legend.String{1};
-                    lgd = legend(lgndName1);
+                    lgnd_names= [];
+                    for l= 1:length(axs.Legend.String)
+                        lgndName_l = axs.Legend.String{l}
+                        lgnd_names = [lgnd_names;lgndName_l]
+                    end
+                    %lgndName1 = axs.Legend.String{1};
+                    lgd = legend(figAxes,lgnd_names)
                     lgd.Box = axs.Legend.Box;
                     lgd.Location = axs.Legend.Location;
                 end
@@ -5890,8 +5900,13 @@ classdef AnalyZe < matlab.apps.AppBase
                 figAxes.ZLim = axs.ZLim;
                 %figAxes.DataAspectRatio = axs.DataAspectRatio;
                 try
-                    lgndName1 = axs.Legend.String{1};
-                    lgd = legend(lgndName1);
+                    lgnd_names= [];
+                    for l= 1:length(axs.Legend.String)
+                        lgndName_l = axs.Legend.String{l}
+                        lgnd_names = [lgnd_names;lgndName_l]
+                    end
+                    %lgndName1 = axs.Legend.String{1};
+                    lgd = legend(figAxes,lgnd_names)
                     lgd.Box = axs.Legend.Box;
                     lgd.Location = axs.Legend.Location;
                 end
