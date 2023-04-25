@@ -2528,11 +2528,11 @@ classdef AnalyZe < matlab.apps.AppBase
                end 
             
             yyaxis(app.BodeResults, 'right')
-             cla(app.BodeResults)
+             cla(app.BodeResults,"reset")
              yyaxis(app.BodeResults, 'left')
-             cla(app.BodeResults)
-             cla(app.NyqResults)
-             cla(app.FitSeriesPlot)
+             cla(app.BodeResults,"reset")
+             cla(app.NyqResults,"reset")
+             cla(app.FitSeriesPlot,"reset")
              app.ResultsTable.Data = [];
              app.ProgressGuage.Limits = [0,1];
              app.ProgressGuage.Value = 0;
@@ -2548,6 +2548,7 @@ classdef AnalyZe < matlab.apps.AppBase
              
              app.Fits = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'FitsResults', {},'RawData', {});
              app.FitsResultsTableMarkings = [];
+             removeStyle(app.ResultsTable);
              f = msgbox("Results Cleared!");
        
              
@@ -6082,6 +6083,8 @@ classdef AnalyZe < matlab.apps.AppBase
             s_unmark = uistyle('FontColor','black','BackgroundColor','white');
             s_marked = uistyle('FontColor','black','BackgroundColor','red');
             s_accept = uistyle('FontColor',"#77AC30",'BackgroundColor','white');
+
+            %display(app.ResultsTable.StyleConfigurations)
 
             ind = app.ResultTableCellsSelected;
 
