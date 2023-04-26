@@ -43,6 +43,7 @@ For more information refer to [Creating MATLAB GUIs](https://www.mathworks.com/h
 
 - Control System Toolbox
 - System Identification Toolbox
+- Signal Processing Toolbox
 - Statistics and Machine Learning Toolbox
 - Global Optimization Toolbox
 - Econometrics Toolbox
