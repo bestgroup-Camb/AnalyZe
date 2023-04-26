@@ -34,7 +34,7 @@ classdef AnalyZe < matlab.apps.AppBase
         TimeSeriesMagnitudeCrossSectionButton  matlab.ui.control.Button
         FitEquivalentCircuitButton      matlab.ui.control.Button
         ImportDataButton                matlab.ui.control.Button
-        DouglasvanNiekerkVersion4March2023Label  matlab.ui.control.Label
+        DouglasvanNiekerkVersion4April2023Label  matlab.ui.control.Label
         Image                           matlab.ui.control.Image
         BioImpedanceDataAnalysisToolLabel  matlab.ui.control.Label
         AnalyZeLabel                    matlab.ui.control.Label
@@ -6190,12 +6190,12 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Image.Position = [739 -3 264 265];
             app.Image.ImageSource = fullfile(pathToMLAPP, 'BEST_Logo.png');
 
-            % Create DouglasvanNiekerkVersion4March2023Label
-            app.DouglasvanNiekerkVersion4March2023Label = uilabel(app.HomeTab);
-            app.DouglasvanNiekerkVersion4March2023Label.FontSize = 14;
-            app.DouglasvanNiekerkVersion4March2023Label.FontColor = [0 0.4471 0.7412];
-            app.DouglasvanNiekerkVersion4March2023Label.Position = [747 9 278 26];
-            app.DouglasvanNiekerkVersion4March2023Label.Text = 'Douglas van Niekerk Version 4 March 2023';
+            % Create DouglasvanNiekerkVersion4April2023Label
+            app.DouglasvanNiekerkVersion4April2023Label = uilabel(app.HomeTab);
+            app.DouglasvanNiekerkVersion4April2023Label.FontSize = 14;
+            app.DouglasvanNiekerkVersion4April2023Label.FontColor = [0 0.4471 0.7412];
+            app.DouglasvanNiekerkVersion4April2023Label.Position = [734 9 278 26];
+            app.DouglasvanNiekerkVersion4April2023Label.Text = 'Douglas van Niekerk Version 4 - April 2023';
 
             % Create ImportDataButton
             app.ImportDataButton = uibutton(app.HomeTab, 'push');

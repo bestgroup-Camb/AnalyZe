@@ -1,4 +1,7 @@
 results_CCTfit = runtests("AnalyZeCircuitFitTest.m");
 results_TxFnfit = runtests("AnalyZeTransferFnFitTest.m");
 
-TestResults = [results_CCTfit,results_TxFnfit]
+TestResults = [results_CCTfit,results_TxFnfit];
+
+display(TestResults)
+generateHTMLReport(TestResults,'./')
