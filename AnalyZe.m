@@ -1614,11 +1614,6 @@ classdef AnalyZe < matlab.apps.AppBase
                end
             
             [file,path] = uigetfile('*');
-            if isequal(file,0)
-               %disp('User selected Cancel');
-            else
-               %disp(['User selected ', fullfile(path,file)]);
-            end
 
             app.FilePathEditField.Value =  fullfile(path,file) ;
             app.CurrentFileName = fullfile(path,file);
@@ -4536,7 +4531,6 @@ classdef AnalyZe < matlab.apps.AppBase
 
 
                         pzplot(app.PoleZeroResults, SysIDresult_i ) 
-%                        plot(app.PoleZeroResults , Dat_i_EIS.Z, Dat_i_EIS.Z1, '*r','LineWidth',1)
                         grid(app.PoleZeroResults,'on')
                         a = findobj(app.PoleZeroResults,'type','line');
                         for j = 1:length(a)
