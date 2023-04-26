@@ -4,4 +4,4 @@ results_TxFnfit = runtests("AnalyZeTransferFnFitTest.m");
 TestResults = [results_CCTfit,results_TxFnfit];
 
 display(TestResults)
-generateHTMLReport(TestResults,'./')
+%generatePDFReport(TestResults,'./TestResults.pdf')
