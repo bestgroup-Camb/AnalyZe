@@ -67,3 +67,7 @@ Initiate the share utility (Share->MATLAB App)
  - Within the 'Package into installation file' section
     - Output Folder = ./Packaged App
     - Click 'Package'
+
+## Testing
+
+From the MATLAB command window, run /test/AnalyZeTestWrapper.m to execute all tests.
