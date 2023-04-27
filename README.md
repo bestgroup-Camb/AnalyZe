@@ -3,7 +3,7 @@
 
 A MATLAB application for handling and analyzing Electrochemical Impedance Spectroscopy (EIS) data in biological (barrier) applications. 
 
-![Schematic of a gerneralised biological barrier being elechtrochemically interrogated alongside the standard equivalent circuit](/Equivalent_circuit_Barrier.png)
+![Schematic of a gerneralised biological barrier being elechtrochemically interrogated alongside the standard equivalent circuit](/images/Equivalent_circuit_Barrier.png)
 
 
 ## Features

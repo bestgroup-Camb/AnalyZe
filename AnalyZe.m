@@ -1590,6 +1590,14 @@ classdef AnalyZe < matlab.apps.AppBase
         % Code that executes after component creation
         function startupFcn(app)
             writelines(evalc('type(mfilename(''fullpath'')+".mlapp")'),mfilename('fullpath')+".m");
+
+            PictureCoinFlip = round(rand(1));
+            pathToMLAPP = fileparts(mfilename('fullpath'));
+            if PictureCoinFlip
+                app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectronicist.png');
+            else
+                app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectroneress.png');
+            end
         end
 
         % Button pushed function: FindFileButton
@@ -6167,7 +6175,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Image2 = uiimage(app.HomeTab);
             app.Image2.ScaleMethod = 'fill';
             app.Image2.Position = [2 -2 1020 709];
-            app.Image2.ImageSource = fullfile(pathToMLAPP, 'Bioelectronicist.png');
+            app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectronicist.png');
 
             % Create AnalyZeLabel
             app.AnalyZeLabel = uilabel(app.HomeTab);
@@ -6188,7 +6196,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create Image
             app.Image = uiimage(app.HomeTab);
             app.Image.Position = [739 -3 264 265];
-            app.Image.ImageSource = fullfile(pathToMLAPP, 'BEST_Logo.png');
+            app.Image.ImageSource = fullfile(pathToMLAPP, 'images', 'BEST_Logo.png');
 
             % Create DouglasvanNiekerkVersion4April2023Label
             app.DouglasvanNiekerkVersion4April2023Label = uilabel(app.HomeTab);

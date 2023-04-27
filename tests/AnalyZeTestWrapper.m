@@ -1,7 +1,13 @@
-results_CCTfit = runtests("AnalyZeCircuitFitTest.m");
-results_TxFnfit = runtests("AnalyZeTransferFnFitTest.m");
+%% Add Project Root folder to Session Path
+    addpath('../../AnalyZe/')
 
-TestResults = [results_CCTfit,results_TxFnfit];
+%% Run Tests    
 
-display(TestResults)
-%generatePDFReport(TestResults,'./TestResults.pdf')
+    results_CCTfit = runtests("AnalyZeCircuitFitTest.m");
+    results_TxFnfit = runtests("AnalyZeTransferFnFitTest.m");
+    results_MagCrossSection = runtests("AnalyZeMagCrossSectionTest");
+
+%% Collate Results
+    TestResults = [results_CCTfit,results_TxFnfit,results_MagCrossSection];
+    display(TestResults)
+    %generatePDFReport(TestResults,'./TestResults.pdf')
