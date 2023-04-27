@@ -43,6 +43,7 @@ For more information refer to [Creating MATLAB GUIs](https://www.mathworks.com/h
 
 - Control System Toolbox
 - System Identification Toolbox
+- Signal Processing Toolbox
 - Statistics and Machine Learning Toolbox
 - Global Optimization Toolbox
 - Econometrics Toolbox
@@ -66,3 +67,7 @@ Initiate the share utility (Share->MATLAB App)
  - Within the 'Package into installation file' section
     - Output Folder = ./Packaged App
     - Click 'Package'
+
+## Testing
+
+From the MATLAB command window, run /test/AnalyZeTestWrapper.m to execute all tests.
