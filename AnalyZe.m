@@ -785,8 +785,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
                             Recursive_Lambda_progression = linspace(0,RecursiveSettings.Lambda,RecursiveSettings.NumIterations);
                             Beta_swap_i = @(Iter,b,Beta,index) normalize([Beta(1:Iter-1), b(index), Beta(Iter+1:end)],'range'); 
-                            Beta_TimeSorted = @(b) (sortrows([RecursiveSettings.TimeVector,b], 1))';
-                            dBeta_dt = @(b_sorted) diff(b_sorted(2,:))./diff(b_sorted(1,:));
+                            Beta_TimeSorted = @(b) (sortrows([RecursiveSettings.TimeVector',b'], 1));
+                            %dBeta_dt = @(b_sorted) diff(b_sorted(:,2))./diff(RecursiveSettings.TimeVector);
+                            dBeta_dt = @(b_sorted) diff(b_sorted(:,2))./diff(b_sorted(:,1));
 
                             
                             switch app.RegSchemeListBox.Value
@@ -795,9 +796,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                 case 'Sparsity'
                                     CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm(Beta_swap_i(TimeIter,b,Beta_Rb(:).',1) ,1) + norm(Beta_swap_i(TimeIter,b,Beta_Cb(:).',2) ,1));
                                 case 'd/dt Smoothness'
-                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,2) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,1))) ,2) );
+                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,2) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,2))) ,2) );
                                 case 'd/dt Sparsity'
-                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,1) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,1))) ,1) );
+                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,1) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,2))) ,1) );
                             end
 
                             CCT_Fn_Regularized = @(b) CCT_Fn_Lik(b) + CCT_Regularization(RecursiveSettings.CurrentIteration,b,RecursiveSettings.CurrentTimePoint);
@@ -2496,10 +2497,14 @@ classdef AnalyZe < matlab.apps.AppBase
                                 switch app.RecursiveTimeRegLogSwitch_2.Value
                                     case 'Rb'
                                         ribbon(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Rb')
+                                        zlabel(app.RecursiveTimeRegPlot,'R_b')
                                     case 'Cb'
                                         ribbon(app.RecursiveTimeRegPlot,Recursive_Settings.TimeVector,BetaRecursiveSeriesLog.Cb')
+                                        zlabel(app.RecursiveTimeRegPlot,'R_b')
                                 end
                                 view(app.RecursiveTimeRegPlot,[60,30])
+                                xlabel(app.RecursiveTimeRegPlot,'Iteration')
+                                ylabel(app.RecursiveTimeRegPlot,'Time')
                                 %colormap(app.RecursiveTimeRegPlot,turbo)
                         end
                      end

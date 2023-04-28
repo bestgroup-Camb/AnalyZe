@@ -568,9 +568,9 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
             
            %% Generate test data
             R_inf = 100;
-            R_b = 250.*linspace(1,2,10);
+            R_b = 250.*linspace(1,2,5);
                 R_b_true = R_b;
-                R_b = R_b + 25*randn(1,length(R_b_true)); %Contaminate with noise
+                R_b = R_b + 10*randn(1,length(R_b_true)); %Contaminate with noise
             C_b = 0.5e-6;
             Q_CE = 1e-5;
             alpha_CE = 0.9;
@@ -616,21 +616,20 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.RefreshDataOptionsButton)
     
                %% Choose Data
-                testCase.choose(testCase.App.TimeListBox,'Select All')
+                testCase.choose(testCase.App.TimeListBox,'Select')
                 testCase.press(testCase.App.ChooseButton)
 
             %% Engage Recursive Regulization Fit
                 RecRegFitTab = testCase.App.RecursiveTimeRegularizationTab;
                 testCase.choose(RecRegFitTab)
                 testCase.press(testCase.App.RecursiveTimeRegularizationSwitch)
-                testCase.type(testCase.App.LambdaEditField,0.5)
-                testCase.type(testCase.App.NumIterationsSpinner,20)
-                testCase.choose(testCase.App.RegSchemeListBox,'d/dt Smoothness')
+                testCase.type(testCase.App.LambdaEditField,1)
+                testCase.type(testCase.App.NumIterationsSpinner,3)
                 DisplayTab = testCase.App.RecursiveTimeReg;
                 testCase.choose(DisplayTab)
             
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,50)
+                testCase.type(testCase.App.MultiStartsEditField,500)
                 testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--Q')
 
            %% Run fitting procedure
@@ -638,24 +637,22 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
 
             %% Verify barrier parameters have been fit properly
                 FitResultsStruct = testCase.App.Fits;
-
-                R_b_fitted = [];
+                
                 for i = 1:length(R_b_true)
                     
                     FitResultsStruct_i = FitResultsStruct(i);
                     FitParams = FitResultsStruct_i.FitsResults;
                     Beta_result = FitParams{1};
-                    Rb_Result = Beta_result(1);
-                    R_b_fitted = [R_b_fitted,Rb_Result];
-                    %Cb_Result = Beta_result(2);
+                    Rb_Result = Beta_result(1)
+                        display(R_b_true(i))
+                    Cb_Result = Beta_result(2);
+    
+                    R_tolerance = 0.1*(R_b);
+                    C_tolerance = 0.1*(C_b);
+    
+                    testCase.verifyTrue( abs(R_b_true(i)-Rb_Result) <= R_tolerance )
 
                 end
-
-
-                    [R,~] = corrcoef(R_b_true,R_b);
-                    [R_fit,~] = corrcoef(R_b_true,R_b_fitted);
-                    
-                    testCase.verifyTrue(R_fit(2) >= R(2))
                 
 
         end
