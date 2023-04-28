@@ -784,12 +784,33 @@ classdef AnalyZe < matlab.apps.AppBase
                             RecursiveSettings = varargin{6};
 
                             Recursive_Lambda_progression = linspace(0,RecursiveSettings.Lambda,RecursiveSettings.NumIterations);
-                            Beta_swap_i = @(Iter,b,Beta,index) normalize([Beta(1:Iter-1), b(index), Beta(Iter+1:end)],'range'); 
+                            Beta_swap_i = @(Iter,b,Beta,index) normalize([Beta(1:Iter-1), b(index), Beta(Iter+1:end)],'range');  
                             Beta_TimeSorted = @(b) (sortrows([RecursiveSettings.TimeVector',b'], 1));
-                            %dBeta_dt = @(b_sorted) diff(b_sorted(:,2))./diff(RecursiveSettings.TimeVector);
                             dBeta_dt = @(b_sorted) diff(b_sorted(:,2))./diff(b_sorted(:,1));
-
                             
+                            %%%%%%%%%%%%%%%
+                            % Local d/dt Smoothness
+                                FOH_pad = @(b) [b(1);b(:);b(end)];  
+                                Time_pad = @(Time,dt) [Time(1)-dt;Time(:);Time(end)+dt];
+                                Pad_Beta_TimeSorted = @(TimeBeta) [Time_pad(TimeBeta(:,1), abs(TimeBeta(2,1)-TimeBeta(1,1)) ) FOH_pad(TimeBeta(:,2))] ;
+                                Local_dBeta_dt = @(b_sorted_padded,tIter) abs(diff(b_sorted_padded(tIter:tIter+2,2))./diff(b_sorted_padded(tIter:tIter+2,1)));
+                                
+                                Local_dBeta_dt_Rb = @(b,TimeIter)   Local_dBeta_dt(...
+                                                                        Pad_Beta_TimeSorted(...
+                                                                            Beta_TimeSorted(...
+                                                                                Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1)...
+                                                                            )...
+                                                                        )...
+                                                                    ,TimeIter);
+                                Local_dBeta_dt_Cb = @(b,TimeIter)   Local_dBeta_dt(...
+                                                                        Pad_Beta_TimeSorted(...
+                                                                            Beta_TimeSorted(...
+                                                                                Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,2)...
+                                                                            )...
+                                                                        )...
+                                                                    ,TimeIter);
+                            %%%%%%%%%%%%%%
+
                             switch app.RegSchemeListBox.Value
                                 case 'Smoothness'
                                     CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm(Beta_swap_i(TimeIter,b,Beta_Rb(:).',1) ,2) + norm(Beta_swap_i(TimeIter,b,Beta_Cb(:).',2) ,2) );
@@ -799,6 +820,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                     CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,2) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,2))) ,2) );
                                 case 'd/dt Sparsity'
                                     CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Rb(:).' ,1))) ,1) + norm( dBeta_dt(Beta_TimeSorted(Beta_swap_i( TimeIter,b, Beta_Cb(:).' ,2))) ,1) );
+                                case 'Local d/dt Smoothness'
+                                    CCT_Regularization = @(Iter,b,TimeIter) Recursive_Lambda_progression(Iter).*( norm( Local_dBeta_dt_Rb(b,TimeIter) ,1) + norm( Local_dBeta_dt_Cb(b,TimeIter) ,1) );
+
                             end
 
                             CCT_Fn_Regularized = @(b) CCT_Fn_Lik(b) + CCT_Regularization(RecursiveSettings.CurrentIteration,b,RecursiveSettings.CurrentTimePoint);
@@ -6806,7 +6830,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create RegSchemeListBox
             app.RegSchemeListBox = uilistbox(app.RecursiveTimeRegularizationTab);
-            app.RegSchemeListBox.Items = {'Smoothness', 'Sparsity', 'd/dt Smoothness', 'd/dt Sparsity'};
+            app.RegSchemeListBox.Items = {'Smoothness', 'Sparsity', 'd/dt Smoothness', 'd/dt Sparsity', 'Local d/dt Smoothness'};
             app.RegSchemeListBox.Position = [187 4 121 60];
             app.RegSchemeListBox.Value = 'Smoothness';
 

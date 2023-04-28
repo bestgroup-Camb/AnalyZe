@@ -568,9 +568,9 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
             
            %% Generate test data
             R_inf = 100;
-            R_b = 250.*linspace(1,2,5);
+            R_b = 250.*linspace(1,2,10);
                 R_b_true = R_b;
-                R_b = R_b + 10*randn(1,length(R_b_true)); %Contaminate with noise
+                R_b = R_b + 25*randn(1,length(R_b_true)); %Contaminate with noise
             C_b = 0.5e-6;
             Q_CE = 1e-5;
             alpha_CE = 0.9;
@@ -616,20 +616,24 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.RefreshDataOptionsButton)
     
                %% Choose Data
-                testCase.choose(testCase.App.TimeListBox,'Select')
+                testCase.choose(testCase.App.TimeListBox,'Select All')
                 testCase.press(testCase.App.ChooseButton)
 
             %% Engage Recursive Regulization Fit
                 RecRegFitTab = testCase.App.RecursiveTimeRegularizationTab;
                 testCase.choose(RecRegFitTab)
                 testCase.press(testCase.App.RecursiveTimeRegularizationSwitch)
-                testCase.type(testCase.App.LambdaEditField,1)
-                testCase.type(testCase.App.NumIterationsSpinner,3)
+%                 testCase.type(testCase.App.LambdaEditField,0.5)
+%                 testCase.type(testCase.App.NumIterationsSpinner,20)
+%                 testCase.choose(testCase.App.RegSchemeListBox,'d/dt Smoothness')
+                testCase.type(testCase.App.LambdaEditField,0.1)
+                testCase.type(testCase.App.NumIterationsSpinner,20)
+                testCase.choose(testCase.App.RegSchemeListBox,'Local d/dt Smoothness')
                 DisplayTab = testCase.App.RecursiveTimeReg;
                 testCase.choose(DisplayTab)
             
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,500)
+                testCase.type(testCase.App.MultiStartsEditField,50)
                 testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--Q')
 
            %% Run fitting procedure
@@ -637,27 +641,133 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
 
             %% Verify barrier parameters have been fit properly
                 FitResultsStruct = testCase.App.Fits;
-                
+
+                R_b_fitted = [];
                 for i = 1:length(R_b_true)
                     
                     FitResultsStruct_i = FitResultsStruct(i);
                     FitParams = FitResultsStruct_i.FitsResults;
                     Beta_result = FitParams{1};
-                    Rb_Result = Beta_result(1)
-                        display(R_b_true(i))
-                    Cb_Result = Beta_result(2);
-    
-                    R_tolerance = 0.1*(R_b);
-                    C_tolerance = 0.1*(C_b);
-    
-                    testCase.verifyTrue( abs(R_b_true(i)-Rb_Result) <= R_tolerance )
+                    Rb_Result = Beta_result(1);
+                    R_b_fitted = [R_b_fitted,Rb_Result];
+                    %Cb_Result = Beta_result(2);
 
                 end
+
+
+                    [R,~] = corrcoef(R_b_true,R_b)
+                    [R_fit,~] = corrcoef(R_b_true,R_b_fitted)
+                    
+                    testCase.verifyTrue(R_fit(2) >= R(2))
                 
 
         end
 
+        
+        function testRecursiveTimeRegularizationZNoise(testCase)
+            
+              testCase.App.TutorialMode = false; %Disable Explainer Pop-ups
+            
+           %% Generate test data
+            R_inf = 100;
+            R_b = 250.*linspace(1,2,10);
+                R_b_true = R_b;
+            C_b = 0.5e-6;
+            Q_CE = 1e-5;
+            alpha_CE = 0.9;
+            W_CE = 0.5e-5;
+            freq_Fwd = logspace(0.1,6,100);
+            freq = freq_Fwd(end:-1:1);
 
+                         Data_TestCase = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {}); 
+            
+            for i = 1:length(R_b)
+
+                Z_cct = 1./(Q_CE.*( (1j.*(2*pi.*freq)).^alpha_CE )) + 1./(W_CE.*( (1j.*(2*pi.*freq)).^0.5 )) + ((  (1./(R_b(i))) + (1j.*C_b.*(2*pi.*freq))  ).^(-1)) + R_inf;
+                Z_cct = Z_cct.' + 25*(randn(length(Z_cct),1) + 1j.*randn(length(Z_cct),1));
+                
+                    Index = 1:length(Z_cct);
+                    Index = Index';
+                    FrequencyHz = freq';
+                    Z = real(Z_cct);
+                    Z1 = -1.*imag(Z_cct);
+                    Z2 = abs(Z_cct);
+                    Phase = -1.*(180/pi).*(angle(Z_cct));
+                    Times = Index;
+                    Data_cct = table(Index,FrequencyHz,Z,Z1,Z2,Phase,Times);
+     
+                               
+                TestCaseName = 'TestCase';
+                Data_TestCase(end+1) = struct('Name', {TestCaseName},...
+                                         'Time', {i},...
+                                         'ExperimentNumber', {1},...
+                                         'Well', {'A1'} ,...
+                                         'Data', (Data_cct)...
+                                         );
+            end
+
+              testCase.App.Data = Data_TestCase;
+
+             %% Navigate To CCT Fit Tab
+                testCase.press(testCase.App.FitEquivalentCircuitButton)
+
+                 testCase.assertEqual( ...
+                                    testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
+
+               %% Refresh Data
+                testCase.press(testCase.App.RefreshDataOptionsButton)
+    
+               %% Choose Data
+                testCase.choose(testCase.App.TimeListBox,'Select All')
+                testCase.press(testCase.App.ChooseButton)
+
+            %% Free R Fit
+                testCase.press(testCase.App.RSeriesResistanceSwitch)
+                testCase.choose(testCase.App.AlternateRestimationListBox,'Free R Fit')
+
+            %% Get Vanilla Fit
+                testCase.press(testCase.App.GoButton)
+
+            %% Engage Recursive Regulization Fit
+                RecRegFitTab = testCase.App.RecursiveTimeRegularizationTab;
+                testCase.choose(RecRegFitTab)
+                testCase.press(testCase.App.RecursiveTimeRegularizationSwitch)
+                testCase.type(testCase.App.LambdaEditField,0.1)
+                testCase.type(testCase.App.NumIterationsSpinner,20)
+                testCase.choose(testCase.App.RegSchemeListBox,'Local d/dt Smoothness')
+                DisplayTab = testCase.App.RecursiveTimeReg;
+                testCase.choose(DisplayTab)
+            
+            %% Adjust Fit Params
+                testCase.type(testCase.App.MultiStartsEditField,50)
+                testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--Q')
+
+           %% Run fitting procedure
+                testCase.press(testCase.App.GoButton)
+
+            %% Verify barrier parameters have been fit properly
+                FitResultsStruct = testCase.App.Fits;
+
+                R_b_fitted = [];
+                for i = 1:length(R_b_true)
+                    
+                    FitResultsStruct_i = FitResultsStruct(i);
+                    FitParams = FitResultsStruct_i.FitsResults;
+                    Beta_result = FitParams{1};
+                    Rb_Result = Beta_result(1);
+                    R_b_fitted = [R_b_fitted,Rb_Result];
+                    %Cb_Result = Beta_result(2);
+
+                end
+
+
+                    [R,~] = corrcoef(R_b_true,R_b)
+                    [R_fit,~] = corrcoef(R_b_true,R_b_fitted)
+                    
+                    testCase.verifyTrue(R_fit(2) >= R(2))
+                
+
+        end
 
     end
 
