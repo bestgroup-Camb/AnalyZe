@@ -42,12 +42,14 @@ classdef AnalyZe < matlab.apps.AppBase
         InportDataTab                   matlab.ui.container.Tab
         PlotSelectedButton              matlab.ui.control.Button
         CLEARLASTDATAPOINTButton        matlab.ui.control.Button
-        CLEARDATAButton                 matlab.ui.control.Button
-        HOMEButton                      matlab.ui.control.Button
-        SaveForLaterButton              matlab.ui.control.Button
+        CLEARALLDATAButton              matlab.ui.control.Button
+        SaveDataForLaterButton          matlab.ui.control.Button
         LoadFromPreviousSaveButton      matlab.ui.control.Button
         UITable                         matlab.ui.control.Table
         LoadDataPanel                   matlab.ui.container.Panel
+        HOMEButton                      matlab.ui.control.Button
+        OptionallyFilterBySubstringEditField  matlab.ui.control.EditField
+        OptinoallyFilterBySubstringLabel  matlab.ui.control.Label
         HoldPlotSwitchLoad              matlab.ui.control.ToggleSwitch
         HoldPlotSwitchLabel             matlab.ui.control.Label
         WellNumberEditField             matlab.ui.control.EditField
@@ -56,8 +58,8 @@ classdef AnalyZe < matlab.apps.AppBase
         ExperimentNumberEditFieldLabel  matlab.ui.control.Label
         LOADButton                      matlab.ui.control.Button
         FindFileButton                  matlab.ui.control.Button
-        FilePathEditField               matlab.ui.control.EditField
-        FilePathEditFieldLabel          matlab.ui.control.Label
+        OrEnterFilePathEditField        matlab.ui.control.EditField
+        OrEnterFilePathEditFieldLabel   matlab.ui.control.Label
         TimePointAUEditField            matlab.ui.control.NumericEditField
         ConditionEditField              matlab.ui.control.EditField
         ConditionEditFieldLabel         matlab.ui.control.Label
@@ -1637,7 +1639,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                  '2,10000,3.00,4.00,5.00,53.1301,2.00',...
                                  '.',...
                                  '.', ...
-                                 '.'},...
+                                 '.',...
+                                 '',...
+                                 'Optinally, Enter part of the file name in the field adjascent to see only filenames containing that string.'},...
                                     'Select EIS Data To Load',...
                                    'Continue','Cancel','Continue');
            end
@@ -1646,16 +1650,20 @@ classdef AnalyZe < matlab.apps.AppBase
                        return
                end
             
-            [file,path] = uigetfile('*');
+            FilterValue = app.OptionallyFilterBySubstringEditField.Value;
+            [file,path] = uigetfile(['*',FilterValue,'*']);
 
-            app.FilePathEditField.Value =  fullfile(path,file) ;
+            app.OrEnterFilePathEditField.Value =  fullfile(path,file) ;
             app.CurrentFileName = fullfile(path,file);
         end
 
         % Button pushed function: LOADButton
         function LOADButtonPushed(app, event)
         
-          
+            if ~isfile(app.CurrentFileName)
+                errordlg('Oops! We couldn''t find that file!','Invalid File')
+                return
+            end
 
             %% Set up the Import Options and import the data
             opts = delimitedTextImportOptions("NumVariables", 7);
@@ -1724,9 +1732,9 @@ classdef AnalyZe < matlab.apps.AppBase
                  app.UITable.Data = [app.UITable.Data; newData];
         end
 
-        % Value changed function: FilePathEditField
-        function FilePathEditFieldValueChanged(app, event)
-            value = app.FilePathEditField.Value;
+        % Value changed function: OrEnterFilePathEditField
+        function OrEnterFilePathEditFieldValueChanged(app, event)
+            value = app.OrEnterFilePathEditField.Value;
             app.CurrentFileName = value;
         end
 
@@ -1754,8 +1762,8 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CurrentWell = value;
         end
 
-        % Button pushed function: SaveForLaterButton
-        function SaveForLaterButtonPushed(app, event)
+        % Button pushed function: SaveDataForLaterButton
+        function SaveDataForLaterButtonPushed(app, event)
            UserFileName = inputdlg("Enter File Name:");
 
             selpath = uigetdir();
@@ -2008,6 +2016,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                         'An exception is made for the irreducible series resistance, which is estimated from the highst frequency datapoint by default and held constant during the optimization - alternative approaches are selectable.',...
                                         '',...
                                         'The results table and plots are populated with the fitting output. To mark and unmark a result, click a cell in the row and press the ''m'' or ''u'' keys respectively. Marked rows are excluded from the time series plot. Use ''a'' to mark a cell with green text - no effect ',...
+                                        'The combinations of options used to run a particular fitting opereration is stored as text in the ''Problem Setup log'' sub-tab in the Plots tab.',...
                                         '',...
                                         'NOTE: If included, the barrier model (R//C) parameters R and C are split into independent columns (if included in the model, otherwise marked as NaN). The remaining parameters are are stored as a character array in the Device CCT Params column in the order that they appear in the circuit string. The irreducible series resistance is always the last value, irrespective of its position in the circuit string',...
                                         'For Example,',...
@@ -4126,8 +4135,8 @@ classdef AnalyZe < matlab.apps.AppBase
         
         end
 
-        % Button pushed function: CLEARDATAButton
-        function CLEARDATAButtonPushed(app, event)
+        % Button pushed function: CLEARALLDATAButton
+        function CLEARALLDATAButtonPushed(app, event)
             
              answer = 'Continue';
 
@@ -5402,10 +5411,12 @@ classdef AnalyZe < matlab.apps.AppBase
         % Value changed function: ExplainerModeSwitch
         function ExplainerModeSwitchValueChanged(app, event)
             value = app.ExplainerModeSwitch.Value;
+             
             switch value
                 case 'On'
                     app.TutorialMode = true;
                 case 'Off'
+                    msgbox('Keep this switch On to recieve tutorial pop-ups as you use the App.','Heads Up!')
                     app.TutorialMode = false;
             end
         end
@@ -6297,13 +6308,13 @@ classdef AnalyZe < matlab.apps.AppBase
             title(app.LoadEISDat, 'Bode Plot')
             xlabel(app.LoadEISDat, 'Frequency (Hz)')
             app.LoadEISDat.Tag = 'LoadEIS';
-            app.LoadEISDat.Position = [16 46 458 339];
+            app.LoadEISDat.Position = [16 46 458 320];
 
             % Create TimePointAUEditFieldLabel
             app.TimePointAUEditFieldLabel = uilabel(app.LoadDataPanel);
             app.TimePointAUEditFieldLabel.HorizontalAlignment = 'right';
             app.TimePointAUEditFieldLabel.FontSize = 14;
-            app.TimePointAUEditFieldLabel.Position = [31 515 104 22];
+            app.TimePointAUEditFieldLabel.Position = [30 525 104 22];
             app.TimePointAUEditFieldLabel.Text = 'Time Point (AU)';
 
             % Create ConditionEditFieldLabel
@@ -6321,19 +6332,22 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create TimePointAUEditField
             app.TimePointAUEditField = uieditfield(app.LoadDataPanel, 'numeric');
             app.TimePointAUEditField.ValueChangedFcn = createCallbackFcn(app, @TimePointAUEditFieldValueChanged, true);
-            app.TimePointAUEditField.Position = [150 509 51 34];
+            app.TimePointAUEditField.Position = [149 519 51 34];
             app.TimePointAUEditField.Value = -1;
 
-            % Create FilePathEditFieldLabel
-            app.FilePathEditFieldLabel = uilabel(app.LoadDataPanel);
-            app.FilePathEditFieldLabel.HorizontalAlignment = 'right';
-            app.FilePathEditFieldLabel.Position = [174 455 52 22];
-            app.FilePathEditFieldLabel.Text = 'File Path';
+            % Create OrEnterFilePathEditFieldLabel
+            app.OrEnterFilePathEditFieldLabel = uilabel(app.LoadDataPanel);
+            app.OrEnterFilePathEditFieldLabel.HorizontalAlignment = 'right';
+            app.OrEnterFilePathEditFieldLabel.FontSize = 14;
+            app.OrEnterFilePathEditFieldLabel.FontWeight = 'bold';
+            app.OrEnterFilePathEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.OrEnterFilePathEditFieldLabel.Position = [19 429 123 22];
+            app.OrEnterFilePathEditFieldLabel.Text = 'Or Enter File Path';
 
-            % Create FilePathEditField
-            app.FilePathEditField = uieditfield(app.LoadDataPanel, 'text');
-            app.FilePathEditField.ValueChangedFcn = createCallbackFcn(app, @FilePathEditFieldValueChanged, true);
-            app.FilePathEditField.Position = [241 450 220 32];
+            % Create OrEnterFilePathEditField
+            app.OrEnterFilePathEditField = uieditfield(app.LoadDataPanel, 'text');
+            app.OrEnterFilePathEditField.ValueChangedFcn = createCallbackFcn(app, @OrEnterFilePathEditFieldValueChanged, true);
+            app.OrEnterFilePathEditField.Position = [146 424 313 32];
 
             % Create FindFileButton
             app.FindFileButton = uibutton(app.LoadDataPanel, 'push');
@@ -6342,17 +6356,17 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FindFileButton.FontWeight = 'bold';
             app.FindFileButton.FontColor = [0.4667 0.6745 0.1882];
             app.FindFileButton.Tooltip = {'Find file from local storage'};
-            app.FindFileButton.Position = [31 449 131 34];
+            app.FindFileButton.Position = [31 466 131 34];
             app.FindFileButton.Text = 'Find File';
 
             % Create LOADButton
             app.LOADButton = uibutton(app.LoadDataPanel, 'push');
             app.LOADButton.ButtonPushedFcn = createCallbackFcn(app, @LOADButtonPushed, true);
-            app.LOADButton.FontSize = 18;
+            app.LOADButton.FontSize = 24;
             app.LOADButton.FontWeight = 'bold';
             app.LOADButton.FontColor = [0.4667 0.6745 0.1882];
             app.LOADButton.Tooltip = {'Add selected file to AnalyZe for processing'};
-            app.LOADButton.Position = [353 390 100 30];
+            app.LOADButton.Position = [195 378 118 38];
             app.LOADButton.Text = 'LOAD';
 
             % Create ExperimentNumberEditFieldLabel
@@ -6391,6 +6405,27 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HoldPlotSwitchLoad.Orientation = 'horizontal';
             app.HoldPlotSwitchLoad.Position = [47 19 78 35];
 
+            % Create OptinoallyFilterBySubstringLabel
+            app.OptinoallyFilterBySubstringLabel = uilabel(app.LoadDataPanel);
+            app.OptinoallyFilterBySubstringLabel.HorizontalAlignment = 'center';
+            app.OptinoallyFilterBySubstringLabel.FontSize = 14;
+            app.OptinoallyFilterBySubstringLabel.FontWeight = 'bold';
+            app.OptinoallyFilterBySubstringLabel.Position = [178 467 135 34];
+            app.OptinoallyFilterBySubstringLabel.Text = {'Optionally'; 'Filter By Substring:'};
+
+            % Create OptionallyFilterBySubstringEditField
+            app.OptionallyFilterBySubstringEditField = uieditfield(app.LoadDataPanel, 'text');
+            app.OptionallyFilterBySubstringEditField.Position = [319 469 139 32];
+
+            % Create HOMEButton
+            app.HOMEButton = uibutton(app.LoadDataPanel, 'push');
+            app.HOMEButton.ButtonPushedFcn = createCallbackFcn(app, @HOMEButtonPushed, true);
+            app.HOMEButton.FontSize = 18;
+            app.HOMEButton.FontWeight = 'bold';
+            app.HOMEButton.FontColor = [0 0.4471 0.7412];
+            app.HOMEButton.Position = [368 8 102 32];
+            app.HOMEButton.Text = 'HOME';
+
             % Create UITable
             app.UITable = uitable(app.InportDataTab);
             app.UITable.ColumnName = {'Condition'; 'Experiment Number'; 'Well'; 'Time Point'};
@@ -6403,34 +6438,27 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LoadFromPreviousSaveButton.ButtonPushedFcn = createCallbackFcn(app, @LoadFromPreviousSaveButtonPushed, true);
             app.LoadFromPreviousSaveButton.FontSize = 14;
             app.LoadFromPreviousSaveButton.FontWeight = 'bold';
-            app.LoadFromPreviousSaveButton.Position = [505 23 198 35];
+            app.LoadFromPreviousSaveButton.FontColor = [0.4667 0.6745 0.1882];
+            app.LoadFromPreviousSaveButton.Position = [538 17 198 35];
             app.LoadFromPreviousSaveButton.Text = 'Load From Previous Save';
 
-            % Create SaveForLaterButton
-            app.SaveForLaterButton = uibutton(app.InportDataTab, 'push');
-            app.SaveForLaterButton.ButtonPushedFcn = createCallbackFcn(app, @SaveForLaterButtonPushed, true);
-            app.SaveForLaterButton.FontSize = 18;
-            app.SaveForLaterButton.FontWeight = 'bold';
-            app.SaveForLaterButton.Position = [530 70 140 30];
-            app.SaveForLaterButton.Text = 'Save For Later';
+            % Create SaveDataForLaterButton
+            app.SaveDataForLaterButton = uibutton(app.InportDataTab, 'push');
+            app.SaveDataForLaterButton.ButtonPushedFcn = createCallbackFcn(app, @SaveDataForLaterButtonPushed, true);
+            app.SaveDataForLaterButton.FontSize = 24;
+            app.SaveDataForLaterButton.FontWeight = 'bold';
+            app.SaveDataForLaterButton.FontColor = [0.4667 0.6745 0.1882];
+            app.SaveDataForLaterButton.Position = [513 59 241 46];
+            app.SaveDataForLaterButton.Text = 'Save Data For Later';
 
-            % Create HOMEButton
-            app.HOMEButton = uibutton(app.InportDataTab, 'push');
-            app.HOMEButton.ButtonPushedFcn = createCallbackFcn(app, @HOMEButtonPushed, true);
-            app.HOMEButton.FontSize = 18;
-            app.HOMEButton.FontWeight = 'bold';
-            app.HOMEButton.FontColor = [0 0.4471 0.7412];
-            app.HOMEButton.Position = [906 9 102 32];
-            app.HOMEButton.Text = 'HOME';
-
-            % Create CLEARDATAButton
-            app.CLEARDATAButton = uibutton(app.InportDataTab, 'push');
-            app.CLEARDATAButton.ButtonPushedFcn = createCallbackFcn(app, @CLEARDATAButtonPushed, true);
-            app.CLEARDATAButton.FontSize = 18;
-            app.CLEARDATAButton.FontWeight = 'bold';
-            app.CLEARDATAButton.FontColor = [0.851 0.3255 0.098];
-            app.CLEARDATAButton.Position = [733 25 130 30];
-            app.CLEARDATAButton.Text = 'CLEAR DATA';
+            % Create CLEARALLDATAButton
+            app.CLEARALLDATAButton = uibutton(app.InportDataTab, 'push');
+            app.CLEARALLDATAButton.ButtonPushedFcn = createCallbackFcn(app, @CLEARALLDATAButtonPushed, true);
+            app.CLEARALLDATAButton.FontSize = 18;
+            app.CLEARALLDATAButton.FontWeight = 'bold';
+            app.CLEARALLDATAButton.FontColor = [0.851 0.3255 0.098];
+            app.CLEARALLDATAButton.Position = [835 10 168 30];
+            app.CLEARALLDATAButton.Text = 'CLEAR ALL DATA';
 
             % Create CLEARLASTDATAPOINTButton
             app.CLEARLASTDATAPOINTButton = uibutton(app.InportDataTab, 'push');
@@ -6438,8 +6466,8 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CLEARLASTDATAPOINTButton.FontSize = 10;
             app.CLEARLASTDATAPOINTButton.FontWeight = 'bold';
             app.CLEARLASTDATAPOINTButton.FontColor = [0.6353 0.0784 0.1843];
-            app.CLEARLASTDATAPOINTButton.Position = [857 88 143 35];
-            app.CLEARLASTDATAPOINTButton.Text = 'CLEAR LAST DATA POINT';
+            app.CLEARLASTDATAPOINTButton.Position = [905 88 95 35];
+            app.CLEARLASTDATAPOINTButton.Text = {'CLEAR LAST '; 'DATA POINT'};
 
             % Create PlotSelectedButton
             app.PlotSelectedButton = uibutton(app.InportDataTab, 'push');
@@ -6447,7 +6475,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.PlotSelectedButton.FontSize = 14;
             app.PlotSelectedButton.FontWeight = 'bold';
             app.PlotSelectedButton.FontColor = [0 0 1];
-            app.PlotSelectedButton.Position = [747 88 103 35];
+            app.PlotSelectedButton.Position = [785 88 103 35];
             app.PlotSelectedButton.Text = 'Plot Selected';
 
             % Create AnalysisCCTFITTab

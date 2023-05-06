@@ -662,9 +662,9 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                     R_b_fitted = [R_b_fitted,Rb_Result];
                 end
                     
-                        R_b_fitted_vanilla
-                        R_b_fitted
-                        R_b_true
+                        %R_b_fitted_vanilla
+                        %R_b_fitted
+                        %R_b_true
 
                     [R,~] = corrcoef(R_b_true,R_b_fitted_vanilla)
                     [R_fit,~] = corrcoef(R_b_true,R_b_fitted)
