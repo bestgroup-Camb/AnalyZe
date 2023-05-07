@@ -172,17 +172,18 @@ classdef AnalyZe < matlab.apps.AppBase
         LambdaEditFieldLabel            matlab.ui.control.Label
         RecursiveTimeRegularizationSwitch  matlab.ui.control.Switch
         RecursiveTimeRegularizationLabel  matlab.ui.control.Label
+        ErrorCorrectionTab              matlab.ui.container.Tab
+        MaxValsEditField                matlab.ui.control.EditField
+        MaxValsEditFieldLabel           matlab.ui.control.Label
+        ZmeasuredZtrueEditField         matlab.ui.control.EditField
+        ZmeasuredZtrueEditFieldLabel    matlab.ui.control.Label
+        PotentiostatErrorCorrectionSwitch  matlab.ui.control.Switch
+        PotentiostatErrorCorrectionSwitchLabel  matlab.ui.control.Label
         ProgressGuage                   matlab.ui.control.SemicircularGauge
         CircuitToFit                    matlab.ui.container.TabGroup
         SelectACircuitTab               matlab.ui.container.Tab
         SelectaCircuitBarrierInclusiveListBox  matlab.ui.control.ListBox
         SelectaCircuitBarrierInclusiveListBoxLabel  matlab.ui.control.Label
-        BuildACircuitTab                matlab.ui.container.Tab
-        IncludeBarrierSwitch            matlab.ui.control.Switch
-        IncludeBarrierSwitchLabel       matlab.ui.control.Label
-        CircuitBuilderTable             matlab.ui.control.Table
-        BuildACircuitMaxValuesTab       matlab.ui.container.Tab
-        CircuitBuilderTable_MaxVals     matlab.ui.control.Table
         WriteACircuitTab                matlab.ui.container.Tab
         IncludeBarrierSwitch_2          matlab.ui.control.RockerSwitch
         IncludeBarrierSwitch_2Label     matlab.ui.control.Label
@@ -193,6 +194,12 @@ classdef AnalyZe < matlab.apps.AppBase
         MaxValuesEditFieldLabel         matlab.ui.control.Label
         CircuitStringEditField          matlab.ui.control.EditField
         CircuitStringEditFieldLabel     matlab.ui.control.Label
+        BuildACircuitTab                matlab.ui.container.Tab
+        IncludeBarrierSwitch            matlab.ui.control.Switch
+        IncludeBarrierSwitchLabel       matlab.ui.control.Label
+        CircuitBuilderTable             matlab.ui.control.Table
+        BuildACircuitMaxValuesTab       matlab.ui.container.Tab
+        CircuitBuilderTable_MaxVals     matlab.ui.control.Table
         RunningLamp                     matlab.ui.control.Lamp
         RunningLampLabel                matlab.ui.control.Label
         GoButton                        matlab.ui.control.Button
@@ -392,6 +399,7 @@ classdef AnalyZe < matlab.apps.AppBase
         FitsResultsTableMarkings = []; % Description
         CumulativeCCTFitDisplayNames; % Description
         CumulativeCCTFitDiagnosticDisplayNames = []; % Description
+        CustomElementFunctions = {}; % Description
     end
     
     methods (Access = private)
@@ -455,6 +463,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         
             
                         %% Fit data setup
+                            %% R_inf estimate
                            
                             R_inf = 0;
                             
@@ -524,7 +533,13 @@ classdef AnalyZe < matlab.apps.AppBase
                                 case 'Re(Z)_final'
                                     R_inf = real(y_z(1));
                             end
-                            
+
+                            %% Circuit function definition
+                                %Eval custom fns
+                                    for fns = 1:length(app.CustomElementFunctions)
+                                        Customfn = app.CustomElementFunctions{fns};
+                                        eval(Customfn{1})
+                                    end
                 
                              C = @(c1,x) ( 1i.*x(:,1).*c1 ).^(-1);
                              L = @(l1,x) 1i.*x(:,1).*l1;
@@ -718,7 +733,7 @@ classdef AnalyZe < matlab.apps.AppBase
             
                             end
                         else
-  
+                            
                             CCT_Fn = eval(cct_type);
                             ub = varargin{3};
                             ub = ub';
@@ -743,6 +758,35 @@ classdef AnalyZe < matlab.apps.AppBase
                                             lb = [lb;0];
                                             beta0 = [beta0;1];
                                     end
+                    end
+                    
+                    %Bilayer = @(b,x) ( (1./b(1,:)) + (1./C(b(2,:),x)) ).^(-1);
+                    value = app.PotentiostatErrorCorrectionSwitch.Value;
+                    switch value
+                        case 'On'
+
+                            CCT_Fn_Chosen = CCT_Fn;
+                            NumParams = length(beta0);
+                            CorrectionStr = app.ZmeasuredZtrueEditField.Value;
+                            CorrectionMaxValStr = app.MaxValsEditField.Value;
+                            CorrectionMaxValsStr =['[',CorrectionMaxValStr,']'];
+                            CorrectionMaxVals = eval(CorrectionMaxValsStr);
+                            NumNewParams = length(CorrectionMaxVals);
+                            for param = 1:NumNewParams
+                                expression = ['b(',int2str(param)];
+                                NewExpression = ['b(',int2str(NumParams+param)];
+                                CorrectionStr = regexprep(CorrectionStr,expression,NewExpression)
+                                
+                                ub = [ub;CorrectionMaxVals(param)];
+                                lb = [lb;0];
+                                beta0 = [beta0;1];
+                            end
+                            
+                            CorrectionStr = ['@(b,x) ',CorrectionStr];
+                            Correction_Fn = eval(CorrectionStr);
+                            CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(b,x);
+                            
+
                     end
 
             
@@ -1450,6 +1494,8 @@ classdef AnalyZe < matlab.apps.AppBase
 %             Modifed from ZFit
 %             Jean-Luc Dellis (2023). Zfit (https://www.mathworks.com/matlabcentral/fileexchange/19460-zfit), MATLAB Central File Exchange. Retrieved April 6, 2023. 
 
+            app.CustomElementFunctions = {};
+
             circuit = app.CircuitStringEditField.Value;
             MaxValsStr = app.MaxValuesEditField.Value;
             MaxValsStr = ['[',MaxValsStr,']'];
@@ -1500,6 +1546,32 @@ classdef AnalyZe < matlab.apps.AppBase
                         case 'W'
                             circuit=regexprep(circuit,element(i:i+1),['R(b(',num2str(ParamCounter),',:),x)'],'once');
                             ParamCounter = ParamCounter +1;
+                        otherwise
+                            % Custom Element
+                            FnCallStr = [element(i),'('];
+                            for paramNum = 1:nlp
+                                if paramNum == 1
+                                    FnCallStr = [FnCallStr,'b(',num2str(ParamCounter),',:)'];
+                                else
+                                    FnCallStr = [FnCallStr,',b(',num2str(ParamCounter),',:)'];
+                                end
+                                ParamCounter = ParamCounter +1;
+                            end
+                            FnCallStr = [FnCallStr,',x)'];
+                            circuit=regexprep(circuit,element(i:i+1),FnCallStr,'once');
+
+                            CustomElementFn = inputdlg({['Enter impedance function for your custom element, Z(jw)', newline,...
+                                                        '',newline,...
+                                                        'For a CPE, a valid entry is of the form: Q = @(c1,c2,x) ( c1.*( (1i.*x(:,1)).^(c2) ) ).^(-1);',newline,...
+                                                        'Where c1 is the Q value/Capacitance, c2 is the alpha value, x(:,1) is the angular frequency vector, w, and 1i is the imaginary constant, sqrt(-1).',newline,...
+                                                         'Thus equivalent to Q(jw)=1/c1(jw)^c2',newline,newline,...
+                                                        'NOTE: You have entered ',element(i),int2str(floor(nlp)),'. Make sure to match the number of circuit parameters @(z1,z2,...,x) to be equal to ',int2str(floor(nlp)),'!']},...
+                                                        'Custom Circuit Element'...
+                                                        ,[1 100],...
+                                                        {[element(i),' = @(z1,x) 1j.*sin(z1.*x(:,1))']});
+                            
+                            app.CustomElementFunctions{end+1} = CustomElementFn;
+                            
      
                     end
             end
@@ -1904,7 +1976,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 Conditions = unique(Conditions);
                 Exp = unique(Exp);
                 Well = unique(Well);
-                Time = unique(Time);
+                Time = sort(unique(Time));
 
                 app.ConditionListBox.Items = Conditions;
                 app.ExperimentNumberListBox.Items = Exp;
@@ -1966,11 +2038,16 @@ classdef AnalyZe < matlab.apps.AppBase
                  TimeAll = TimeAll(Indexes);
 
              Indexes = [];
-               switch Well
+               switch Well{1}
                     case 'Select All'
                         Indexes = [1:length(Dat)];
                    otherwise
-                        Indexes = find(WellAll == Well);
+                       Indexes = [];
+                       for j = 1:length(Well)
+                            Ind_j = find(WellAll == Well(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(WellAll == Well);
                end
                  Dat = Dat(Indexes);
                  TimeAll = TimeAll(Indexes);
@@ -1989,15 +2066,42 @@ classdef AnalyZe < matlab.apps.AppBase
                end
                 Dat = Dat(Indexes);
 
+             %% Cluster data
+                DatToFit_temp = Dat;
+                DatToFit_Clustered  = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+        
+
+                while length(DatToFit_temp) >= 1
+                    
+                    basecase = DatToFit_temp(1);
+                    temp  = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+                    
+                    indexes = [];
+                    var = DatToFit_temp;
+                    for i = 1:length(var) 
+                        var_i = var(i);
+                        if (string(basecase.Name) == string(var_i.Name)) && (basecase.ExperimentNumber == var_i.ExperimentNumber) && (string(basecase.Well) == string(var_i.Well))
+                            temp(end+1) = var_i;
+                            indexes = [indexes,i];
+                        end
+                        
+                    end
+                    DatToFit_temp(indexes) = [];
+                    DatToFit_Clustered = [DatToFit_Clustered, temp];
+
+                end
+
+
+            %% Load into table
              app.ChosenDataTable.Data = [];
-            for (i = 1:length(Dat))
-                var = Dat;
+            for (i = 1:length(DatToFit_Clustered))
+                var = DatToFit_Clustered;
                 var = var(i);
                 newData = {var.Name var.ExperimentNumber var.Well var.Time};
                 app.ChosenDataTable.Data = [app.ChosenDataTable.Data; newData];
             end
 
-           app.DatToFit = Dat;
+           app.DatToFit = DatToFit_Clustered;
 
         end
 
@@ -2124,8 +2228,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                     case BarrierStr
                                         errorflag = false;
                                     otherwise
-                                        
-                                        errorflag = true;
+                                        if ~(CurrentCct(1:2) == 'p(') % Allow parallel parasisitcs
+                                            errorflag = true;
+                                        end
                                 end
                             end
         
@@ -2135,7 +2240,8 @@ classdef AnalyZe < matlab.apps.AppBase
                             end
         
                     end
-
+                
+                    
                 [fit_cct, Upper_bound, Lower_Bound, Beta_Zero, CircuitUsed] = app.getWrittenCircuit();
 
                 app.FitSequentiallySwitch.Value = 'Off';
@@ -2238,6 +2344,26 @@ classdef AnalyZe < matlab.apps.AppBase
                         case 'Alternate'
                              ProblemSetUpString_i = ProblemSetUpString_i + app.AlternateRestimationListBox.Value + newline;
                     end
+
+                    if ~isempty(app.CustomElementFunctions)
+                        ProblemSetUpString_i = ProblemSetUpString_i + "Custom Elements Used: " + newline;
+                        for CstmFns = 1:length(app.CustomElementFunctions) 
+                            CustomFn = app.CustomElementFunctions{CstmFns};
+                            ProblemSetUpString_i = ProblemSetUpString_i + convertCharsToStrings(CustomFn{1}) + newline;
+                        end
+                    end
+
+                               
+                    switch app.PotentiostatErrorCorrectionSwitch.Value
+                        case 'On'
+                            ProblemSetUpString_i = ProblemSetUpString_i + " Potentiostat Error Correction Engaged (true) " + newline;
+                            ProblemSetUpString_i = ProblemSetUpString_i + "     Z_meas/Z_true = " + string(app.ZmeasuredZtrueEditField.Value) + newline;
+                            ProblemSetUpString_i = ProblemSetUpString_i + "     Max Vals = " + string(app.MaxValsEditField.Value) + newline;
+                        case 'Off'
+                            ProblemSetUpString_i = ProblemSetUpString_i + "Potentiostat Error Correction Engaged (false) " + newline;
+                    end
+
+
         
             %% Fit CCT
        
@@ -3719,6 +3845,10 @@ classdef AnalyZe < matlab.apps.AppBase
             end
 
             selectedTab = app.CircuitToFit.SelectedTab;
+
+            if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.BuildACircuitMaxValuesTab)
+                warndlg('Build-A-Circuit is deprecated and will be removed in subsequent versions! Write-A-Circuit or Select-A-Circuit are recommended.','Deprecation Warning')
+            end
 
             if (selectedTab == app.BuildACircuitTab) || (selectedTab == app.BuildACircuitMaxValuesTab) || (selectedTab == app.WriteACircuitTab)
                 app.FitSequentiallySwitch.Value = 'Off';
@@ -5603,6 +5733,39 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'L'
                     CurrentCCTstring = CurrentCCTstring + "L1";
                     CurrentMaxVals = CurrentMaxVals + "1";
+
+                case 'Add Custom Element'
+                    prompt = {['Enter the symbol for your custom element.',newline,...
+                                    'This is a single, unique, (capital) character',newline,...
+                                    'Reserved characters (predefined elements) are forbidden (Symbol|R,C,Q,W,L,p), as are any previously used custom characters.',newline,...
+                                    'You will be requested to enter the impedance function of this element after you initiate the circuit fit. This function is of the form Z = Z(param1,param2,....,jw).'],...
+                               ['Enter the number of parameters (excluding frequency).',newline,...
+                                    'This is the number of real valued parameters of which the elmenent impedance function is comprised, barring frequency.',newline,...
+                                    'A CPE element, for example, is defined by two parameters.']};
+                    dlgtitle = 'Add a custom circuit element!';
+                    dims = [1 100];
+                    definput = {'X','2'};
+                    answer = inputdlg(prompt,dlgtitle,dims,definput);
+                    Elem = answer{1};
+                    NumParams = answer{2};
+
+                    if length(Elem) > 1
+                        errordlg('A Symbol name must be a single character.');
+                        return
+                    elseif (Elem == 'R') || (Elem == 'C') || (Elem == 'Q') || (Elem == 'W') || (Elem == 'L') || (Elem == 'p')
+                        errordlg('Please refrain from using reserved element symbols.');
+                        return
+                    end
+                    
+                    CurrentCCTstring = CurrentCCTstring + convertCharsToStrings([Elem,NumParams]);
+                    for nps = 1:eval(NumParams)
+                        if nps == 1
+                            CurrentMaxVals = CurrentMaxVals + "1";
+                        else
+                            CurrentMaxVals = CurrentMaxVals + ",1";
+                        end
+                    end
+
             end
 
             app.CircuitStringEditField.Value = CurrentCCTstring;
@@ -5664,8 +5827,9 @@ classdef AnalyZe < matlab.apps.AppBase
                             case BarrierStr
                                 errorflag = false;
                             otherwise
-                                
-                                errorflag = true;
+                                if ~(CurrentCct(1:2) == 'p(') % Allow parallel parasisitcs
+                                    errorflag = true;
+                                end
                         end
                     end
 
@@ -6185,6 +6349,46 @@ classdef AnalyZe < matlab.apps.AppBase
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             end
         end
+
+        % Value changed function: PotentiostatErrorCorrectionSwitch
+        function PotentiostatErrorCorrectionSwitchValueChanged(app, event)
+            value = app.PotentiostatErrorCorrectionSwitch.Value;
+            
+            switch value
+                
+                case 'On'
+                    
+                    flag = app.TutorialMode;
+                       
+                       if flag
+                            
+                            msgbox({'The principle of this error correction module is to accomodate the scenario where the difference between the true impedance and measured impedance is expressable as a function of the measured impedance and an arbitrary number of unknown circuit elements.',...
+                                    'In particular, the error factor is expressed as Z_measured/Z_true s.t. Z_measured = Circuit_To_Fit * (Z_measured/Z_true).',...
+                                    '',...
+                                    'As an example: Z_meas/Z_true = subplus(1+(y_z./( C(b(1,:),x) + b(2,:) )) - ( C(b(1,:),x) ./ (  C(b(1,:),x) + b(2,:)  ) ))',...
+                                    'Where,'...
+                                    '     y_z == Z_measured (the measured impedance data)',...
+                                    '     C(a,x) == The impedance of a capacitve element with Capacitance a and angular frequency x',...
+                                    '     b(1,:) == The first parameter, in this case the capacitance.',...
+                                    '     b(2,:) == The second parameter, in this case a resistance.',...
+                                    '     subplus() is used to clamp the function to positive values, i.e. Z_measured >= (0+)*Z_true',...
+                                    '',...
+                                    'Available Functions/constants are: ',...
+                                    '     C(a,x) -> Capacitance',...
+                                    '     L(a,x) -> Inductance',...
+                                    '     Q(a,b,x) -> CPE',...
+                                    '     R(a,x) or a -> Resistance',...
+                                    '     W(a,x) -> Warburg Impedance',...
+                                    '     p(X,Y) -> X//Y where X and Y are impedances, e.g. X = C(a,x)',...
+                                    '     y_z -> Measured impedance data, Z_measured',...
+                                    '',...
+                                    'Each parameter must be assigned a maximum value, entered as a comma-separated list, e.g. 1,1e6'},...
+                                    'Potentiostat Error Correction - Experiemntal')
+                       end
+
+
+            end
+        end
     end
 
     % Component initialization
@@ -6516,7 +6720,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create WellNumberListBox
             app.WellNumberListBox = uilistbox(app.TrimData);
+            app.WellNumberListBox.Multiselect = 'on';
             app.WellNumberListBox.Position = [137 101 87 54];
+            app.WellNumberListBox.Value = {'Item 1'};
 
             % Create ChosenDataTable
             app.ChosenDataTable = uitable(app.TrimData);
@@ -6609,6 +6815,73 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SelectaCircuitBarrierInclusiveListBox.Position = [81 17 358 93];
             app.SelectaCircuitBarrierInclusiveListBox.Value = 'R--(R//C)--((R--W)//C)';
 
+            % Create WriteACircuitTab
+            app.WriteACircuitTab = uitab(app.CircuitToFit);
+            app.WriteACircuitTab.Title = 'Write-A-Circuit';
+
+            % Create CircuitStringEditFieldLabel
+            app.CircuitStringEditFieldLabel = uilabel(app.WriteACircuitTab);
+            app.CircuitStringEditFieldLabel.HorizontalAlignment = 'right';
+            app.CircuitStringEditFieldLabel.FontWeight = 'bold';
+            app.CircuitStringEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.CircuitStringEditFieldLabel.Position = [5 84 43 30];
+            app.CircuitStringEditFieldLabel.Text = {'Circuit'; 'String'};
+
+            % Create CircuitStringEditField
+            app.CircuitStringEditField = uieditfield(app.WriteACircuitTab, 'text');
+            app.CircuitStringEditField.ValueChangedFcn = createCallbackFcn(app, @CircuitStringEditFieldValueChanged, true);
+            app.CircuitStringEditField.Position = [63 85 193 35];
+
+            % Create MaxValuesEditFieldLabel
+            app.MaxValuesEditFieldLabel = uilabel(app.WriteACircuitTab);
+            app.MaxValuesEditFieldLabel.HorizontalAlignment = 'right';
+            app.MaxValuesEditFieldLabel.FontWeight = 'bold';
+            app.MaxValuesEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.MaxValuesEditFieldLabel.Position = [6 41 43 30];
+            app.MaxValuesEditFieldLabel.Text = {'Max'; 'Values'};
+
+            % Create MaxValuesEditField
+            app.MaxValuesEditField = uieditfield(app.WriteACircuitTab, 'text');
+            app.MaxValuesEditField.Position = [64 42 230 35];
+
+            % Create DoubleClicktoAddElementListBoxLabel
+            app.DoubleClicktoAddElementListBoxLabel = uilabel(app.WriteACircuitTab);
+            app.DoubleClicktoAddElementListBoxLabel.HorizontalAlignment = 'right';
+            app.DoubleClicktoAddElementListBoxLabel.FontWeight = 'bold';
+            app.DoubleClicktoAddElementListBoxLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.DoubleClicktoAddElementListBoxLabel.Position = [285 1 168 22];
+            app.DoubleClicktoAddElementListBoxLabel.Text = 'Double Click to Add Element';
+
+            % Create DoubleClicktoAddElementListBox
+            app.DoubleClicktoAddElementListBox = uilistbox(app.WriteACircuitTab);
+            app.DoubleClicktoAddElementListBox.Items = {'Add New Parallel Branch', 'Edit Adjacent Branch', 'End Parallel Branch', 'R', 'C', 'Q', 'W', 'L', 'Add Custom Element'};
+            app.DoubleClicktoAddElementListBox.ValueChangedFcn = createCallbackFcn(app, @DoubleClicktoAddElementListBoxValueChanged, true);
+            app.DoubleClicktoAddElementListBox.DoubleClickedFcn = createCallbackFcn(app, @DoubleClicktoAddElementListBoxDoubleClicked, true);
+            app.DoubleClicktoAddElementListBox.Position = [301 24 151 98];
+            app.DoubleClicktoAddElementListBox.Value = 'R';
+
+            % Create RLabel
+            app.RLabel = uilabel(app.WriteACircuitTab);
+            app.RLabel.FontSize = 18;
+            app.RLabel.FontWeight = 'bold';
+            app.RLabel.FontColor = [0.6353 0.0784 0.1843];
+            app.RLabel.Position = [259 91 41 23];
+            app.RLabel.Text = '+R∞';
+
+            % Create IncludeBarrierSwitch_2Label
+            app.IncludeBarrierSwitch_2Label = uilabel(app.WriteACircuitTab);
+            app.IncludeBarrierSwitch_2Label.HorizontalAlignment = 'center';
+            app.IncludeBarrierSwitch_2Label.FontWeight = 'bold';
+            app.IncludeBarrierSwitch_2Label.FontColor = [0.6353 0.0784 0.1843];
+            app.IncludeBarrierSwitch_2Label.Position = [8 9 90 22];
+            app.IncludeBarrierSwitch_2Label.Text = 'Include Barrier';
+
+            % Create IncludeBarrierSwitch_2
+            app.IncludeBarrierSwitch_2 = uiswitch(app.WriteACircuitTab, 'rocker');
+            app.IncludeBarrierSwitch_2.Orientation = 'horizontal';
+            app.IncludeBarrierSwitch_2.ValueChangedFcn = createCallbackFcn(app, @IncludeBarrierSwitch_2ValueChanged, true);
+            app.IncludeBarrierSwitch_2.Position = [127 10 45 20];
+
             % Create BuildACircuitTab
             app.BuildACircuitTab = uitab(app.CircuitToFit);
             app.BuildACircuitTab.Title = 'Build-A-Circuit';
@@ -6651,73 +6924,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CircuitBuilderTable_MaxVals.Tooltip = {'Enter the maximum allowed values for each circuit parameter. Use the same locations as the Build-A-Circuit table'};
             app.CircuitBuilderTable_MaxVals.FontSize = 10;
             app.CircuitBuilderTable_MaxVals.Position = [55 8 364 116];
-
-            % Create WriteACircuitTab
-            app.WriteACircuitTab = uitab(app.CircuitToFit);
-            app.WriteACircuitTab.Title = 'Write-A-Circuit';
-
-            % Create CircuitStringEditFieldLabel
-            app.CircuitStringEditFieldLabel = uilabel(app.WriteACircuitTab);
-            app.CircuitStringEditFieldLabel.HorizontalAlignment = 'right';
-            app.CircuitStringEditFieldLabel.FontWeight = 'bold';
-            app.CircuitStringEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.CircuitStringEditFieldLabel.Position = [5 84 43 30];
-            app.CircuitStringEditFieldLabel.Text = {'Circuit'; 'String'};
-
-            % Create CircuitStringEditField
-            app.CircuitStringEditField = uieditfield(app.WriteACircuitTab, 'text');
-            app.CircuitStringEditField.ValueChangedFcn = createCallbackFcn(app, @CircuitStringEditFieldValueChanged, true);
-            app.CircuitStringEditField.Position = [63 85 193 35];
-
-            % Create MaxValuesEditFieldLabel
-            app.MaxValuesEditFieldLabel = uilabel(app.WriteACircuitTab);
-            app.MaxValuesEditFieldLabel.HorizontalAlignment = 'right';
-            app.MaxValuesEditFieldLabel.FontWeight = 'bold';
-            app.MaxValuesEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.MaxValuesEditFieldLabel.Position = [6 41 43 30];
-            app.MaxValuesEditFieldLabel.Text = {'Max'; 'Values'};
-
-            % Create MaxValuesEditField
-            app.MaxValuesEditField = uieditfield(app.WriteACircuitTab, 'text');
-            app.MaxValuesEditField.Position = [64 42 230 35];
-
-            % Create DoubleClicktoAddElementListBoxLabel
-            app.DoubleClicktoAddElementListBoxLabel = uilabel(app.WriteACircuitTab);
-            app.DoubleClicktoAddElementListBoxLabel.HorizontalAlignment = 'right';
-            app.DoubleClicktoAddElementListBoxLabel.FontWeight = 'bold';
-            app.DoubleClicktoAddElementListBoxLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.DoubleClicktoAddElementListBoxLabel.Position = [285 1 168 22];
-            app.DoubleClicktoAddElementListBoxLabel.Text = 'Double Click to Add Element';
-
-            % Create DoubleClicktoAddElementListBox
-            app.DoubleClicktoAddElementListBox = uilistbox(app.WriteACircuitTab);
-            app.DoubleClicktoAddElementListBox.Items = {'Add New Parallel Branch', 'Edit Adjacent Branch', 'End Parallel Branch', 'R', 'C', 'Q', 'W', 'L'};
-            app.DoubleClicktoAddElementListBox.ValueChangedFcn = createCallbackFcn(app, @DoubleClicktoAddElementListBoxValueChanged, true);
-            app.DoubleClicktoAddElementListBox.DoubleClickedFcn = createCallbackFcn(app, @DoubleClicktoAddElementListBoxDoubleClicked, true);
-            app.DoubleClicktoAddElementListBox.Position = [301 24 151 98];
-            app.DoubleClicktoAddElementListBox.Value = 'R';
-
-            % Create RLabel
-            app.RLabel = uilabel(app.WriteACircuitTab);
-            app.RLabel.FontSize = 18;
-            app.RLabel.FontWeight = 'bold';
-            app.RLabel.FontColor = [0.6353 0.0784 0.1843];
-            app.RLabel.Position = [259 91 41 23];
-            app.RLabel.Text = '+R∞';
-
-            % Create IncludeBarrierSwitch_2Label
-            app.IncludeBarrierSwitch_2Label = uilabel(app.WriteACircuitTab);
-            app.IncludeBarrierSwitch_2Label.HorizontalAlignment = 'center';
-            app.IncludeBarrierSwitch_2Label.FontWeight = 'bold';
-            app.IncludeBarrierSwitch_2Label.FontColor = [0.6353 0.0784 0.1843];
-            app.IncludeBarrierSwitch_2Label.Position = [8 9 90 22];
-            app.IncludeBarrierSwitch_2Label.Text = 'Include Barrier';
-
-            % Create IncludeBarrierSwitch_2
-            app.IncludeBarrierSwitch_2 = uiswitch(app.WriteACircuitTab, 'rocker');
-            app.IncludeBarrierSwitch_2.Orientation = 'horizontal';
-            app.IncludeBarrierSwitch_2.ValueChangedFcn = createCallbackFcn(app, @IncludeBarrierSwitch_2ValueChanged, true);
-            app.IncludeBarrierSwitch_2.Position = [127 10 45 20];
 
             % Create ProgressGuage
             app.ProgressGuage = uigauge(app.FittingParams, 'semicircular');
@@ -6861,6 +7067,46 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RegSchemeListBox.Items = {'Smoothness', 'Sparsity', 'd/dt Smoothness', 'd/dt Sparsity', 'Local d/dt Smoothness'};
             app.RegSchemeListBox.Position = [187 4 121 60];
             app.RegSchemeListBox.Value = 'Smoothness';
+
+            % Create ErrorCorrectionTab
+            app.ErrorCorrectionTab = uitab(app.CCTFitOptionsTabGroup);
+            app.ErrorCorrectionTab.Title = 'Error Correction';
+
+            % Create PotentiostatErrorCorrectionSwitchLabel
+            app.PotentiostatErrorCorrectionSwitchLabel = uilabel(app.ErrorCorrectionTab);
+            app.PotentiostatErrorCorrectionSwitchLabel.HorizontalAlignment = 'center';
+            app.PotentiostatErrorCorrectionSwitchLabel.FontWeight = 'bold';
+            app.PotentiostatErrorCorrectionSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.PotentiostatErrorCorrectionSwitchLabel.Position = [9 9 75 44];
+            app.PotentiostatErrorCorrectionSwitchLabel.Text = {'Potentiostat'; 'Error'; 'Correction'};
+
+            % Create PotentiostatErrorCorrectionSwitch
+            app.PotentiostatErrorCorrectionSwitch = uiswitch(app.ErrorCorrectionTab, 'slider');
+            app.PotentiostatErrorCorrectionSwitch.ValueChangedFcn = createCallbackFcn(app, @PotentiostatErrorCorrectionSwitchValueChanged, true);
+            app.PotentiostatErrorCorrectionSwitch.Tooltip = {''};
+            app.PotentiostatErrorCorrectionSwitch.Position = [26 59 48 21];
+
+            % Create ZmeasuredZtrueEditFieldLabel
+            app.ZmeasuredZtrueEditFieldLabel = uilabel(app.ErrorCorrectionTab);
+            app.ZmeasuredZtrueEditFieldLabel.HorizontalAlignment = 'right';
+            app.ZmeasuredZtrueEditFieldLabel.FontWeight = 'bold';
+            app.ZmeasuredZtrueEditFieldLabel.Position = [143 75 103 22];
+            app.ZmeasuredZtrueEditFieldLabel.Text = 'Zmeasured/Ztrue';
+
+            % Create ZmeasuredZtrueEditField
+            app.ZmeasuredZtrueEditField = uieditfield(app.ErrorCorrectionTab, 'text');
+            app.ZmeasuredZtrueEditField.Position = [107 46 193 30];
+
+            % Create MaxValsEditFieldLabel
+            app.MaxValsEditFieldLabel = uilabel(app.ErrorCorrectionTab);
+            app.MaxValsEditFieldLabel.HorizontalAlignment = 'right';
+            app.MaxValsEditFieldLabel.FontWeight = 'bold';
+            app.MaxValsEditFieldLabel.Position = [134 9 55 22];
+            app.MaxValsEditFieldLabel.Text = 'Max Vals';
+
+            % Create MaxValsEditField
+            app.MaxValsEditField = uieditfield(app.ErrorCorrectionTab, 'text');
+            app.MaxValsEditField.Position = [201 7 99 30];
 
             % Create AbortButton
             app.AbortButton = uibutton(app.FittingParams, 'state');
