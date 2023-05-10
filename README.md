@@ -41,7 +41,7 @@ For more information refer to [Creating MATLAB GUIs](https://www.mathworks.com/h
 
 ## MATLAB Dependencies
 
-- >= MATLAB 2022b
+- \>= MATLAB 2022b
 - Control System Toolbox
 - System Identification Toolbox
 - Signal Processing Toolbox
