@@ -173,12 +173,13 @@ classdef AnalyZe < matlab.apps.AppBase
         RecursiveTimeRegularizationSwitch  matlab.ui.control.Switch
         RecursiveTimeRegularizationLabel  matlab.ui.control.Label
         ErrorCorrectionTab              matlab.ui.container.Tab
-        MaxValsEditField                matlab.ui.control.EditField
-        MaxValsEditFieldLabel           matlab.ui.control.Label
+        ParamMaxValsLabel               matlab.ui.control.Label
+        FixedFreeParams                 matlab.ui.control.RockerSwitch
+        MaxParamErrValsEditField        matlab.ui.control.EditField
         ZmeasuredZtrueEditField         matlab.ui.control.EditField
         ZmeasuredZtrueEditFieldLabel    matlab.ui.control.Label
-        PotentiostatErrorCorrectionSwitch  matlab.ui.control.Switch
-        PotentiostatErrorCorrectionSwitchLabel  matlab.ui.control.Label
+        ErrorCorrectionSwitch           matlab.ui.control.Switch
+        ErrorCorrectionLabel            matlab.ui.control.Label
         ProgressGuage                   matlab.ui.control.SemicircularGauge
         CircuitToFit                    matlab.ui.container.TabGroup
         SelectACircuitTab               matlab.ui.container.Tab
@@ -760,32 +761,54 @@ classdef AnalyZe < matlab.apps.AppBase
                                     end
                     end
                     
-                    %Bilayer = @(b,x) ( (1./b(1,:)) + (1./C(b(2,:),x)) ).^(-1);
-                    value = app.PotentiostatErrorCorrectionSwitch.Value;
+               %%% Error Correction
+
+                    ErrCorrParams = [];
+                    value = app.ErrorCorrectionSwitch.Value;
                     switch value
                         case 'On'
 
-                            CCT_Fn_Chosen = CCT_Fn;
-                            NumParams = length(beta0);
-                            CorrectionStr = app.ZmeasuredZtrueEditField.Value;
-                            CorrectionMaxValStr = app.MaxValsEditField.Value;
-                            CorrectionMaxValsStr =['[',CorrectionMaxValStr,']'];
-                            CorrectionMaxVals = eval(CorrectionMaxValsStr);
-                            NumNewParams = length(CorrectionMaxVals);
-                            for param = 1:NumNewParams
-                                expression = ['b(',int2str(param)];
-                                NewExpression = ['b(',int2str(NumParams+param)];
-                                CorrectionStr = regexprep(CorrectionStr,expression,NewExpression)
-                                
-                                ub = [ub;CorrectionMaxVals(param)];
-                                lb = [lb;0];
-                                beta0 = [beta0;1];
+                            valueFixedParams = app.FixedFreeParams.Value;
+                            switch valueFixedParams
+                                case 'Free Params'
+                                    CCT_Fn_Chosen = CCT_Fn;
+                                    NumParams = length(beta0);
+                                    CorrectionStr = app.ZmeasuredZtrueEditField.Value;
+                                    CorrectionMaxValStr = app.MaxParamErrValsEditField.Value;
+                                    CorrectionMaxValsStr =['[',CorrectionMaxValStr,']'];
+                                    CorrectionMaxVals = eval(CorrectionMaxValsStr);
+                                    NumNewParams = length(CorrectionMaxVals);
+                                    for param = 1:NumNewParams
+                                        expression = ['b(',int2str(param)];
+                                        NewExpression = ['b(',int2str(NumParams+param)];
+                                        CorrectionStr = regexprep(CorrectionStr,expression,NewExpression);
+                                        
+                                        ub = [ub;CorrectionMaxVals(param)];
+                                        lb = [lb;0];
+                                        beta0 = [beta0;1];
+                                    end
+                                    
+                                    CorrectionStr = ['@(b,x) ',CorrectionStr];
+                                    Correction_Fn = eval(CorrectionStr);
+                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(b,x);
+
+                                case 'Fixed Params'
+                                    CCT_Fn_Chosen = CCT_Fn;
+                                    NumParams = length(beta0);
+                                    CorrectionStr = app.ZmeasuredZtrueEditField.Value;
+                                    CorrectionMaxValStr = app.MaxParamErrValsEditField.Value;
+                                    CorrectionMaxValsStr =['[',CorrectionMaxValStr,']'];
+                                    ErrCorrParams = eval(CorrectionMaxValsStr);
+                                        ErrCorrParams = ErrCorrParams.';
+                                    
+                                        expression = 'b(';
+                                        NewExpression = 'ErrCorrParams(';
+                                        CorrectionStr = regexprep(CorrectionStr,expression,NewExpression);
+                                                                        
+                                    CorrectionStr = ['@(x) ',CorrectionStr];
+                                    Correction_Fn = eval(CorrectionStr);
+                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(b,x);
                             end
-                            
-                            CorrectionStr = ['@(b,x) ',CorrectionStr];
-                            Correction_Fn = eval(CorrectionStr);
-                            CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(b,x);
-                            
 
                     end
 
@@ -2354,11 +2377,11 @@ classdef AnalyZe < matlab.apps.AppBase
                     end
 
                                
-                    switch app.PotentiostatErrorCorrectionSwitch.Value
+                    switch app.ErrorCorrectionSwitch.Value
                         case 'On'
                             ProblemSetUpString_i = ProblemSetUpString_i + " Potentiostat Error Correction Engaged (true) " + newline;
                             ProblemSetUpString_i = ProblemSetUpString_i + "     Z_meas/Z_true = " + string(app.ZmeasuredZtrueEditField.Value) + newline;
-                            ProblemSetUpString_i = ProblemSetUpString_i + "     Max Vals = " + string(app.MaxValsEditField.Value) + newline;
+                            ProblemSetUpString_i = ProblemSetUpString_i + "     Max Vals = " + string(app.MaxParamErrValsEditField.Value) + newline;
                         case 'Off'
                             ProblemSetUpString_i = ProblemSetUpString_i + "Potentiostat Error Correction Engaged (false) " + newline;
                     end
@@ -6350,9 +6373,9 @@ classdef AnalyZe < matlab.apps.AppBase
             end
         end
 
-        % Value changed function: PotentiostatErrorCorrectionSwitch
-        function PotentiostatErrorCorrectionSwitchValueChanged(app, event)
-            value = app.PotentiostatErrorCorrectionSwitch.Value;
+        % Value changed function: ErrorCorrectionSwitch
+        function ErrorCorrectionSwitchValueChanged(app, event)
+            value = app.ErrorCorrectionSwitch.Value;
             
             switch value
                 
@@ -6387,6 +6410,17 @@ classdef AnalyZe < matlab.apps.AppBase
                        end
 
 
+            end
+        end
+
+        % Value changed function: FixedFreeParams
+        function FixedFreeParamsValueChanged(app, event)
+            value = app.FixedFreeParams.Value;
+            switch value
+                case 'Free Params'
+                    app.ParamMaxValsLabel.Text = 'Param Max Vals';
+                case 'Fixed Params'
+                    app.ParamMaxValsLabel.Text = 'Param Fixed Vals';
             end
         end
     end
@@ -7072,19 +7106,20 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ErrorCorrectionTab = uitab(app.CCTFitOptionsTabGroup);
             app.ErrorCorrectionTab.Title = 'Error Correction';
 
-            % Create PotentiostatErrorCorrectionSwitchLabel
-            app.PotentiostatErrorCorrectionSwitchLabel = uilabel(app.ErrorCorrectionTab);
-            app.PotentiostatErrorCorrectionSwitchLabel.HorizontalAlignment = 'center';
-            app.PotentiostatErrorCorrectionSwitchLabel.FontWeight = 'bold';
-            app.PotentiostatErrorCorrectionSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.PotentiostatErrorCorrectionSwitchLabel.Position = [9 9 75 44];
-            app.PotentiostatErrorCorrectionSwitchLabel.Text = {'Potentiostat'; 'Error'; 'Correction'};
+            % Create ErrorCorrectionLabel
+            app.ErrorCorrectionLabel = uilabel(app.ErrorCorrectionTab);
+            app.ErrorCorrectionLabel.HorizontalAlignment = 'center';
+            app.ErrorCorrectionLabel.FontWeight = 'bold';
+            app.ErrorCorrectionLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.ErrorCorrectionLabel.Position = [1 78 99 22];
+            app.ErrorCorrectionLabel.Text = 'Error Correction';
 
-            % Create PotentiostatErrorCorrectionSwitch
-            app.PotentiostatErrorCorrectionSwitch = uiswitch(app.ErrorCorrectionTab, 'slider');
-            app.PotentiostatErrorCorrectionSwitch.ValueChangedFcn = createCallbackFcn(app, @PotentiostatErrorCorrectionSwitchValueChanged, true);
-            app.PotentiostatErrorCorrectionSwitch.Tooltip = {''};
-            app.PotentiostatErrorCorrectionSwitch.Position = [26 59 48 21];
+            % Create ErrorCorrectionSwitch
+            app.ErrorCorrectionSwitch = uiswitch(app.ErrorCorrectionTab, 'slider');
+            app.ErrorCorrectionSwitch.Orientation = 'vertical';
+            app.ErrorCorrectionSwitch.ValueChangedFcn = createCallbackFcn(app, @ErrorCorrectionSwitchValueChanged, true);
+            app.ErrorCorrectionSwitch.Tooltip = {''};
+            app.ErrorCorrectionSwitch.Position = [16 19 19 43];
 
             % Create ZmeasuredZtrueEditFieldLabel
             app.ZmeasuredZtrueEditFieldLabel = uilabel(app.ErrorCorrectionTab);
@@ -7097,16 +7132,23 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ZmeasuredZtrueEditField = uieditfield(app.ErrorCorrectionTab, 'text');
             app.ZmeasuredZtrueEditField.Position = [107 46 193 30];
 
-            % Create MaxValsEditFieldLabel
-            app.MaxValsEditFieldLabel = uilabel(app.ErrorCorrectionTab);
-            app.MaxValsEditFieldLabel.HorizontalAlignment = 'right';
-            app.MaxValsEditFieldLabel.FontWeight = 'bold';
-            app.MaxValsEditFieldLabel.Position = [134 9 55 22];
-            app.MaxValsEditFieldLabel.Text = 'Max Vals';
+            % Create MaxParamErrValsEditField
+            app.MaxParamErrValsEditField = uieditfield(app.ErrorCorrectionTab, 'text');
+            app.MaxParamErrValsEditField.Position = [201 7 99 30];
 
-            % Create MaxValsEditField
-            app.MaxValsEditField = uieditfield(app.ErrorCorrectionTab, 'text');
-            app.MaxValsEditField.Position = [201 7 99 30];
+            % Create FixedFreeParams
+            app.FixedFreeParams = uiswitch(app.ErrorCorrectionTab, 'rocker');
+            app.FixedFreeParams.Items = {'Free Params', 'Fixed Params'};
+            app.FixedFreeParams.ValueChangedFcn = createCallbackFcn(app, @FixedFreeParamsValueChanged, true);
+            app.FixedFreeParams.FontSize = 9;
+            app.FixedFreeParams.Position = [65 21 14 31];
+            app.FixedFreeParams.Value = 'Free Params';
+
+            % Create ParamMaxValsLabel
+            app.ParamMaxValsLabel = uilabel(app.ErrorCorrectionTab);
+            app.ParamMaxValsLabel.FontWeight = 'bold';
+            app.ParamMaxValsLabel.Position = [98 11 95 22];
+            app.ParamMaxValsLabel.Text = 'Param Max Vals';
 
             % Create AbortButton
             app.AbortButton = uibutton(app.FittingParams, 'state');
