@@ -47,9 +47,20 @@ classdef AnalyZe < matlab.apps.AppBase
         LoadFromPreviousSaveButton      matlab.ui.control.Button
         UITable                         matlab.ui.control.Table
         LoadDataPanel                   matlab.ui.container.Panel
+        ThenLabel                       matlab.ui.control.Label
+        FirstLabel                      matlab.ui.control.Label
+        AutoIncrementTimePointSwitch    matlab.ui.control.Switch
+        AutoIncrementTimePointSwitchLabel  matlab.ui.control.Label
+        FileFinderTab                   matlab.ui.container.TabGroup
+        FileFinderSUBTRINGFilterTab     matlab.ui.container.Tab
+        FilterFilenamesbyLabel          matlab.ui.control.Label
+        SubstringLabel                  matlab.ui.control.Label
+        KnobSubtringFilter              matlab.ui.control.DiscreteKnob
+        FindFilesSubtringFilter         matlab.ui.control.EditField
+        MultiSelectTab                  matlab.ui.container.Tab
+        SelectMultipleFilesandautoincrementafieldLabel  matlab.ui.control.Label
+        KnobMultiSelect                 matlab.ui.control.DiscreteKnob
         HOMEButton                      matlab.ui.control.Button
-        OptionallyFilterBySubstringEditField  matlab.ui.control.EditField
-        OptinoallyFilterBySubstringLabel  matlab.ui.control.Label
         HoldPlotSwitchLoad              matlab.ui.control.ToggleSwitch
         HoldPlotSwitchLabel             matlab.ui.control.Label
         WellNumberEditField             matlab.ui.control.EditField
@@ -354,7 +365,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
     
     properties (Access = private)
-        CurrentFileName % Description
+        CurrentFileName = {} % Description
         DatToFit % Description
         DatToCrossSection % Description
     end
@@ -401,6 +412,9 @@ classdef AnalyZe < matlab.apps.AppBase
         CumulativeCCTFitDisplayNames; % Description
         CumulativeCCTFitDiagnosticDisplayNames = []; % Description
         CustomElementFunctions = {}; % Description
+        MultiFileSelectAutoIncrementArray = {}; % Description
+        AutoFileTimeIncrementArray = {};
+        AutoFileTimeIncremementPosition = 0;
     end
     
     methods (Access = private)
@@ -807,7 +821,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                                                         
                                     CorrectionStr = ['@(x) ',CorrectionStr];
                                     Correction_Fn = eval(CorrectionStr);
-                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(b,x);
+                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(x);
                             end
 
                     end
@@ -1744,93 +1758,257 @@ classdef AnalyZe < matlab.apps.AppBase
                    case 'Cancel'
                        return
                end
-            
-            FilterValue = app.OptionallyFilterBySubstringEditField.Value;
-            [file,path] = uigetfile(['*',FilterValue,'*']);
 
-            app.OrEnterFilePathEditField.Value =  fullfile(path,file) ;
-            app.CurrentFileName = fullfile(path,file);
+            %% File name filtering
+            value = app.KnobSubtringFilter.Value;
+            switch value
+                case 'Condition'
+                    FilterValue = app.ConditionEditField.Value;
+                case 'Well'
+                    FilterValue = app.WellNumberEditField.Value;
+                case 'Time Point'
+                    FilterValue = int2str(app.TimePointAUEditField.Value);
+                case 'Substring'
+                    FilterValue = app.FindFilesSubtringFilter.Value;
+
+                otherwise
+                    FilterValue = '';
+            end
+
+            %% MultiSelect Util
+            
+            value = app.KnobMultiSelect.Value;
+            MultiSelectString = 'off';
+                
+                dlgtitle = 'MultiSelect Array';
+                dims = [1 100];
+             
+            
+                
+            switch value
+                case 'Condition'
+                    prompt = {'Enter a delimited list of Conditions','Enter a list delimiter'};
+                    definput = {'control,test',','};
+                    answer = inputdlg(prompt,dlgtitle,dims,definput); 
+                    app.MultiFileSelectAutoIncrementArray = regexp(answer{1},answer{2},'split');
+
+                    MultiSelectString = 'on';
+                    app.HoldPlotSwitchLoad.Value = 'Off';
+                case 'Well Number'
+                    prompt = {'Enter a delimited list of Well numbers','Enter a list delimiter'};
+                    definput = {'control,test',','};
+                    answer = inputdlg(prompt,dlgtitle,dims,definput); 
+                    app.MultiFileSelectAutoIncrementArray = regexp(answer{1},answer{2},'split');
+
+                    MultiSelectString = 'on';
+                    app.HoldPlotSwitchLoad.Value = 'Off';
+                case 'Time Point'
+                    prompt = {'Enter a delimited list of Time Points','Enter a list delimiter'};
+                    definput = {'control,test',','};
+                    answer = inputdlg(prompt,dlgtitle,dims,definput); 
+                    app.MultiFileSelectAutoIncrementArray = regexp(answer{1},answer{2},'split');
+
+                    MultiSelectString = 'on';
+                    app.HoldPlotSwitchLoad.Value = 'Off';
+                otherwise
+                    app.MultiFileSelectAutoIncrementArray = {};
+                    SelectPrompt = 'Please Select A File';
+                    
+                    MultiSelectString = 'off';
+                    
+            end
+            
+            %% Select files
+
+            if ~isempty(app.MultiFileSelectAutoIncrementArray)
+                    
+                    selpath = uigetdir('.','First Select Directory (Folder)');
+                    file = {};
+                    path = {};
+                    
+                for multSel = 1:length(app.MultiFileSelectAutoIncrementArray)
+                    SelectPrompt = ['NOW SELECT: ',app.MultiFileSelectAutoIncrementArray{multSel}];
+                    if isempty(FilterValue)
+                        [file_temp,path_temp] = uigetfile([selpath,'\*'],SelectPrompt,'MultiSelect',MultiSelectString);
+                    else
+                        [file_temp,path_temp] = uigetfile([selpath,'\*',FilterValue,'*'],SelectPrompt,'MultiSelect',MultiSelectString);
+                    end
+
+                    file = [file,{file_temp}];
+                    path = [path,{path_temp}];
+ 
+                end
+
+            else
+                
+                if isempty(FilterValue)
+                    [file,path] = uigetfile('*',SelectPrompt,'MultiSelect',MultiSelectString);
+                else
+                    [file,path] = uigetfile(['*',FilterValue,'*'],SelectPrompt,'MultiSelect',MultiSelectString);
+                end
+
+            end
+
+            switch app.KnobMultiSelect.Value
+                case 'Off'
+                otherwise
+                    if length(file) ~= length(app.MultiFileSelectAutoIncrementArray)
+                        errordlg('Please select the same number of files as items in the auto-increment list supplied','Multiselect autoincrement error')
+                        return
+                    end
+            end
+
+            
+            app.CurrentFileName = string(fullfile(path,file));
+
+            if length(app.CurrentFileName) > 1
+                app.OrEnterFilePathEditField.Value = selpath;
+            else
+                app.OrEnterFilePathEditField.Value =  fullfile(path,file) ;
+            end
+
+            display(app.CurrentFileName)
+
         end
 
         % Button pushed function: LOADButton
         function LOADButtonPushed(app, event)
-        
-            if ~isfile(app.CurrentFileName)
-                errordlg('Oops! We couldn''t find that file!','Invalid File')
-                return
+
+            if isempty(app.CurrentFileName)
+                value = app.OrEnterFilePathEditField.Value;
+                app.CurrentFileName = string(value);
             end
 
-            %% Set up the Import Options and import the data
-            opts = delimitedTextImportOptions("NumVariables", 7);
-            
-            % Specify range and delimiter
-            opts.DataLines = [2, Inf];
-            opts.Delimiter = "\t";
+            %% Time AutoIncrementer
 
-                %Auto-detect_delimeter
-                   AutoOpts = detectImportOptions(app.CurrentFileName);
-                   opts.Delimiter = string(AutoOpts.Delimiter{1});
-            
-            % Specify column names and types
-            opts.VariableNames = ["Index", "FrequencyHz", "Z", "Z1", "Z2", "Phase", "Times"];
-            opts.VariableTypes = ["double", "double", "double", "double", "double", "double", "double"];
-            
-            % Specify file level properties
-            opts.ExtraColumnsRule = "ignore";
-            opts.EmptyLineRule = "read";
-            
-            % Import the data
-            app.CurrentEISMeasurement = readtable(app.CurrentFileName, opts);
-            
-            
-            %% Clear temporary variables
-            clear opts
+                value = app.AutoIncrementTimePointSwitch.Value;
+                switch value
+                    case 'On'
+                        app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition+1;
+                        app.TimePointAUEditField.Value  = app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition);
+                        app.CurrentEISTime =app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition);
+                        
+                        if app.AutoFileTimeIncremementPosition == length(app.AutoFileTimeIncrementArray)
+                            app.AutoIncrementTimePointSwitch.Value = 'Off';
+                            app.TimePointAUEditField.Enable = true;
+                            app.AutoFileTimeIncrementArray = [];
+                            app.AutoFileTimeIncremementPosition = 0;
 
-            %% Save Data
-
-            %struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
-
-                app.Data(end+1) = struct('Name', {app.CurrentEISName}, 'Time', {app.CurrentEISTime}, 'ExperimentNumber', {app.CurrentExpNumber},...
-                    'Well', {app.CurrentWell} ,  'Data', (app.CurrentEISMeasurement));
-                %Data2Save = app.Data;
-                %save("Test.mat","Data2Save")
-
-
-
-            %% Plot
-                EISDat = app.CurrentEISMeasurement;
-                Freq = EISDat.FrequencyHz;
-                Mod = EISDat.Z2;
-                Arg = EISDat.Phase;
-
-                switch app.HoldPlotSwitchLoad.Value
-                        case 'On'
-                            hold(app.LoadEISDat, 'on');
-
-                        case 'Off'
-                            hold(app.LoadEISDat, 'off');
-                            cla(app.LoadEISDat)
-                    end
+                            app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment',newline,'Time Point'};
+                            
+                            msgbox('All Time Points Loaded')
+                        else
+                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME',newline, 'POINT:',int2str(app.AutoFileTimeIncremementPosition+1)}
+                        end 
+                end
+        
+            for MSelct = 1:length(app.CurrentFileName)
                 
-                yyaxis(app.LoadEISDat, 'left')
-                plot(app.LoadEISDat, Freq, Mod,'LineWidth',3)
-                set(app.LoadEISDat,'YScale','log')
-                set(app.LoadEISDat,'XScale','log')
-                hold(app.LoadEISDat, 'on')
-                     yyaxis(app.LoadEISDat, 'right')
-                     plot(app.LoadEISDat, Freq, Arg,'LineWidth',3)
-                     set(app.LoadEISDat,'YScale','linear')
-                hold(app.LoadEISDat, 'on')
+                if length(app.CurrentFileName) > 1
+                    FileName = app.CurrentFileName(MSelct);
+                else
+                    FileName = app.CurrentFileName;
+                end
 
-           %% Add Table Entry
-                 newData = {app.CurrentEISName app.CurrentExpNumber app.CurrentWell app.CurrentEISTime};
-                 app.UITable.Data = [app.UITable.Data; newData];
+                if ~isfile(FileName)
+                   
+                    errordlg({'Oops! We couldn''t find that file!',newline,FileName},'Invalid File')
+                    return
+                end
+
+                %% Multiselect
+                    value = app.KnobMultiSelect.Value;
+
+                    switch value
+                        case 'Condition'
+                            app.CurrentEISName = app.MultiFileSelectAutoIncrementArray{MSelct};
+                        case 'Well Number'
+                            app.CurrentWell = app.MultiFileSelectAutoIncrementArray{MSelct};
+                        case 'Time Point'
+                            app.CurrentEISTime = app.MultiFileSelectAutoIncrementArray{MSelct};
+                        otherwise
+                    end
+
+
+                    
+                %% Set up the Import Options and import the data
+                opts = delimitedTextImportOptions("NumVariables", 7);
+                
+                % Specify range and delimiter
+                opts.DataLines = [2, Inf];
+                opts.Delimiter = "\t";
+    
+                    %Auto-detect_delimeter
+                       AutoOpts = detectImportOptions(FileName);
+                       opts.Delimiter = string(AutoOpts.Delimiter{1});
+                
+                % Specify column names and types
+                opts.VariableNames = ["Index", "FrequencyHz", "Z", "Z1", "Z2", "Phase", "Times"];
+                opts.VariableTypes = ["double", "double", "double", "double", "double", "double", "double"];
+                
+                % Specify file level properties
+                opts.ExtraColumnsRule = "ignore";
+                opts.EmptyLineRule = "read";
+                
+                % Import the data
+                app.CurrentEISMeasurement = readtable(FileName, opts);
+                
+                
+                %% Clear temporary variables
+                clear opts
+    
+                %% Save Data
+    
+                %struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+    
+                    app.Data(end+1) = struct('Name', {app.CurrentEISName}, 'Time', {app.CurrentEISTime}, 'ExperimentNumber', {app.CurrentExpNumber},...
+                        'Well', {app.CurrentWell} ,  'Data', (app.CurrentEISMeasurement));
+                    %Data2Save = app.Data;
+                    %save("Test.mat","Data2Save")
+    
+    
+    
+                %% Plot
+                    EISDat = app.CurrentEISMeasurement;
+                    Freq = EISDat.FrequencyHz;
+                    Mod = EISDat.Z2;
+                    Arg = EISDat.Phase;
+    
+                    switch app.HoldPlotSwitchLoad.Value
+                            case 'On'
+                                hold(app.LoadEISDat, 'on');
+    
+                            case 'Off'
+                                hold(app.LoadEISDat, 'off');
+                                cla(app.LoadEISDat)
+                        end
+                    
+                    yyaxis(app.LoadEISDat, 'left')
+                    plot(app.LoadEISDat, Freq, Mod,'LineWidth',3)
+                    set(app.LoadEISDat,'YScale','log')
+                    set(app.LoadEISDat,'XScale','log')
+                    hold(app.LoadEISDat, 'on')
+                         yyaxis(app.LoadEISDat, 'right')
+                         plot(app.LoadEISDat, Freq, Arg,'LineWidth',3)
+                         set(app.LoadEISDat,'YScale','linear')
+                    hold(app.LoadEISDat, 'on')
+    
+               %% Add Table Entry
+                     newData = {app.CurrentEISName app.CurrentExpNumber app.CurrentWell app.CurrentEISTime};
+                     app.UITable.Data = [app.UITable.Data; newData];
+
+
+        
+            end
+
+          %% Clear filename
+                app.CurrentFileName = '';
+                app.OrEnterFilePathEditField.Value = '';
         end
 
         % Value changed function: OrEnterFilePathEditField
         function OrEnterFilePathEditFieldValueChanged(app, event)
-            value = app.OrEnterFilePathEditField.Value;
-            app.CurrentFileName = value;
+            
         end
 
         % Value changed function: TimePointAUEditField
@@ -4308,6 +4486,13 @@ classdef AnalyZe < matlab.apps.AppBase
             cla(app.LoadEISDat)
             yyaxis(app.LoadEISDat, 'left')
             cla(app.LoadEISDat)
+
+
+            %% Time auto incrementer
+                    app.TimePointAUEditField.Enable = true;
+                    app.AutoFileTimeIncrementArray = [];
+                    app.AutoFileTimeIncremementPosition = 0;
+                    app.AutoIncrementTimePointSwitch.Value = 'Off';
            
 
              f = msgbox("Data Cleared!");
@@ -4341,6 +4526,13 @@ classdef AnalyZe < matlab.apps.AppBase
                    app.UITable.Data = [];
 
                    f = msgbox("All Data purged :)");
+               end
+
+               value = app.AutoIncrementTimePointSwitch.Value;
+               switch value
+                   case 'On'
+                        app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
+                        msgbox('Time Point auto incrementer rolled back by one')
                end
 
                
@@ -6423,6 +6615,134 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.ParamMaxValsLabel.Text = 'Param Fixed Vals';
             end
         end
+
+        % Value changed function: KnobSubtringFilter
+        function KnobSubtringFilterValueChanged(app, event)
+            
+           answer = 'Continue';
+           flag = app.TutorialMode;
+           if flag
+                
+               answer = questdlg({'When you enable this module, the FindFile button will filter the results in the file explorer to filenames containing the substring you select.',...
+                                 newline,...
+                                 'The filenames are filtered according to the pattern: (whatever)Your Substring(whatever)',...
+                                 newline, newline,...
+                                 'Note that this has been known to misbehave on certain platforms as it is at the mercy of the system file explorer.'},...
+                                    'Filter File Names',...
+                                   'Continue','Cancel','Continue');
+           end
+               switch answer
+                   case 'Cancel'
+                       app.KnobSubtringFilter.Value = 'Off';
+                       return
+               end
+            
+            
+            
+            
+            value = app.KnobSubtringFilter.Value;
+            switch value
+                case 'Substring'
+                    app.FindFilesSubtringFilter.Enable = true;
+                otherwise
+                     app.FindFilesSubtringFilter.Enable = false;
+            end
+        end
+
+        % Value changed function: KnobMultiSelect
+        function KnobMultiSelectValueChanged(app, event)
+
+            answer = 'Continue';
+           flag = app.TutorialMode;
+           if flag
+                
+               answer = questdlg({'This utility enables you to select multiple files, which all vary in one category, and have them auto labelled.',...
+                                    newline,...
+                                    'When you click Find File, you will be asked for a dellimited list of category values. For example, if you have four files of the same condition, time point and experiment number, you can enter the list of four different well numbers. The system will then ask you to find the root directory, and then sequentially select the four files, each data point will be assigned well numbers according to the list you provided.',...
+                                    'Remember to press LOAD after each Find File!'},...
+                                    'Select Multiple Files In One Go',...
+                                   'Continue','Cancel','Continue');
+           end
+               switch answer
+                   case 'Cancel'
+                       app.KnobMultiSelect.Value = 'Off';
+                       return
+               end
+
+
+            value = app.KnobMultiSelect.Value;
+            switch value
+                case 'Condition'
+                    app.ConditionEditField.Enable = false;
+                    app.WellNumberEditField.Enable = true;
+                    app.TimePointAUEditField.Enable = true;
+                case 'Well Number'
+                    app.ConditionEditField.Enable = true;
+                    app.WellNumberEditField.Enable = false;
+                    app.TimePointAUEditField.Enable = true;
+                case 'Time Point'
+                    AutoTime = app.AutoIncrementTimePointSwitch.Value;
+                    switch AutoTime
+                        case 'On'
+                            errordlg('This option cannot be used concurrently with the auto-time point incrementer.')
+                            app.KnobMultiSelect.Value = 'Off';
+                            app.ConditionEditField.Enable = true;
+                            app.WellNumberEditField.Enable = true;
+                            app.TimePointAUEditField.Enable = false;
+                            return
+                    end
+
+                    app.ConditionEditField.Enable = true;
+                    app.WellNumberEditField.Enable = true;
+                    app.TimePointAUEditField.Enable = false;
+                otherwise
+                    app.ConditionEditField.Enable = true;
+                    app.WellNumberEditField.Enable = true;
+                    app.TimePointAUEditField.Enable = true;
+
+            end
+        end
+
+        % Value changed function: AutoIncrementTimePointSwitch
+        function AutoIncrementTimePointSwitchValueChanged(app, event)
+                     answer = 'Continue';
+           flag = app.TutorialMode;
+           if flag
+                
+               answer = questdlg({'This utility enables you to pre-specify the time points for a series of data points. Upon activation, you will be prompted for a list of time points.',...
+                                    'Each time you press LOAD, the time point will be automatically incremented and the next time point in the list you specified will be assigned to the data point (or points) being read in.'},...
+                                    'Auto-Incrememnt Time Point',...
+                                   'Continue','Cancel','Continue');
+           end
+               switch answer
+                   case 'Cancel'
+                       app.AutoIncrementTimePointSwitch.Value = 'Off';
+                       return
+               end
+            
+            
+            value = app.AutoIncrementTimePointSwitch.Value;
+            switch value 
+                case 'Off'
+                    app.TimePointAUEditField.Enable = true;
+                    app.AutoFileTimeIncrementArray = [];
+                    app.AutoFileTimeIncremementPosition = 0;
+                case 'On'
+                    app.TimePointAUEditField.Enable = false;
+
+                    dlgtitle = 'Time Point Array';
+                    dims = [1 100];
+                    prompt = 'Enter a COMMA separated list of Time Points';
+                    definput = {'0,1,2'};
+                    answer = inputdlg(prompt,dlgtitle,dims,definput); 
+                    
+                    try
+                        app.AutoFileTimeIncrementArray = eval(['[',answer{1},']']);
+                    catch
+                        errordlg('Please enter numeric values separated by commas','Invalud Time Point Array')
+                    end
+            end
+        end
     end
 
     % Component initialization
@@ -6546,31 +6866,31 @@ classdef AnalyZe < matlab.apps.AppBase
             title(app.LoadEISDat, 'Bode Plot')
             xlabel(app.LoadEISDat, 'Frequency (Hz)')
             app.LoadEISDat.Tag = 'LoadEIS';
-            app.LoadEISDat.Position = [16 46 458 320];
+            app.LoadEISDat.Position = [38 57 409 284];
 
             % Create TimePointAUEditFieldLabel
             app.TimePointAUEditFieldLabel = uilabel(app.LoadDataPanel);
             app.TimePointAUEditFieldLabel.HorizontalAlignment = 'right';
             app.TimePointAUEditFieldLabel.FontSize = 14;
-            app.TimePointAUEditFieldLabel.Position = [30 525 104 22];
+            app.TimePointAUEditFieldLabel.Position = [31 530 104 22];
             app.TimePointAUEditFieldLabel.Text = 'Time Point (AU)';
 
             % Create ConditionEditFieldLabel
             app.ConditionEditFieldLabel = uilabel(app.LoadDataPanel);
             app.ConditionEditFieldLabel.HorizontalAlignment = 'right';
             app.ConditionEditFieldLabel.FontSize = 14;
-            app.ConditionEditFieldLabel.Position = [22 621 64 22];
+            app.ConditionEditFieldLabel.Position = [22 625 64 22];
             app.ConditionEditFieldLabel.Text = 'Condition';
 
             % Create ConditionEditField
             app.ConditionEditField = uieditfield(app.LoadDataPanel, 'text');
             app.ConditionEditField.ValueChangedFcn = createCallbackFcn(app, @ConditionEditFieldValueChanged, true);
-            app.ConditionEditField.Position = [101 617 352 30];
+            app.ConditionEditField.Position = [101 621 352 30];
 
             % Create TimePointAUEditField
             app.TimePointAUEditField = uieditfield(app.LoadDataPanel, 'numeric');
             app.TimePointAUEditField.ValueChangedFcn = createCallbackFcn(app, @TimePointAUEditFieldValueChanged, true);
-            app.TimePointAUEditField.Position = [149 519 51 34];
+            app.TimePointAUEditField.Position = [150 524 51 34];
             app.TimePointAUEditField.Value = -1;
 
             % Create OrEnterFilePathEditFieldLabel
@@ -6579,13 +6899,13 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OrEnterFilePathEditFieldLabel.FontSize = 14;
             app.OrEnterFilePathEditFieldLabel.FontWeight = 'bold';
             app.OrEnterFilePathEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.OrEnterFilePathEditFieldLabel.Position = [19 429 123 22];
+            app.OrEnterFilePathEditFieldLabel.Position = [17 398 123 22];
             app.OrEnterFilePathEditFieldLabel.Text = 'Or Enter File Path';
 
             % Create OrEnterFilePathEditField
             app.OrEnterFilePathEditField = uieditfield(app.LoadDataPanel, 'text');
             app.OrEnterFilePathEditField.ValueChangedFcn = createCallbackFcn(app, @OrEnterFilePathEditFieldValueChanged, true);
-            app.OrEnterFilePathEditField.Position = [146 424 313 32];
+            app.OrEnterFilePathEditField.Position = [144 393 313 32];
 
             % Create FindFileButton
             app.FindFileButton = uibutton(app.LoadDataPanel, 'push');
@@ -6594,7 +6914,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FindFileButton.FontWeight = 'bold';
             app.FindFileButton.FontColor = [0.4667 0.6745 0.1882];
             app.FindFileButton.Tooltip = {'Find file from local storage'};
-            app.FindFileButton.Position = [31 466 131 34];
+            app.FindFileButton.Position = [75 431 131 34];
             app.FindFileButton.Text = 'Find File';
 
             % Create LOADButton
@@ -6604,33 +6924,33 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LOADButton.FontWeight = 'bold';
             app.LOADButton.FontColor = [0.4667 0.6745 0.1882];
             app.LOADButton.Tooltip = {'Add selected file to AnalyZe for processing'};
-            app.LOADButton.Position = [195 378 118 38];
+            app.LOADButton.Position = [187 347 118 38];
             app.LOADButton.Text = 'LOAD';
 
             % Create ExperimentNumberEditFieldLabel
             app.ExperimentNumberEditFieldLabel = uilabel(app.LoadDataPanel);
             app.ExperimentNumberEditFieldLabel.HorizontalAlignment = 'right';
             app.ExperimentNumberEditFieldLabel.FontSize = 14;
-            app.ExperimentNumberEditFieldLabel.Position = [6 570 130 22];
+            app.ExperimentNumberEditFieldLabel.Position = [6 578 130 22];
             app.ExperimentNumberEditFieldLabel.Text = 'Experiment Number';
 
             % Create ExperimentNumberEditField
             app.ExperimentNumberEditField = uieditfield(app.LoadDataPanel, 'numeric');
             app.ExperimentNumberEditField.ValueChangedFcn = createCallbackFcn(app, @ExperimentNumberEditFieldValueChanged, true);
-            app.ExperimentNumberEditField.Position = [151 561 50 40];
+            app.ExperimentNumberEditField.Position = [151 569 50 40];
             app.ExperimentNumberEditField.Value = -1;
 
             % Create WellNumberEditFieldLabel
             app.WellNumberEditFieldLabel = uilabel(app.LoadDataPanel);
             app.WellNumberEditFieldLabel.HorizontalAlignment = 'right';
             app.WellNumberEditFieldLabel.FontSize = 14;
-            app.WellNumberEditFieldLabel.Position = [211 570 86 22];
+            app.WellNumberEditFieldLabel.Position = [211 581 86 22];
             app.WellNumberEditFieldLabel.Text = 'Well Number';
 
             % Create WellNumberEditField
             app.WellNumberEditField = uieditfield(app.LoadDataPanel, 'text');
             app.WellNumberEditField.ValueChangedFcn = createCallbackFcn(app, @WellNumberEditFieldValueChanged, true);
-            app.WellNumberEditField.Position = [312 561 141 39];
+            app.WellNumberEditField.Position = [312 572 141 39];
 
             % Create HoldPlotSwitchLabel
             app.HoldPlotSwitchLabel = uilabel(app.LoadDataPanel);
@@ -6643,18 +6963,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HoldPlotSwitchLoad.Orientation = 'horizontal';
             app.HoldPlotSwitchLoad.Position = [47 19 78 35];
 
-            % Create OptinoallyFilterBySubstringLabel
-            app.OptinoallyFilterBySubstringLabel = uilabel(app.LoadDataPanel);
-            app.OptinoallyFilterBySubstringLabel.HorizontalAlignment = 'center';
-            app.OptinoallyFilterBySubstringLabel.FontSize = 14;
-            app.OptinoallyFilterBySubstringLabel.FontWeight = 'bold';
-            app.OptinoallyFilterBySubstringLabel.Position = [178 467 135 34];
-            app.OptinoallyFilterBySubstringLabel.Text = {'Optionally'; 'Filter By Substring:'};
-
-            % Create OptionallyFilterBySubstringEditField
-            app.OptionallyFilterBySubstringEditField = uieditfield(app.LoadDataPanel, 'text');
-            app.OptionallyFilterBySubstringEditField.Position = [319 469 139 32];
-
             % Create HOMEButton
             app.HOMEButton = uibutton(app.LoadDataPanel, 'push');
             app.HOMEButton.ButtonPushedFcn = createCallbackFcn(app, @HOMEButtonPushed, true);
@@ -6663,6 +6971,87 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HOMEButton.FontColor = [0 0.4471 0.7412];
             app.HOMEButton.Position = [368 8 102 32];
             app.HOMEButton.Text = 'HOME';
+
+            % Create FileFinderTab
+            app.FileFinderTab = uitabgroup(app.LoadDataPanel);
+            app.FileFinderTab.Position = [212 430 241 135];
+
+            % Create FileFinderSUBTRINGFilterTab
+            app.FileFinderSUBTRINGFilterTab = uitab(app.FileFinderTab);
+            app.FileFinderSUBTRINGFilterTab.Title = 'File Finder SUBTRING Filter';
+
+            % Create FindFilesSubtringFilter
+            app.FindFilesSubtringFilter = uieditfield(app.FileFinderSUBTRINGFilterTab, 'text');
+            app.FindFilesSubtringFilter.Enable = 'off';
+            app.FindFilesSubtringFilter.Position = [75 6 149 25];
+
+            % Create KnobSubtringFilter
+            app.KnobSubtringFilter = uiknob(app.FileFinderSUBTRINGFilterTab, 'discrete');
+            app.KnobSubtringFilter.Items = {'Off', 'Condition', 'Well', 'Time Point', 'Substring'};
+            app.KnobSubtringFilter.ValueChangedFcn = createCallbackFcn(app, @KnobSubtringFilterValueChanged, true);
+            app.KnobSubtringFilter.Position = [122 39 44 44];
+
+            % Create SubstringLabel
+            app.SubstringLabel = uilabel(app.FileFinderSUBTRINGFilterTab);
+            app.SubstringLabel.FontWeight = 'bold';
+            app.SubstringLabel.Position = [11 8 65 22];
+            app.SubstringLabel.Text = 'Substring:';
+
+            % Create FilterFilenamesbyLabel
+            app.FilterFilenamesbyLabel = uilabel(app.FileFinderSUBTRINGFilterTab);
+            app.FilterFilenamesbyLabel.HorizontalAlignment = 'center';
+            app.FilterFilenamesbyLabel.WordWrap = 'on';
+            app.FilterFilenamesbyLabel.FontWeight = 'bold';
+            app.FilterFilenamesbyLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.FilterFilenamesbyLabel.Position = [7 39 59 64];
+            app.FilterFilenamesbyLabel.Text = 'Filter File names by:';
+
+            % Create MultiSelectTab
+            app.MultiSelectTab = uitab(app.FileFinderTab);
+            app.MultiSelectTab.Title = 'MultiSelect';
+
+            % Create KnobMultiSelect
+            app.KnobMultiSelect = uiknob(app.MultiSelectTab, 'discrete');
+            app.KnobMultiSelect.Items = {'Off', 'Condition', 'Well Number', 'Time Point'};
+            app.KnobMultiSelect.ValueChangedFcn = createCallbackFcn(app, @KnobMultiSelectValueChanged, true);
+            app.KnobMultiSelect.Position = [115 22 49 49];
+
+            % Create SelectMultipleFilesandautoincrementafieldLabel
+            app.SelectMultipleFilesandautoincrementafieldLabel = uilabel(app.MultiSelectTab);
+            app.SelectMultipleFilesandautoincrementafieldLabel.HorizontalAlignment = 'center';
+            app.SelectMultipleFilesandautoincrementafieldLabel.WordWrap = 'on';
+            app.SelectMultipleFilesandautoincrementafieldLabel.FontWeight = 'bold';
+            app.SelectMultipleFilesandautoincrementafieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.SelectMultipleFilesandautoincrementafieldLabel.Position = [7 14 59 89];
+            app.SelectMultipleFilesandautoincrementafieldLabel.Text = 'Select Multiple Files and auto-increment a field:';
+
+            % Create AutoIncrementTimePointSwitchLabel
+            app.AutoIncrementTimePointSwitchLabel = uilabel(app.LoadDataPanel);
+            app.AutoIncrementTimePointSwitchLabel.HorizontalAlignment = 'center';
+            app.AutoIncrementTimePointSwitchLabel.FontWeight = 'bold';
+            app.AutoIncrementTimePointSwitchLabel.Position = [14 489 97 30];
+            app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment '; 'Time Point'};
+
+            % Create AutoIncrementTimePointSwitch
+            app.AutoIncrementTimePointSwitch = uiswitch(app.LoadDataPanel, 'slider');
+            app.AutoIncrementTimePointSwitch.ValueChangedFcn = createCallbackFcn(app, @AutoIncrementTimePointSwitchValueChanged, true);
+            app.AutoIncrementTimePointSwitch.Position = [142 497 45 20];
+
+            % Create FirstLabel
+            app.FirstLabel = uilabel(app.LoadDataPanel);
+            app.FirstLabel.FontSize = 18;
+            app.FirstLabel.FontWeight = 'bold';
+            app.FirstLabel.FontColor = [0 0.4471 0.7412];
+            app.FirstLabel.Position = [26 436 44 23];
+            app.FirstLabel.Text = 'First';
+
+            % Create ThenLabel
+            app.ThenLabel = uilabel(app.LoadDataPanel);
+            app.ThenLabel.FontSize = 18;
+            app.ThenLabel.FontWeight = 'bold';
+            app.ThenLabel.FontColor = [0 0.4471 0.7412];
+            app.ThenLabel.Position = [133 356 48 23];
+            app.ThenLabel.Text = 'Then';
 
             % Create UITable
             app.UITable = uitable(app.InportDataTab);
@@ -7147,7 +7536,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ParamMaxValsLabel
             app.ParamMaxValsLabel = uilabel(app.ErrorCorrectionTab);
             app.ParamMaxValsLabel.FontWeight = 'bold';
-            app.ParamMaxValsLabel.Position = [98 11 95 22];
+            app.ParamMaxValsLabel.Position = [94 11 109 22];
             app.ParamMaxValsLabel.Text = 'Param Max Vals';
 
             % Create AbortButton
