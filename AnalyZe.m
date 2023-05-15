@@ -266,6 +266,13 @@ classdef AnalyZe < matlab.apps.AppBase
         FinalResampleFrequencyEditFieldLabel  matlab.ui.control.Label
         ResampleSwitch                  matlab.ui.control.Switch
         ResampleSwitchLabel             matlab.ui.control.Label
+        ClipTimeVectorTab               matlab.ui.container.Tab
+        NumTailValuesToClipSpinner      matlab.ui.control.Spinner
+        NumTailValuesToClipSpinnerLabel  matlab.ui.control.Label
+        NumStartValuesToClipSpinner     matlab.ui.control.Spinner
+        NumStartValuesToClipSpinnerLabel  matlab.ui.control.Label
+        ClipTimeVectorSwitch            matlab.ui.control.Switch
+        ClipTimeVectorSwitchLabel       matlab.ui.control.Label
         Panel_2                         matlab.ui.container.Panel
         PlotMeanSwitch                  matlab.ui.control.Switch
         PlotMeanSwitchLabel             matlab.ui.control.Label
@@ -368,6 +375,7 @@ classdef AnalyZe < matlab.apps.AppBase
         CurrentFileName = {} % Description
         DatToFit % Description
         DatToCrossSection % Description
+         % Description
     end
     
     properties (Access = public)
@@ -413,6 +421,7 @@ classdef AnalyZe < matlab.apps.AppBase
         CumulativeCCTFitDiagnosticDisplayNames = []; % Description
         CustomElementFunctions = {}; % Description
         MultiFileSelectAutoIncrementArray = {}; % Description
+        MultiFileSelectAutoIncrementLastInput = [];
         AutoFileTimeIncrementArray = {};
         AutoFileTimeIncremementPosition = 0;
     end
@@ -957,6 +966,18 @@ classdef AnalyZe < matlab.apps.AppBase
         
             function [] = CrossSection(app,CS_val,LoadNew)
 
+            %% Time clipping
+                switch app.ClipTimeVectorSwitch.Value
+                    case 'On'
+                        HeadClip = app.NumStartValuesToClipSpinner.Value;
+                        TailClip = app.NumTailValuesToClipSpinner.Value;
+                    case 'Off'
+                        HeadClip = 0;
+                        TailClip = 0;
+                end
+
+            %% Setup
+
             CS_Freq = CS_val;
 
             Dat_full = app.DatToCrossSection;
@@ -1073,9 +1094,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                             
                                             Disp_Name_i = CS_i.Name + ", " + CS_i.ExperimentNumber + ", " + CS_i.Well;
                                             if isreal(CS_i.CSResults.y_z)
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), (CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
                                             else
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
                                             end
                                             hold(app.CSResultsPlot, 'on');
                                             legend(app.CSResultsPlot)
@@ -1106,9 +1127,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                         for (i=1:length(app.CrossSectionResultsCumulative))
                                             CS_i = app.CrossSectionResultsCumulative(i);
                                              if isreal(CS_i.CSResults.y_z)
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), (CS_i.CSResults.y_z), '-*', 'LineWidth',2)
                                             else
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2)
                                             end
                                             hold(app.CSResultsPlot, 'on');
                                         end
@@ -1137,9 +1158,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
 
                               if isreal(CS_local.y_z)
-                                plot(app.CSResultsPlot, CS_local.Time, (CS_local.y_z), '-*', 'LineWidth',2)
+                                plot(app.CSResultsPlot, CS_local.Time(HeadClip:end-TailClip), (CS_local.y_z), '-*', 'LineWidth',2)
                             else
-                                plot(app.CSResultsPlot, CS_local.Time, abs(CS_local.y_z), '-*', 'LineWidth',2)
+                                plot(app.CSResultsPlot, CS_local.Time(HeadClip:end-TailClip), abs(CS_local.y_z), '-*', 'LineWidth',2)
                             end
 
                               
@@ -1788,30 +1809,35 @@ classdef AnalyZe < matlab.apps.AppBase
             switch value
                 case 'Condition'
                     prompt = {'Enter a delimited list of Conditions','Enter a list delimiter'};
-                    definput = {'control,test',','};
+                    if isempty(app.MultiFileSelectAutoIncrementLastInput), definput = {'control,test',','}; else, definput = {app.MultiFileSelectAutoIncrementLastInput,','}; end
                     answer = inputdlg(prompt,dlgtitle,dims,definput); 
                     app.MultiFileSelectAutoIncrementArray = regexp(answer{1},answer{2},'split');
+                    app.MultiFileSelectAutoIncrementLastInput = answer{1};
 
                     MultiSelectString = 'on';
                     app.HoldPlotSwitchLoad.Value = 'Off';
                 case 'Well Number'
                     prompt = {'Enter a delimited list of Well numbers','Enter a list delimiter'};
-                    definput = {'control,test',','};
+                    if isempty(app.MultiFileSelectAutoIncrementLastInput), definput = {'A1,D6',','}; else, definput = {app.MultiFileSelectAutoIncrementLastInput,','}; end
                     answer = inputdlg(prompt,dlgtitle,dims,definput); 
                     app.MultiFileSelectAutoIncrementArray = regexp(answer{1},answer{2},'split');
+                    app.MultiFileSelectAutoIncrementLastInput = answer{1};
 
                     MultiSelectString = 'on';
                     app.HoldPlotSwitchLoad.Value = 'Off';
                 case 'Time Point'
                     prompt = {'Enter a delimited list of Time Points','Enter a list delimiter'};
-                    definput = {'control,test',','};
+                    if isempty(app.MultiFileSelectAutoIncrementLastInput), definput = {'1,2',','}; else, definput = {app.MultiFileSelectAutoIncrementLastInput,','}; end
                     answer = inputdlg(prompt,dlgtitle,dims,definput); 
                     app.MultiFileSelectAutoIncrementArray = regexp(answer{1},answer{2},'split');
+                    app.MultiFileSelectAutoIncrementLastInput = answer{1};
 
                     MultiSelectString = 'on';
                     app.HoldPlotSwitchLoad.Value = 'Off';
                 otherwise
                     app.MultiFileSelectAutoIncrementArray = {};
+                    app.MultiFileSelectAutoIncrementLastInput = [];
+
                     SelectPrompt = 'Please Select A File';
                     
                     MultiSelectString = 'off';
@@ -1867,7 +1893,6 @@ classdef AnalyZe < matlab.apps.AppBase
                 app.OrEnterFilePathEditField.Value =  fullfile(path,file) ;
             end
 
-            display(app.CurrentFileName)
 
         end
 
@@ -1894,11 +1919,13 @@ classdef AnalyZe < matlab.apps.AppBase
                             app.AutoFileTimeIncrementArray = [];
                             app.AutoFileTimeIncremementPosition = 0;
 
-                            app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment',newline,'Time Point'};
-                            
+                            app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
+                            app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
+
                             msgbox('All Time Points Loaded')
                         else
-                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME',newline, 'POINT:',int2str(app.AutoFileTimeIncremementPosition+1)}
+                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
+                            app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
                         end 
                 end
         
@@ -3238,11 +3265,16 @@ classdef AnalyZe < matlab.apps.AppBase
                  IndexRecord{2} = Indexes;
 
              Indexes = [];
-               switch Well
+               switch Well{1}
                     case 'Select All'
                         Indexes = [1:length(Dat)];
                    otherwise
-                        Indexes = find(WellAll == Well);
+                        Indexes = [];
+                       for j = 1:length(Well)
+                            Ind_j = find(WellAll == Well(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(WellAll == Well);
                end
                  Dat = Dat(Indexes);
 
@@ -4493,6 +4525,10 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.AutoFileTimeIncrementArray = [];
                     app.AutoFileTimeIncremementPosition = 0;
                     app.AutoIncrementTimePointSwitch.Value = 'Off';
+                    app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
+                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
+
+                    
            
 
              f = msgbox("Data Cleared!");
@@ -4531,8 +4567,13 @@ classdef AnalyZe < matlab.apps.AppBase
                value = app.AutoIncrementTimePointSwitch.Value;
                switch value
                    case 'On'
-                        app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
-                        msgbox('Time Point auto incrementer rolled back by one')
+                        if (app.AutoFileTimeIncremementPosition > 0)
+                            app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
+                            msgbox('Time Point auto incrementer rolled back by one')
+                        end
+                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
+                            app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
+                        
                end
 
                
@@ -5761,8 +5802,9 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'On'
                     app.TutorialMode = true;
                 case 'Off'
-                    msgbox('Keep this switch On to recieve tutorial pop-ups as you use the App.','Heads Up!')
                     app.TutorialMode = false;
+                    msgbox('Keep this switch On to recieve tutorial pop-ups as you use the App.','Heads Up!')
+                    
             end
         end
 
@@ -6727,6 +6769,8 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.TimePointAUEditField.Enable = true;
                     app.AutoFileTimeIncrementArray = [];
                     app.AutoFileTimeIncremementPosition = 0;
+                    app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
+                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
                 case 'On'
                     app.TimePointAUEditField.Enable = false;
 
@@ -6741,6 +6785,9 @@ classdef AnalyZe < matlab.apps.AppBase
                     catch
                         errordlg('Please enter numeric values separated by commas','Invalud Time Point Array')
                     end
+
+                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
+                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
             end
         end
     end
@@ -8102,7 +8149,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create WellNumberListBox_2
             app.WellNumberListBox_2 = uilistbox(app.TrimData_2);
+            app.WellNumberListBox_2.Multiselect = 'on';
             app.WellNumberListBox_2.Position = [364 140 80 63];
+            app.WellNumberListBox_2.Value = {'Item 1'};
 
             % Create ChosenDataTable_2
             app.ChosenDataTable_2 = uitable(app.TrimData_2);
@@ -8354,6 +8403,47 @@ classdef AnalyZe < matlab.apps.AppBase
             app.IntermediateResampleFactorLabel.FontWeight = 'bold';
             app.IntermediateResampleFactorLabel.Position = [69 46 102 30];
             app.IntermediateResampleFactorLabel.Text = {'Intermediate'; 'Resample Factor'};
+
+            % Create ClipTimeVectorTab
+            app.ClipTimeVectorTab = uitab(app.CrossSectionOptions);
+            app.ClipTimeVectorTab.Title = 'Clip Time Vector';
+
+            % Create ClipTimeVectorSwitchLabel
+            app.ClipTimeVectorSwitchLabel = uilabel(app.ClipTimeVectorTab);
+            app.ClipTimeVectorSwitchLabel.HorizontalAlignment = 'center';
+            app.ClipTimeVectorSwitchLabel.FontSize = 14;
+            app.ClipTimeVectorSwitchLabel.FontWeight = 'bold';
+            app.ClipTimeVectorSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.ClipTimeVectorSwitchLabel.Position = [8 41 115 22];
+            app.ClipTimeVectorSwitchLabel.Text = 'Clip Time Vector';
+
+            % Create ClipTimeVectorSwitch
+            app.ClipTimeVectorSwitch = uiswitch(app.ClipTimeVectorTab, 'slider');
+            app.ClipTimeVectorSwitch.Position = [41 68 45 20];
+
+            % Create NumStartValuesToClipSpinnerLabel
+            app.NumStartValuesToClipSpinnerLabel = uilabel(app.ClipTimeVectorTab);
+            app.NumStartValuesToClipSpinnerLabel.HorizontalAlignment = 'right';
+            app.NumStartValuesToClipSpinnerLabel.Position = [142 91 138 22];
+            app.NumStartValuesToClipSpinnerLabel.Text = 'Num Start Values To Clip';
+
+            % Create NumStartValuesToClipSpinner
+            app.NumStartValuesToClipSpinner = uispinner(app.ClipTimeVectorTab);
+            app.NumStartValuesToClipSpinner.Limits = [0 Inf];
+            app.NumStartValuesToClipSpinner.FontSize = 18;
+            app.NumStartValuesToClipSpinner.Position = [184 68 67 24];
+
+            % Create NumTailValuesToClipSpinnerLabel
+            app.NumTailValuesToClipSpinnerLabel = uilabel(app.ClipTimeVectorTab);
+            app.NumTailValuesToClipSpinnerLabel.HorizontalAlignment = 'right';
+            app.NumTailValuesToClipSpinnerLabel.Position = [149 39 131 22];
+            app.NumTailValuesToClipSpinnerLabel.Text = 'Num Tail Values To Clip';
+
+            % Create NumTailValuesToClipSpinner
+            app.NumTailValuesToClipSpinner = uispinner(app.ClipTimeVectorTab);
+            app.NumTailValuesToClipSpinner.Limits = [0 Inf];
+            app.NumTailValuesToClipSpinner.FontSize = 18;
+            app.NumTailValuesToClipSpinner.Position = [184 18 67 24];
 
             % Create TabGroup4
             app.TabGroup4 = uitabgroup(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
