@@ -52,7 +52,7 @@ classdef AnalyZe < matlab.apps.AppBase
         AutoIncrementTimePointSwitch    matlab.ui.control.Switch
         AutoIncrementTimePointSwitchLabel  matlab.ui.control.Label
         FileFinderTab                   matlab.ui.container.TabGroup
-        FileFinderSUBTRINGFilterTab     matlab.ui.container.Tab
+        FileSUBTRINGFilterTab           matlab.ui.container.Tab
         FilterFilenamesbyLabel          matlab.ui.control.Label
         SubstringLabel                  matlab.ui.control.Label
         KnobSubtringFilter              matlab.ui.control.DiscreteKnob
@@ -416,7 +416,7 @@ classdef AnalyZe < matlab.apps.AppBase
         CumulativeSysIDSeriesPlot; % Description
         TutorialMode = true; % Description
         BetaRecursiveSeries = struct('Rb',[],'Cb',[]); % Description
-        FitsResultsTableMarkings = []; % Description
+        FitsResultsTableMarkings = {}; % Description
         CumulativeCCTFitDisplayNames; % Description
         CumulativeCCTFitDiagnosticDisplayNames = []; % Description
         CustomElementFunctions = {}; % Description
@@ -966,15 +966,6 @@ classdef AnalyZe < matlab.apps.AppBase
         
             function [] = CrossSection(app,CS_val,LoadNew)
 
-            %% Time clipping
-                switch app.ClipTimeVectorSwitch.Value
-                    case 'On'
-                        HeadClip = app.NumStartValuesToClipSpinner.Value;
-                        TailClip = app.NumTailValuesToClipSpinner.Value;
-                    case 'Off'
-                        HeadClip = 0;
-                        TailClip = 0;
-                end
 
             %% Setup
 
@@ -1094,9 +1085,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                             
                                             Disp_Name_i = CS_i.Name + ", " + CS_i.ExperimentNumber + ", " + CS_i.Well;
                                             if isreal(CS_i.CSResults.y_z)
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), (CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
                                             else
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
                                             end
                                             hold(app.CSResultsPlot, 'on');
                                             legend(app.CSResultsPlot)
@@ -1127,9 +1118,9 @@ classdef AnalyZe < matlab.apps.AppBase
                                         for (i=1:length(app.CrossSectionResultsCumulative))
                                             CS_i = app.CrossSectionResultsCumulative(i);
                                              if isreal(CS_i.CSResults.y_z)
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), (CS_i.CSResults.y_z), '-*', 'LineWidth',2)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2)
                                             else
-                                                plot(app.CSResultsPlot, CS_i.CSResults.Time(HeadClip:end-TailClip), abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2)
+                                                plot(app.CSResultsPlot, CS_i.CSResults.Time, abs(CS_i.CSResults.y_z), '-*', 'LineWidth',2)
                                             end
                                             hold(app.CSResultsPlot, 'on');
                                         end
@@ -1158,9 +1149,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
 
                               if isreal(CS_local.y_z)
-                                plot(app.CSResultsPlot, CS_local.Time(HeadClip:end-TailClip), (CS_local.y_z), '-*', 'LineWidth',2)
+                                plot(app.CSResultsPlot, CS_local.Time, (CS_local.y_z), '-*', 'LineWidth',2)
                             else
-                                plot(app.CSResultsPlot, CS_local.Time(HeadClip:end-TailClip), abs(CS_local.y_z), '-*', 'LineWidth',2)
+                                plot(app.CSResultsPlot, CS_local.Time, abs(CS_local.y_z), '-*', 'LineWidth',2)
                             end
 
                               
@@ -1193,30 +1184,43 @@ classdef AnalyZe < matlab.apps.AppBase
                 
             end
 
+                  %% Time clipping
+                    switch app.ClipTimeVectorSwitch.Value
+                        case 'On'
+                            HeadClip = app.NumStartValuesToClipSpinner.Value;
+                            TailClip = app.NumTailValuesToClipSpinner.Value;
+                        case 'Off'
+                            HeadClip = 0;
+                            TailClip = 0;
+                    end
+
+            %% Loop through Selected Data
             T = struct2table(Dat_full); % convert the struct array to a table
-             sortedT = sortrows(T, 'Time'); % sort the table by 'DOB'
+             sortedT = sortrows(T, 'Time'); % sort the table by 'time'
              Dat_full = table2struct(sortedT) ;
 
             NumDays = length(Dat_full);
 
             CS_local = [];
-            for (i = 1:NumDays)
-                
-                Dat_i = Dat_full(i);
+            i = 0;
+            for time = (HeadClip+1):(NumDays-TailClip)
+                i=i+1;
+                Dat_i = Dat_full(time);
                 Dat_i_EIS = Dat_i.Data;
                 y_z_i = Dat_i_EIS.Z - 1j*Dat_i_EIS.Z1;
                 freq_i = Dat_i_EIS.FrequencyHz;
 
                 
                 index = find(freq_i>=CS_Freq);
-                
                 index = index(end);
-
                 y_z_CS_i = y_z_i(index);
+
 
                 switch (app.OffsetRemovalSwitch.Value)
                     case 'On'
-                        y_z_CS_i = y_z_CS_i - abs(y_z_i(1));
+                        MaxFreqInd = find(freq_i == max(freq_i));
+
+                        y_z_CS_i = y_z_CS_i - abs(y_z_i(MaxFreqInd));
                     case 'Off'
                 end
 
@@ -1268,6 +1272,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
           
             results = CS_local;
+
             
         end
 
@@ -1738,6 +1743,29 @@ classdef AnalyZe < matlab.apps.AppBase
             
         end
 
+        
+        function results = UpdateCCTFitResultsTableStyles(app)
+                     
+            s_unmark = uistyle('FontColor','black','BackgroundColor','white');
+            s_marked = uistyle('FontColor','black','BackgroundColor','red');
+            s_accept = uistyle('FontColor',"#77AC30",'BackgroundColor','white');
+
+            CatResultsMarkings = categorical(app.FitsResultsTableMarkings);
+
+            for i = 1:length(app.Fits)
+                
+                switch CatResultsMarkings(i)
+                    case 'marked'
+                        addStyle(app.ResultsTable,s_marked,'row',i);
+                    case 'unmarked'
+                        addStyle(app.ResultsTable,s_unmark,'row',i);
+                    case 'approved'
+                         addStyle(app.ResultsTable,s_accept,'row',i);
+                end
+            end
+
+            
+        end
     end
     
 
@@ -1892,6 +1920,18 @@ classdef AnalyZe < matlab.apps.AppBase
             else
                 app.OrEnterFilePathEditField.Value =  fullfile(path,file) ;
             end
+
+
+
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            flag = app.TutorialMode;
+           if flag
+                
+               answer = msgbox({'Now press LOAD to import the selected file (or files), tagging it with the Condition, Well Number, Experiment Number and Time Point entered.'},...
+                                    'Select EIS Data To Load');
+           end
 
 
         end
@@ -2713,7 +2753,7 @@ classdef AnalyZe < matlab.apps.AppBase
                           'RawData', [y_z_i freq_i]...
                           );
 
-                      app.FitsResultsTableMarkings(end+1) = false;
+                      app.FitsResultsTableMarkings(end+1) = {'unmarked'};
 
                       
                   %% Add Table Entry
@@ -2942,7 +2982,7 @@ classdef AnalyZe < matlab.apps.AppBase
              app.CCTFitProblemLog.Value = "";
              
              app.Fits = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'FitsResults', {},'RawData', {});
-             app.FitsResultsTableMarkings = [];
+             app.FitsResultsTableMarkings = {};
              removeStyle(app.ResultsTable);
              f = msgbox("Results Cleared!");
        
@@ -2955,13 +2995,15 @@ classdef AnalyZe < matlab.apps.AppBase
             
             selpath = uigetdir();
             SavedDataResults = app.Fits;
-            save(selpath + "\AnalyZeResults_" + string(UserFileName) + ".mat","SavedDataResults",'-mat');
-
+            SavedTableMarkings = app.FitsResultsTableMarkings;
+            
             T_c =  app.ResultsTable.Data;
-            T = cell2table(T_c, 'VariableNames', {'circuit','Condition','exp','cell','Time','Rb','Cb','Device CCT Params','mse','rmse','nmse','aic','bic'});
+            SavedResultsTable = cell2table(T_c, 'VariableNames', {'circuit','Condition','exp','cell','Time','Rb','Cb','Device CCT Params','mse','rmse','nmse','aic','bic'});
+
+            save(selpath + "\AnalyZeResults_" + string(UserFileName) + ".mat","SavedDataResults","SavedResultsTable","SavedTableMarkings",'-mat');
 
             filename= selpath + "\AnalyZeResults_wIC_" + string(UserFileName) + ".csv";
-            writetable(T,filename);
+            writetable(SavedResultsTable,filename);
 
             f = msgbox("Data Saved as AnalyZeResults_" + string(UserFileName) + ".mat and AnalyZeResults_wIC_"  + string(UserFileName) + ".csv :D");
         end
@@ -3068,7 +3110,8 @@ classdef AnalyZe < matlab.apps.AppBase
                 SelectedRows_temp = SelectedRows;
                 for r = 1:length(SelectedRows)
                     row = SelectedRows(r);
-                    if ~app.FitsResultsTableMarkings(row)
+                    CatTabMarkings = categorical(app.FitsResultsTableMarkings);
+                    if (CatTabMarkings(row) ~= 'marked')
                         SelectedRows_temp(row_count) = row;
                         row_count = row_count+1;
                     end
@@ -3604,7 +3647,9 @@ classdef AnalyZe < matlab.apps.AppBase
                 row_count = 1;
                 for r = 1:length(ind(:,1))
                     row = ind(r,1);
-                    if ~app.FitsResultsTableMarkings(row)
+                    display(app.FitsResultsTableMarkings)
+                    CatTabMarkings = categorical(app.FitsResultsTableMarkings);
+                    if (CatTabMarkings(row) ~= 'marked')
                         ind_temp(row_count,:) = ind(r,:);
                         row_count = row_count+1;
                     end
@@ -4315,12 +4360,16 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Button pushed function: LoadResultsButton
         function LoadResultsButtonPushed(app, event)
+
+            %SavedResultsTable = cell2table(T_c, 'VariableNames', {'circuit','Condition','exp','cell','Time','Rb','Cb','Device CCT Params','mse','rmse','nmse','aic','bic'});
+
             answer = 'Continue';
            flag = app.TutorialMode;
            if flag
                 
                answer = questdlg({'Navigate to the .mat file containing the desired fitting results',...
-                                'NOTE: Immediately after selecting the .mat file, you will be asked to select the corresponding .csv file.', ...
+                                    newline,...
+                                'NOTE (DEPRECTAED): In older versions of the app or for results saved by older versions - Immediately after selecting the .mat file, you will be asked to select the corresponding .csv file.', ...
                                  'Please ensure that the selected pair of files correspond to the same result set.'},...
                                     'Loading a Fitting Result',...
                                    'Continue','Cancel','Continue');
@@ -4343,156 +4392,208 @@ classdef AnalyZe < matlab.apps.AppBase
                         return
                     end
 
-               [file2,path2] = uigetfile(convertStringsToChars(string(path) + "\AnalyZeResults*" ),'Now Select AnalyZe Results CSV file:');
-
-               if isequal(file2,0)
-                   %disp('User selected Cancel')
-               else
-                   %disp(['User Selected ', fullfile(path2,file2)]);
-                       [~,~,anExt]=fileparts(file2);
-                        idx = find(strcmp(anExt,{'.csv'})) ;
-                        if isempty(idx)
-                            errordlg("Please select the .csv file which corresponds to the previously selected .mat file","Unsupported File Type")
-                            return
-                        end
-                  
-                   %%Read in .mat file
+                    %%Read in .mat file
                     var = load(fullfile(path,file));
-                    app.Fits = [app.Fits, var.SavedDataResults];
+                    if length(fieldnames(var)) == 1
+      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %% Read AnalyZe Results from table (DEPRECATED)
+                            [file2,path2] = uigetfile(convertStringsToChars(string(path) + "\AnalyZeResults*" ),'Now Select AnalyZe Results CSV file:');
 
-                   if isempty(strfind(file2,"wIC"))
-                        %% Read in CSV file
-                        %% Set up the Import Options and import the data
-                        opts = delimitedTextImportOptions("NumVariables", 11);
+                           if isequal(file2,0)
+                               %disp('User selected Cancel')
+                           else
+                               %disp(['User Selected ', fullfile(path2,file2)]);
+                                   
+                              
+                               %%Read in .mat file
+                                    app.Fits = [app.Fits, var.SavedDataResults];
+            
+            
+                               if isempty(strfind(file2,"wIC"))
+                                    %% Read in CSV file
+                                    %% Set up the Import Options and import the data
+                                    opts = delimitedTextImportOptions("NumVariables", 11);
+                                    
+                                    % Specify range and delimiter
+                                    opts.DataLines = [2, Inf];
+                                    opts.Delimiter = ",";
+                                    
+                                    % Specify column names and types
+                                    opts.VariableNames = ["circuit", "Condition", "exp", "cell", "Time", "Rb", "Cb", "DeviceCCTParams", "mse", "rmse", "nmse"];
+                                    opts.VariableTypes = ["char", "char", "double", "char", "double", "double", "double", "char", "double", "double", "double"];
+                                    
+                                    % Specify file level properties
+                                    opts.ExtraColumnsRule = "ignore";
+                                    opts.EmptyLineRule = "read";
+                                    
+                                    % Specify variable properties
+                                    opts = setvaropts(opts, "DeviceCCTParams", "WhitespaceRule", "preserve");
+                                    opts = setvaropts(opts, ["circuit", "Condition", "DeviceCCTParams"], "EmptyFieldRule", "auto");
+                                    %opts = setvaropts(opts, "cell", "TrimNonNumeric", true);
+                                    %opts = setvaropts(opts, "cell", "ThousandsSeparator", ",");
+                                    
+                                    % Import the data
+                                    AnalyZeResultsCSVTable = readtable(fullfile(path2,file2), opts);
+                                    
+                                    
+                                    %% Clear temporary variables
+                                    clear opts
+                
+                                    %%Add data back into table
+                
+                                    for (j = 1:length(AnalyZeResultsCSVTable.circuit))
+                
+                                            newData = {cell2mat(AnalyZeResultsCSVTable.circuit(j)) ...
+                                                cell2mat(AnalyZeResultsCSVTable.Condition(j)) ...
+                                                AnalyZeResultsCSVTable.exp(j) ...
+                                                cell2mat(AnalyZeResultsCSVTable.cell(j)) ...
+                                                AnalyZeResultsCSVTable.Time(j) ...
+                                                AnalyZeResultsCSVTable.Rb(j) ...
+                                                AnalyZeResultsCSVTable.Cb(j) ...
+                                                cell2mat(AnalyZeResultsCSVTable.DeviceCCTParams(j)) ...
+                                                AnalyZeResultsCSVTable.mse(j) ...
+                                                AnalyZeResultsCSVTable.rmse(j) ...
+                                                AnalyZeResultsCSVTable.nmse(j) ...
+                                                NaN ...
+                                                NaN...
+                                                };
+                                            
+                                            %display(newData)
+                
+                                            if isempty(app.ResultsTable.Data)
+                                                app.ResultsTable.Data = newData;
+                                            else
+                                                DataToAddToTable = [app.ResultsTable.Data; newData];
+                                                app.ResultsTable.Data = DataToAddToTable;
+                                            end
+            
+                                            app.FitsResultsTableMarkings(end+1) = {'unmarked'};
+              
+                                    end
+            
+                               else
+            
+                                   %% Read in CSV file
+                                    %% Set up the Import Options and import the data
+                                    opts = delimitedTextImportOptions("NumVariables", 13);
+                                    
+                                    % Specify range and delimiter
+                                    opts.DataLines = [2, Inf];
+                                    opts.Delimiter = ",";
+                                    
+                                    % Specify column names and types
+                                    opts.VariableNames = ["circuit", "Condition", "exp", "cell", "Time", "Rb", "Cb", "DeviceCCTParams", "mse", "rmse", "nmse", "aic", "bic"];
+                                    opts.VariableTypes = ["char", "char", "double", "char", "double", "double", "double", "char", "double", "double", "double", "double", "double"];
+                                    
+                                    % Specify file level properties
+                                    opts.ExtraColumnsRule = "ignore";
+                                    opts.EmptyLineRule = "read";
+                                    
+                                    % Specify variable properties
+                                    opts = setvaropts(opts, "DeviceCCTParams", "WhitespaceRule", "preserve");
+                                    opts = setvaropts(opts, ["circuit", "Condition", "DeviceCCTParams"], "EmptyFieldRule", "auto");
+                                    %opts = setvaropts(opts, "cell", "TrimNonNumeric", true);
+                                    %opts = setvaropts(opts, "cell", "ThousandsSeparator", ",");
+                                    
+                                    % Import the data
+                                    AnalyZeResultsCSVTable = readtable(fullfile(path2,file2), opts);
+                                    
+                                    
+                                    %% Clear temporary variables
+                                    clear opts
+                
+                                    %%Add data back into table
+                
+                                    for (j = 1:length(AnalyZeResultsCSVTable.circuit))
+                
+                                            newData = {cell2mat(AnalyZeResultsCSVTable.circuit(j)) ...
+                                                cell2mat(AnalyZeResultsCSVTable.Condition(j)) ...
+                                                AnalyZeResultsCSVTable.exp(j) ...
+                                                cell2mat(AnalyZeResultsCSVTable.cell(j)) ...
+                                                AnalyZeResultsCSVTable.Time(j) ...
+                                                AnalyZeResultsCSVTable.Rb(j) ...
+                                                AnalyZeResultsCSVTable.Cb(j) ...
+                                                cell2mat(AnalyZeResultsCSVTable.DeviceCCTParams(j)) ...
+                                                AnalyZeResultsCSVTable.mse(j) ...
+                                                AnalyZeResultsCSVTable.rmse(j) ...
+                                                AnalyZeResultsCSVTable.nmse(j) ...
+                                                AnalyZeResultsCSVTable.aic(j) ...
+                                                AnalyZeResultsCSVTable.bic(j)...
+                                                };
+                                            
+                                            %display(newData)
+                
+                                            if isempty(app.ResultsTable.Data)
+                                                app.ResultsTable.Data = newData;
+                                            else
+                                                DataToAddToTable = [app.ResultsTable.Data; newData];
+                                                app.ResultsTable.Data = DataToAddToTable;
+                                            end
+            
+                                            app.FitsResultsTableMarkings(end+1) = {'unmarked'};
+                                           
+                                        
+                                    end
+            
+                               end
+            
+            
+                           end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    
+                    else %% Read results table from mat file
+
+                        app.Fits = [app.Fits, var.SavedDataResults];
                         
-                        % Specify range and delimiter
-                        opts.DataLines = [2, Inf];
-                        opts.Delimiter = ",";
+                        %SavedResultsTable = cell2table(T_c, 'VariableNames', {'circuit','Condition','exp','cell','Time','Rb','Cb','Device CCT Params','mse','rmse','nmse','aic','bic'});
+                        SavedResultsTable = var.SavedResultsTable;
+                        SavedTableMarkings = var.SavedTableMarkings;
                         
-                        % Specify column names and types
-                        opts.VariableNames = ["circuit", "Condition", "exp", "cell", "Time", "Rb", "Cb", "DeviceCCTParams", "mse", "rmse", "nmse"];
-                        opts.VariableTypes = ["char", "char", "double", "char", "double", "double", "double", "char", "double", "double", "double"];
-                        
-                        % Specify file level properties
-                        opts.ExtraColumnsRule = "ignore";
-                        opts.EmptyLineRule = "read";
-                        
-                        % Specify variable properties
-                        opts = setvaropts(opts, "DeviceCCTParams", "WhitespaceRule", "preserve");
-                        opts = setvaropts(opts, ["circuit", "Condition", "DeviceCCTParams"], "EmptyFieldRule", "auto");
-                        %opts = setvaropts(opts, "cell", "TrimNonNumeric", true);
-                        %opts = setvaropts(opts, "cell", "ThousandsSeparator", ",");
-                        
-                        % Import the data
-                        AnalyZeResultsCSVTable = readtable(fullfile(path2,file2), opts);
-                        
-                        
-                        %% Clear temporary variables
-                        clear opts
+                        %Populate Results Table
+                          %%Add data back into table
+        
+                            for (j = 1:length(SavedResultsTable.circuit))
+        
+                                    newData = {cell2mat(SavedResultsTable.circuit(j)) ...
+                                        cell2mat(SavedResultsTable.Condition(j)) ...
+                                        SavedResultsTable.exp(j) ...
+                                        cell2mat(SavedResultsTable.cell(j)) ...
+                                        SavedResultsTable.Time(j) ...
+                                        SavedResultsTable.Rb(j) ...
+                                        SavedResultsTable.Cb(j) ...
+                                        cell2mat(SavedResultsTable.('Device CCT Params')(j)) ...
+                                        SavedResultsTable.mse(j) ...
+                                        SavedResultsTable.rmse(j) ...
+                                        SavedResultsTable.nmse(j) ...
+                                        SavedResultsTable.aic(j) ...
+                                        SavedResultsTable.bic(j)...
+                                        };
+                                    
+                                    %display(newData)
+        
+                                    if isempty(app.ResultsTable.Data)
+                                        app.ResultsTable.Data = newData;
+                                    else
+                                        DataToAddToTable = [app.ResultsTable.Data; newData];
+                                        app.ResultsTable.Data = DataToAddToTable;
+                                    end
     
-                        %%Add data back into table
-    
-                        for (j = 1:length(AnalyZeResultsCSVTable.circuit))
-    
-                                newData = {cell2mat(AnalyZeResultsCSVTable.circuit(j)) ...
-                                    cell2mat(AnalyZeResultsCSVTable.Condition(j)) ...
-                                    AnalyZeResultsCSVTable.exp(j) ...
-                                    cell2mat(AnalyZeResultsCSVTable.cell(j)) ...
-                                    AnalyZeResultsCSVTable.Time(j) ...
-                                    AnalyZeResultsCSVTable.Rb(j) ...
-                                    AnalyZeResultsCSVTable.Cb(j) ...
-                                    cell2mat(AnalyZeResultsCSVTable.DeviceCCTParams(j)) ...
-                                    AnalyZeResultsCSVTable.mse(j) ...
-                                    AnalyZeResultsCSVTable.rmse(j) ...
-                                    AnalyZeResultsCSVTable.nmse(j) ...
-                                    NaN ...
-                                    NaN...
-                                    };
+                                    app.FitsResultsTableMarkings(end+1) = SavedTableMarkings(j);
+                                   
                                 
-                                %display(newData)
-    
-                                if isempty(app.ResultsTable.Data)
-                                    app.ResultsTable.Data = newData;
-                                else
-                                    DataToAddToTable = [app.ResultsTable.Data; newData];
-                                    app.ResultsTable.Data = DataToAddToTable;
-                                end
+                            end
 
-                                app.FitsResultsTableMarkings(end+1) = false;
-  
-                        end
+                                app.UpdateCCTFitResultsTableStyles();
 
-                   else
-
-                       %% Read in CSV file
-                        %% Set up the Import Options and import the data
-                        opts = delimitedTextImportOptions("NumVariables", 13);
-                        
-                        % Specify range and delimiter
-                        opts.DataLines = [2, Inf];
-                        opts.Delimiter = ",";
-                        
-                        % Specify column names and types
-                        opts.VariableNames = ["circuit", "Condition", "exp", "cell", "Time", "Rb", "Cb", "DeviceCCTParams", "mse", "rmse", "nmse", "aic", "bic"];
-                        opts.VariableTypes = ["char", "char", "double", "char", "double", "double", "double", "char", "double", "double", "double", "double", "double"];
-                        
-                        % Specify file level properties
-                        opts.ExtraColumnsRule = "ignore";
-                        opts.EmptyLineRule = "read";
-                        
-                        % Specify variable properties
-                        opts = setvaropts(opts, "DeviceCCTParams", "WhitespaceRule", "preserve");
-                        opts = setvaropts(opts, ["circuit", "Condition", "DeviceCCTParams"], "EmptyFieldRule", "auto");
-                        %opts = setvaropts(opts, "cell", "TrimNonNumeric", true);
-                        %opts = setvaropts(opts, "cell", "ThousandsSeparator", ",");
-                        
-                        % Import the data
-                        AnalyZeResultsCSVTable = readtable(fullfile(path2,file2), opts);
-                        
-                        
-                        %% Clear temporary variables
-                        clear opts
-    
-                        %%Add data back into table
-    
-                        for (j = 1:length(AnalyZeResultsCSVTable.circuit))
-    
-                                newData = {cell2mat(AnalyZeResultsCSVTable.circuit(j)) ...
-                                    cell2mat(AnalyZeResultsCSVTable.Condition(j)) ...
-                                    AnalyZeResultsCSVTable.exp(j) ...
-                                    cell2mat(AnalyZeResultsCSVTable.cell(j)) ...
-                                    AnalyZeResultsCSVTable.Time(j) ...
-                                    AnalyZeResultsCSVTable.Rb(j) ...
-                                    AnalyZeResultsCSVTable.Cb(j) ...
-                                    cell2mat(AnalyZeResultsCSVTable.DeviceCCTParams(j)) ...
-                                    AnalyZeResultsCSVTable.mse(j) ...
-                                    AnalyZeResultsCSVTable.rmse(j) ...
-                                    AnalyZeResultsCSVTable.nmse(j) ...
-                                    AnalyZeResultsCSVTable.aic(j) ...
-                                    AnalyZeResultsCSVTable.bic(j)...
-                                    };
-                                
-                                %display(newData)
-    
-                                if isempty(app.ResultsTable.Data)
-                                    app.ResultsTable.Data = newData;
-                                else
-                                    DataToAddToTable = [app.ResultsTable.Data; newData];
-                                    app.ResultsTable.Data = DataToAddToTable;
-                                end
-
-                                app.FitsResultsTableMarkings(end+1) = false;
-                               
-                            
-                        end
-
-                   end
+                    end
 
 
-               end
 
               
             end
+
+            
+            display( app.FitsResultsTableMarkings)
             
 
         
@@ -6543,25 +6644,19 @@ classdef AnalyZe < matlab.apps.AppBase
         % Key press function: ResultsTable
         function ResultsTableKeyPress(app, event)
             key = event.Key;
-            s_unmark = uistyle('FontColor','black','BackgroundColor','white');
-            s_marked = uistyle('FontColor','black','BackgroundColor','red');
-            s_accept = uistyle('FontColor',"#77AC30",'BackgroundColor','white');
-
-            %display(app.ResultsTable.StyleConfigurations)
 
             ind = app.ResultTableCellsSelected;
 
             switch key
                 case 'm'
-                    addStyle(app.ResultsTable,s_marked,'row',ind(1));
-                    app.FitsResultsTableMarkings(ind(1)) = true;
+                    app.FitsResultsTableMarkings(ind(1)) = {'marked'};
                 case 'u'
-                    addStyle(app.ResultsTable,s_unmark,'row',ind(1));
-                    app.FitsResultsTableMarkings(ind(1)) = false;
+                    app.FitsResultsTableMarkings(ind(1)) = {'unmarked'};
                 case 'a'
-                    addStyle(app.ResultsTable,s_accept,'row',ind(1));
-                    app.FitsResultsTableMarkings(ind(1)) = false;
+                    app.FitsResultsTableMarkings(ind(1)) = {'approved'};
             end
+
+            app.UpdateCCTFitResultsTableStyles();
         end
 
         % Button down function: ResultsTable
@@ -7023,29 +7118,29 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FileFinderTab = uitabgroup(app.LoadDataPanel);
             app.FileFinderTab.Position = [212 430 241 135];
 
-            % Create FileFinderSUBTRINGFilterTab
-            app.FileFinderSUBTRINGFilterTab = uitab(app.FileFinderTab);
-            app.FileFinderSUBTRINGFilterTab.Title = 'File Finder SUBTRING Filter';
+            % Create FileSUBTRINGFilterTab
+            app.FileSUBTRINGFilterTab = uitab(app.FileFinderTab);
+            app.FileSUBTRINGFilterTab.Title = 'File SUBTRING Filter';
 
             % Create FindFilesSubtringFilter
-            app.FindFilesSubtringFilter = uieditfield(app.FileFinderSUBTRINGFilterTab, 'text');
+            app.FindFilesSubtringFilter = uieditfield(app.FileSUBTRINGFilterTab, 'text');
             app.FindFilesSubtringFilter.Enable = 'off';
             app.FindFilesSubtringFilter.Position = [75 6 149 25];
 
             % Create KnobSubtringFilter
-            app.KnobSubtringFilter = uiknob(app.FileFinderSUBTRINGFilterTab, 'discrete');
+            app.KnobSubtringFilter = uiknob(app.FileSUBTRINGFilterTab, 'discrete');
             app.KnobSubtringFilter.Items = {'Off', 'Condition', 'Well', 'Time Point', 'Substring'};
             app.KnobSubtringFilter.ValueChangedFcn = createCallbackFcn(app, @KnobSubtringFilterValueChanged, true);
             app.KnobSubtringFilter.Position = [122 39 44 44];
 
             % Create SubstringLabel
-            app.SubstringLabel = uilabel(app.FileFinderSUBTRINGFilterTab);
+            app.SubstringLabel = uilabel(app.FileSUBTRINGFilterTab);
             app.SubstringLabel.FontWeight = 'bold';
             app.SubstringLabel.Position = [11 8 65 22];
             app.SubstringLabel.Text = 'Substring:';
 
             % Create FilterFilenamesbyLabel
-            app.FilterFilenamesbyLabel = uilabel(app.FileFinderSUBTRINGFilterTab);
+            app.FilterFilenamesbyLabel = uilabel(app.FileSUBTRINGFilterTab);
             app.FilterFilenamesbyLabel.HorizontalAlignment = 'center';
             app.FilterFilenamesbyLabel.WordWrap = 'on';
             app.FilterFilenamesbyLabel.FontWeight = 'bold';
