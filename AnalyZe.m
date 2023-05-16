@@ -40,6 +40,7 @@ classdef AnalyZe < matlab.apps.AppBase
         AnalyZeLabel                    matlab.ui.control.Label
         Image2                          matlab.ui.control.Image
         InportDataTab                   matlab.ui.container.Tab
+        OrLabel                         matlab.ui.control.Label
         PlotSelectedButton              matlab.ui.control.Button
         CLEARLASTDATAPOINTButton        matlab.ui.control.Button
         CLEARALLDATAButton              matlab.ui.control.Button
@@ -1746,22 +1747,34 @@ classdef AnalyZe < matlab.apps.AppBase
 
         
         function results = UpdateCCTFitResultsTableStyles(app)
+
+            removeStyle(app.ResultsTable);
+
                      
-            s_unmark = uistyle('FontColor','black','BackgroundColor','white');
+            %s_unmark = uistyle('FontColor','black','BackgroundColor','white');
             s_marked = uistyle('FontColor','black','BackgroundColor','red');
             s_accept = uistyle('FontColor',"#77AC30",'BackgroundColor','white');
+            s_query = uistyle('FontColor',	"#EDB120",'BackgroundColor','white');
+            s_default1 = uistyle('BackgroundColor','white','FontColor','black');
+            s_default2 = uistyle('BackgroundColor',[0.94 0.94 0.94],'FontColor','black');
 
             CatResultsMarkings = categorical(app.FitsResultsTableMarkings);
-
+    
             for i = 1:length(app.Fits)
                 
                 switch CatResultsMarkings(i)
                     case 'marked'
                         addStyle(app.ResultsTable,s_marked,'row',i);
                     case 'unmarked'
-                        addStyle(app.ResultsTable,s_unmark,'row',i);
+                        if mod(i,2)
+                            addStyle(app.ResultsTable,s_default1,'row',i);
+                        else
+                            addStyle(app.ResultsTable,s_default2,'row',i);
+                        end
                     case 'approved'
-                         addStyle(app.ResultsTable,s_accept,'row',i);
+                         addStyle(app.ResultsTable,s_accept,'row',i); 
+                    case 'query'
+                         addStyle(app.ResultsTable,s_query,'row',i); 
                 end
             end
 
@@ -1814,7 +1827,7 @@ classdef AnalyZe < matlab.apps.AppBase
             switch value
                 case 'Condition'
                     FilterValue = app.ConditionEditField.Value;
-                case 'Well'
+                case 'Well Number'
                     FilterValue = app.WellNumberEditField.Value;
                 case 'Time Point'
                     FilterValue = int2str(app.TimePointAUEditField.Value);
@@ -1882,6 +1895,12 @@ classdef AnalyZe < matlab.apps.AppBase
                     path = {};
                     
                 for multSel = 1:length(app.MultiFileSelectAutoIncrementArray)
+                    
+                    %%%Synergistic subtring filtering
+                        if string(app.KnobSubtringFilter.Value) == string(app.KnobMultiSelect.Value)
+                            FilterValue = convertStringsToChars(string(app.MultiFileSelectAutoIncrementArray{multSel}));
+                        end
+
                     SelectPrompt = ['NOW SELECT: ',app.MultiFileSelectAutoIncrementArray{multSel}];
                     if isempty(FilterValue)
                         [file_temp,path_temp] = uigetfile([selpath,'\*'],SelectPrompt,'MultiSelect',MultiSelectString);
@@ -2388,7 +2407,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                         'An initial condition space is defined by the origin and the max values provided; the MultiStart algorithm minimizes the objective function N times, where N is the number of MultiStarts provided and each iteration uses an intial condition for a set of N uniformly distributed points in the intitial condition space.',...
                                         'An exception is made for the irreducible series resistance, which is estimated from the highst frequency datapoint by default and held constant during the optimization - alternative approaches are selectable.',...
                                         '',...
-                                        'The results table and plots are populated with the fitting output. To mark and unmark a result, click a cell in the row and press the ''m'' or ''u'' keys respectively. Marked rows are excluded from the time series plot. Use ''a'' to mark a cell with green text - no effect ',...
+                                        'The results table and plots are populated with the fitting output. To mark and unmark a result, click a cell in the row and press the ''m'' or ''u'' keys respectively. Marked rows are excluded from the time series plot. Use ''a''  (accept) to mark a cell with green text and ''q'' for orange text (query) - no effect ',...
                                         'The combinations of options used to run a particular fitting opereration is stored as text in the ''Problem Setup log'' sub-tab in the Plots tab.',...
                                         '',...
                                         'NOTE: If included, the barrier model (R//C) parameters R and C are split into independent columns (if included in the model, otherwise marked as NaN). The remaining parameters are are stored as a character array in the Device CCT Params column in the order that they appear in the circuit string. The irreducible series resistance is always the last value, irrespective of its position in the circuit string',...
@@ -4672,12 +4691,17 @@ classdef AnalyZe < matlab.apps.AppBase
                value = app.AutoIncrementTimePointSwitch.Value;
                switch value
                    case 'On'
-                        if (app.AutoFileTimeIncremementPosition > 0)
-                            app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
-                            msgbox('Time Point auto incrementer rolled back by one','Clear Last Data Point','help')
-                        end
-                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
-                            app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
+                        answer = 'No';
+                        answer = questdlg('Roll back Time Point Auto Increment by one?','Time Auto-Incrementer Enabled','Yes','No','No');
+                        switch answer
+                            case 'Yes'
+                                if (app.AutoFileTimeIncremementPosition > 0)
+                                    app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
+                                    msgbox('Time Point auto incrementer rolled back by one','Clear Last Data Point','help')
+                                end
+                                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
+                                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
+                            end
                         
                end
 
@@ -6661,6 +6685,9 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'a'
                     app.FitsResultsTableMarkings(ind(1)) = {'approved'};
                     app.UpdateCCTFitResultsTableStyles();
+                case 'q'
+                    app.FitsResultsTableMarkings(ind(1)) = {'query'};
+                    app.UpdateCCTFitResultsTableStyles();
             end
 
             
@@ -6845,6 +6872,12 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.TimePointAUEditField.Enable = true;
 
             end
+
+            value = app.AutoIncrementTimePointSwitch.Value;
+            switch value
+                case 'on'
+                    app.TimePointAUEditField.Enable = false;
+            end
         end
 
         % Value changed function: AutoIncrementTimePointSwitch
@@ -6881,6 +6914,16 @@ classdef AnalyZe < matlab.apps.AppBase
                     prompt = 'Enter a COMMA separated list of Time Points';
                     definput = {'0,1,2'};
                     answer = inputdlg(prompt,dlgtitle,dims,definput); 
+
+                    if isempty(answer)
+                        app.TimePointAUEditField.Enable = true;
+                        app.AutoIncrementTimePointSwitch.Value = 'Off';
+                        app.AutoFileTimeIncrementArray = [];
+                        app.AutoFileTimeIncremementPosition = 0;
+                        app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
+                        app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
+                        return
+                    end
                     
                     try
                         app.AutoFileTimeIncrementArray = eval(['[',answer{1},']']);
@@ -7136,9 +7179,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create KnobSubtringFilter
             app.KnobSubtringFilter = uiknob(app.FileSUBTRINGFilterTab, 'discrete');
-            app.KnobSubtringFilter.Items = {'Off', 'Condition', 'Well', 'Time Point', 'Substring'};
+            app.KnobSubtringFilter.Items = {'Off', 'Condition', 'Well Number', 'Time Point', 'Substring'};
             app.KnobSubtringFilter.ValueChangedFcn = createCallbackFcn(app, @KnobSubtringFilterValueChanged, true);
-            app.KnobSubtringFilter.Position = [122 39 44 44];
+            app.KnobSubtringFilter.Position = [123 35 53 53];
 
             % Create SubstringLabel
             app.SubstringLabel = uilabel(app.FileSUBTRINGFilterTab);
@@ -7215,7 +7258,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LoadFromPreviousSaveButton.FontSize = 14;
             app.LoadFromPreviousSaveButton.FontWeight = 'bold';
             app.LoadFromPreviousSaveButton.FontColor = [0.4667 0.6745 0.1882];
-            app.LoadFromPreviousSaveButton.Position = [538 17 198 35];
+            app.LoadFromPreviousSaveButton.Position = [554 17 198 35];
             app.LoadFromPreviousSaveButton.Text = 'Load From Previous Save';
 
             % Create SaveDataForLaterButton
@@ -7253,6 +7296,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.PlotSelectedButton.FontColor = [0 0 1];
             app.PlotSelectedButton.Position = [785 88 103 35];
             app.PlotSelectedButton.Text = 'Plot Selected';
+
+            % Create OrLabel
+            app.OrLabel = uilabel(app.InportDataTab);
+            app.OrLabel.FontSize = 18;
+            app.OrLabel.FontWeight = 'bold';
+            app.OrLabel.FontColor = [0 0.4471 0.7412];
+            app.OrLabel.Position = [522 23 26 23];
+            app.OrLabel.Text = 'Or';
 
             % Create AnalysisCCTFITTab
             app.AnalysisCCTFITTab = uitab(app.TabGroup);
@@ -7800,7 +7851,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResultsTable.RowName = {};
             app.ResultsTable.CellSelectionCallback = createCallbackFcn(app, @ResultsTableCellSelection, true);
             app.ResultsTable.DoubleClickedFcn = createCallbackFcn(app, @ResultsTableDoubleClicked, true);
-            app.ResultsTable.Tooltip = {'''m'' - mark for exclusion'; '''a'' - mark to accept'; '''u'' - unmark'};
+            app.ResultsTable.Tooltip = {'''m'' - mark for exclusion'; '''a'' - mark to accept'; '''u'' - unmark'; '''q'' - mark for query'};
             app.ResultsTable.ButtonDownFcn = createCallbackFcn(app, @ResultsTableButtonDown, true);
             app.ResultsTable.KeyPressFcn = createCallbackFcn(app, @ResultsTableKeyPress, true);
             app.ResultsTable.Position = [11 20 461 570];
