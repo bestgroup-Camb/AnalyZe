@@ -243,6 +243,7 @@ classdef AnalyZe < matlab.apps.AppBase
         ClearResultsButton_2            matlab.ui.control.Button
         ResultsTable_2                  matlab.ui.control.Table
         CrossSectionParametersPanel     matlab.ui.container.Panel
+        RefreshPlotButton               matlab.ui.control.Button
         CrossSectionOptions             matlab.ui.container.TabGroup
         NormalizationTab_2              matlab.ui.container.Tab
         Panel_3                         matlab.ui.container.Panel
@@ -1893,6 +1894,9 @@ classdef AnalyZe < matlab.apps.AppBase
                     selpath = uigetdir('.','First Select Directory (Folder)');
                     file = {};
                     path = {};
+                    if string(selpath)=="0"
+                        selpath = '.';
+                    end
                     
                 for multSel = 1:length(app.MultiFileSelectAutoIncrementArray)
                     
@@ -1931,7 +1935,13 @@ classdef AnalyZe < matlab.apps.AppBase
                         return
                     end
             end
-
+            
+            for selection = 1:length(path)
+                if string(path{selection}) == "0"
+                    errordlg('Oops! It looks like a file name was not read properly','Invalid File Selection')
+                    return
+                end
+            end
             
             app.CurrentFileName = string(fullfile(path,file));
 
@@ -6935,6 +6945,14 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
             end
         end
+
+        % Button pushed function: RefreshPlotButton
+        function RefreshPlotButtonPushed(app, event)
+            value = app.HzEditField.Value;
+            app.setSliderVal(value);
+
+            CrossSection(app,value,false);
+        end
     end
 
     % Component initialization
@@ -8360,14 +8378,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HzEditFieldLabel = uilabel(app.CrossSectionParametersPanel);
             app.HzEditFieldLabel.HorizontalAlignment = 'right';
             app.HzEditFieldLabel.FontSize = 18;
-            app.HzEditFieldLabel.Position = [289 19 27 23];
+            app.HzEditFieldLabel.Position = [322 12 27 23];
             app.HzEditFieldLabel.Text = 'Hz';
 
             % Create HzEditField
             app.HzEditField = uieditfield(app.CrossSectionParametersPanel, 'numeric');
             app.HzEditField.ValueChangedFcn = createCallbackFcn(app, @HzEditFieldValueChanged, true);
             app.HzEditField.FontSize = 18;
-            app.HzEditField.Position = [173 5 105 35];
+            app.HzEditField.Position = [205 5 105 35];
 
             % Create Panel_2
             app.Panel_2 = uipanel(app.CrossSectionParametersPanel);
@@ -8597,6 +8615,15 @@ classdef AnalyZe < matlab.apps.AppBase
             app.NumTailValuesToClipSpinner.Limits = [0 Inf];
             app.NumTailValuesToClipSpinner.FontSize = 18;
             app.NumTailValuesToClipSpinner.Position = [184 18 67 24];
+
+            % Create RefreshPlotButton
+            app.RefreshPlotButton = uibutton(app.CrossSectionParametersPanel, 'push');
+            app.RefreshPlotButton.ButtonPushedFcn = createCallbackFcn(app, @RefreshPlotButtonPushed, true);
+            app.RefreshPlotButton.FontSize = 14;
+            app.RefreshPlotButton.FontWeight = 'bold';
+            app.RefreshPlotButton.FontColor = [0.4667 0.6745 0.1882];
+            app.RefreshPlotButton.Position = [96 10 100 26];
+            app.RefreshPlotButton.Text = 'Refresh Plot';
 
             % Create TabGroup4
             app.TabGroup4 = uitabgroup(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
