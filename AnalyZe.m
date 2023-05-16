@@ -1220,7 +1220,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     case 'On'
                         MaxFreqInd = find(freq_i == max(freq_i));
 
-                        y_z_CS_i = y_z_CS_i - abs(y_z_i(MaxFreqInd));
+                        y_z_CS_i = y_z_CS_i - abs(y_z_i(MaxFreqInd(1)));
                     case 'Off'
                 end
 
@@ -1662,6 +1662,7 @@ classdef AnalyZe < matlab.apps.AppBase
         
         function results = UpdateRecursiveFitButton(app)
 
+
             selectedTab = app.CCTFitOptionsTabGroup.SelectedTab;
             switch selectedTab
                 case app.RecursiveTimeRegularizationTab
@@ -1930,7 +1931,7 @@ classdef AnalyZe < matlab.apps.AppBase
            if flag
                 
                answer = msgbox({'Now press LOAD to import the selected file (or files), tagging it with the Condition, Well Number, Experiment Number and Time Point entered.'},...
-                                    'Select EIS Data To Load');
+                                    'Select EIS Data To Load','help');
            end
 
 
@@ -1962,7 +1963,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
                             app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
 
-                            msgbox('All Time Points Loaded')
+                            msgbox('All Time Points Loaded! Noice :)','Auto-Time Incrementer','help')
                         else
                             app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
                             app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
@@ -2110,7 +2111,7 @@ classdef AnalyZe < matlab.apps.AppBase
             SavedData = app.Data;
             save(selpath + "\AnalyZeData_" + string(UserFileName) + ".mat","SavedData",'-mat');
 
-            f = msgbox("Data Saved as AnalyZeData_" + string(UserFileName) + ".mat :)");
+            f = msgbox("Data Saved as AnalyZeData_" + string(UserFileName) + ".mat :)",'Data Saved Successfully','help');
         end
 
         % Button pushed function: LoadFromPreviousSaveButton
@@ -2207,16 +2208,16 @@ classdef AnalyZe < matlab.apps.AppBase
                        switch TabTag
                            case 'ImportData'
                                  msgbox('Enter Data Descriptiors (Time in Arb. Units) -> Select Find File to search for .txt (.csv) data file using explorer -> Select Load to Read data' ,...
-                                            'Workflow');
+                                            'Workflow','help');
                            case 'CCTFit'
                                 msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for circuit fitting -> Choose circuit fitting parameters -> Select Go! to fit slected circuit to all chosen data.' ,...
-                                            'Workflow');
+                                            'Workflow','help');
                            case 'CrossSection'
                                 msgbox('Refresh Data to load data options for selection -> Select Choose and Plot to define subset of the full dataset for analysis and plot the time series of the magnitude cross section -> Explore the spectrum by slecting different frequencies.' ,...
-                                            'Workflow');
+                                            'Workflow','help');
                            case 'TransferFnFit'
                                msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for Transfer function estimation -> Choose the Number of poles and zeros -> Select Go! to fit an nth order transfer dunction to all chosen data.' ,...
-                                            'Workflow');
+                                            'Workflow','help');
                        end
                         
 
@@ -2259,7 +2260,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 flag = app.TutorialMode;
                    
                    if flag
-                        msgbox('You can now select a subset of time points by holding CTRL and multi-selecting from the Time list box','Heads-Up')
+                        msgbox('You can now select a subset of time points by holding CTRL and multi-selecting from the Time list box','Heads-Up','help')
                    end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2503,7 +2504,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             end
         
                             if errorflag
-                                msgbox('The app is expecting a leading p(R1,C1) as the Include Barrier Switch is turned on. Please revise circuit string.')
+                                msgbox('The app is expecting a leading p(R1,C1) as the Include Barrier Switch is turned on. Please revise circuit string.','Abnormal Barrier Circuit','warning')
                                 return
                             end
         
@@ -2984,13 +2985,18 @@ classdef AnalyZe < matlab.apps.AppBase
              app.Fits = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'FitsResults', {},'RawData', {});
              app.FitsResultsTableMarkings = {};
              removeStyle(app.ResultsTable);
-             f = msgbox("Results Cleared!");
+             f = msgbox("All Results Cleared Successfully!",'Clear Results','help');
        
              
         end
 
         % Button pushed function: SaveResultsButton
         function SaveResultsButtonPushed(app, event)
+            if isempty(app.Fits)
+                errordlg('No results to save!','Results Not Found')
+                return
+            end
+
             UserFileName = inputdlg("Enter File Name: ");
             
             selpath = uigetdir();
@@ -3005,7 +3011,7 @@ classdef AnalyZe < matlab.apps.AppBase
             filename= selpath + "\AnalyZeResults_wIC_" + string(UserFileName) + ".csv";
             writetable(SavedResultsTable,filename);
 
-            f = msgbox("Data Saved as AnalyZeResults_" + string(UserFileName) + ".mat and AnalyZeResults_wIC_"  + string(UserFileName) + ".csv :D");
+            f = msgbox("Data Saved as AnalyZeResults_" + string(UserFileName) + ".mat and AnalyZeResults_wIC_"  + string(UserFileName) + ".csv :D",'Save Results','help');
         end
 
         % Value changed function: FitBlankOnlyExcludeBarrierSwitch
@@ -3100,7 +3106,7 @@ classdef AnalyZe < matlab.apps.AppBase
               try 
                     SelectedFits = app.Fits(app.ResultTableRowSelected);
                catch
-                   msgbox('Select a cell in the results table to plot the fit diagnostics result associated with that row.')
+                   msgbox('Select a cell (or cells across multiple rows) in the results table to plot the fit diagnostics result associated with that row.','Result Not Found','error')
                    error('No result selected.')
                end
             
@@ -3604,7 +3610,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});
             app.CrossSectionResultsLoaded = struct('CSFreq',{},'Name',{'Start'},'ExperimentNumber',{-1},'Well',{'A0'},'Time',{-1},'Mod',{-1},'Arg',{-1});
              
-             f = msgbox("Results Cleared!");
+             f = msgbox("Results Cleared Successfully!",'Clear Results','help');
         end
 
         % Button pushed function: SaveResultsButton_2
@@ -3621,7 +3627,7 @@ classdef AnalyZe < matlab.apps.AppBase
             filename= selpath + "\AnalyZeCrossSectionResults_" + string(UserFileName) + ".csv";
             writetable(T,filename);
 
-            f = msgbox("Data Saved as AnalyZeCrossSectionResults_" + string(UserFileName) + ".mat and AnalyZeCrossSectionResults_"  + string(UserFileName) + ".csv :D");
+            f = msgbox("Data Saved as AnalyZeCrossSectionResults_" + string(UserFileName) + ".mat and AnalyZeCrossSectionResults_"  + string(UserFileName) + ".csv :D",'Save Results','help');
         end
 
         % Button pushed function: PlotFromTableSelectionButton
@@ -3647,7 +3653,6 @@ classdef AnalyZe < matlab.apps.AppBase
                 row_count = 1;
                 for r = 1:length(ind(:,1))
                     row = ind(r,1);
-                    display(app.FitsResultsTableMarkings)
                     CatTabMarkings = categorical(app.FitsResultsTableMarkings);
                     if (CatTabMarkings(row) ~= 'marked')
                         ind_temp(row_count,:) = ind(r,:);
@@ -4015,7 +4020,7 @@ classdef AnalyZe < matlab.apps.AppBase
             if flag
 
                  msgbox('Enter Data Descriptiors (Time in Arb. Units) -> Select Find File to search for .txt (.csv) data file using explorer -> Select Load to Read data' ,...
-                                            'Workflow');
+                                            'Workflow','help');
             end
         end
 
@@ -4059,7 +4064,7 @@ classdef AnalyZe < matlab.apps.AppBase
                    if flag
 
                       msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for circuit fitting -> Choose circuit fitting parameters -> Select Go! to fit slected circuit to all chosen data.' ,...
-                                            'Workflow');
+                                            'Workflow','help');
 
                    end
                 
@@ -4076,7 +4081,7 @@ classdef AnalyZe < matlab.apps.AppBase
                    if flag
 
                        msgbox('Refresh Data to load data options for selection -> Select Choose and Plot to define subset of the full dataset for analysis and plot the time series of the magnitude cross section -> Explore the spectrum by slecting different frequencies.' ,...
-                                            'Workflow');
+                                            'Workflow','help');
                    end
 
         end
@@ -4593,7 +4598,6 @@ classdef AnalyZe < matlab.apps.AppBase
             end
 
             
-            display( app.FitsResultsTableMarkings)
             
 
         
@@ -4632,7 +4636,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     
            
 
-             f = msgbox("Data Cleared!");
+             f = msgbox("Data Cleared Successfully!",'Clear Data','help');
         end
 
         % Button pushed function: CLEARLASTDATAPOINTButton
@@ -4655,14 +4659,14 @@ classdef AnalyZe < matlab.apps.AppBase
                    
                    end
                    
-                   f = msgbox("Data entry purged :)");
+                   f = msgbox("Data entry purged :)",'Clear Last Data Point','help');
 
 
                else
                    app.Data = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
                    app.UITable.Data = [];
 
-                   f = msgbox("All Data purged :)");
+                   f = msgbox("All Data purged :)",'Clear Last Data Point','help');
                end
 
                value = app.AutoIncrementTimePointSwitch.Value;
@@ -4670,7 +4674,7 @@ classdef AnalyZe < matlab.apps.AppBase
                    case 'On'
                         if (app.AutoFileTimeIncremementPosition > 0)
                             app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
-                            msgbox('Time Point auto incrementer rolled back by one')
+                            msgbox('Time Point auto incrementer rolled back by one','Clear Last Data Point','help')
                         end
                             app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
                             app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
@@ -4746,7 +4750,7 @@ classdef AnalyZe < matlab.apps.AppBase
                try 
                    Fit_to_plot = app.Fits(ind);
                catch
-                   msgbox('Select a cell in the results table to plot the result associated with that row.')
+                   msgbox('Select a cell in the results table to plot the result associated with that row.','Result Not Found','error')
                    error('No result selected.')
                end
 
@@ -5143,7 +5147,7 @@ classdef AnalyZe < matlab.apps.AppBase
                try 
                    Fit_to_plot = app.Fits_TFest(ind);
                catch
-                   msgbox('Select a cell in the results table to plot the result associated with that row.')
+                   msgbox('Select a cell in the results table to plot the result associated with that row.','Result Not Found','error')
                    error('No result selected.')
                end
 
@@ -5734,7 +5738,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
              app.Fits_TFest = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'FitsResults', {},'RawData', {},'FitOpts',{});% Description
 
-             f = msgbox("Results Cleared!");
+             f = msgbox("Results Cleared Successfully!",'Clear Results','help');
         end
 
         % Button pushed function: SaveResultsButton_3
@@ -5754,7 +5758,7 @@ classdef AnalyZe < matlab.apps.AppBase
             filename= selpath + "\AnalyZeSysIDResults_" + string(UserFileName) + ".csv";
             writetable(T,filename);
 
-            f = msgbox("Data Saved as AnalyZeSysIDResults_" + string(UserFileName) + ".mat and AnalyZeSysIDResults_"  + string(UserFileName) + ".csv :D");
+            f = msgbox("Data Saved as AnalyZeSysIDResults_" + string(UserFileName) + ".mat and AnalyZeSysIDResults_"  + string(UserFileName) + ".csv :D",'Save Results','help');
 
         end
 
@@ -5890,7 +5894,7 @@ classdef AnalyZe < matlab.apps.AppBase
                    if flag
 
                          msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for Transfer function estimation -> Choose the Number of poles and zeros -> Select Go! to fit an nth order transfer dunction to all chosen data.' ,...
-                                            'Workflow');
+                                            'Workflow','help');
 
                    end
         end
@@ -5904,7 +5908,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.TutorialMode = true;
                 case 'Off'
                     app.TutorialMode = false;
-                    msgbox('Keep this switch On to recieve tutorial pop-ups as you use the App.','Heads Up!')
+                    msgbox('Keep this switch On to recieve tutorial pop-ups as you use the App.','Heads Up!','help')
                     
             end
         end
@@ -6262,7 +6266,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
                 % Copy all UIAxes children, take over axes limits and aspect ratio. 
-                allChildren = findall(axs,'Type','Line');%axs.XAxis.Parent.Children;
+                allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')]; %axs.XAxis.Parent.Children;
                     if isempty(allChildren)
                         allChildren = findall(axs,'Type','Scatter');
                     end
@@ -6650,13 +6654,16 @@ classdef AnalyZe < matlab.apps.AppBase
             switch key
                 case 'm'
                     app.FitsResultsTableMarkings(ind(1)) = {'marked'};
+                    app.UpdateCCTFitResultsTableStyles();
                 case 'u'
                     app.FitsResultsTableMarkings(ind(1)) = {'unmarked'};
+                    app.UpdateCCTFitResultsTableStyles();
                 case 'a'
                     app.FitsResultsTableMarkings(ind(1)) = {'approved'};
+                    app.UpdateCCTFitResultsTableStyles();
             end
 
-            app.UpdateCCTFitResultsTableStyles();
+            
         end
 
         % Button down function: ResultsTable
