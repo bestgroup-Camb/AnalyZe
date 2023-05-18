@@ -99,6 +99,7 @@ classdef AnalyZe < matlab.apps.AppBase
         HoldPlotsSwitchLabel            matlab.ui.control.Label
         BodeResults                     matlab.ui.control.UIAxes
         ResultsTab                      matlab.ui.container.Tab
+        AutoMarkButton                  matlab.ui.control.Button
         ResultsTable                    matlab.ui.control.Table
         FitDiagnosticTab                matlab.ui.container.Tab
         LabelPlotsSwitch                matlab.ui.control.Switch
@@ -122,6 +123,7 @@ classdef AnalyZe < matlab.apps.AppBase
         ImagQQ                          matlab.ui.control.UIAxes
         RealQQ                          matlab.ui.control.UIAxes
         SeriesPlotTab                   matlab.ui.container.Tab
+        RefreshPlotButton_2             matlab.ui.control.Button
         LabelDataSeriesSwitch           matlab.ui.control.Switch
         LabelDataSeriesSwitchLabel      matlab.ui.control.Label
         SeriesPlotcctFitTabGroup        matlab.ui.container.TabGroup
@@ -2236,7 +2238,8 @@ classdef AnalyZe < matlab.apps.AppBase
 
                        switch TabTag
                            case 'ImportData'
-                                 msgbox('Enter Data Descriptiors (Time in Arb. Units) -> Select Find File to search for .txt (.csv) data file using explorer -> Select Load to Read data' ,...
+                                 msgbox('Enter Data Descriptiors (Time in Arb. Units) -> Select Find File to search for .txt (.csv) data file using explorer -> Select Load to Read data (-> Select Save For Later to save all loaded data as a .mat file to be recalled in a different session)' ,...
+                                            newline, 'Alternatively, Select Load From Prvious Save to reload a set of labelled, data points saved in a previous session.',...
                                             'Workflow','help');
                            case 'CCTFit'
                                 msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for circuit fitting -> Choose circuit fitting parameters -> Select Go! to fit slected circuit to all chosen data.' ,...
@@ -4627,7 +4630,7 @@ classdef AnalyZe < matlab.apps.AppBase
             end
 
             
-            
+            msgbox('Results Loaded Successfully!','Load Results','help')
 
         
         end
@@ -6428,7 +6431,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
                 % Copy all UIAxes children, take over axes limits and aspect ratio. 
                 
-                allChildren = findall(axs,'Type','Line');%axs.XAxis.Parent.Children;
+                 allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')];
                     if isempty(allChildren)
                         allChildren = findall(axs,'Type','Scatter');
                     end
@@ -6685,19 +6688,31 @@ classdef AnalyZe < matlab.apps.AppBase
 
             ind = app.ResultTableCellsSelected;
 
-            switch key
-                case 'm'
-                    app.FitsResultsTableMarkings(ind(1)) = {'marked'};
-                    app.UpdateCCTFitResultsTableStyles();
-                case 'u'
-                    app.FitsResultsTableMarkings(ind(1)) = {'unmarked'};
-                    app.UpdateCCTFitResultsTableStyles();
-                case 'a'
-                    app.FitsResultsTableMarkings(ind(1)) = {'approved'};
-                    app.UpdateCCTFitResultsTableStyles();
-                case 'q'
-                    app.FitsResultsTableMarkings(ind(1)) = {'query'};
-                    app.UpdateCCTFitResultsTableStyles();
+            ind = app.ResultTableCellsSelected;
+            rows = ind(:,1);
+
+            updateFlag = false;
+
+            for r = 1:length(rows)
+                
+                switch key
+                    case 'm'
+                        app.FitsResultsTableMarkings(rows(r)) = {'marked'};
+                        updateFlag = true;
+                    case 'u'
+                        app.FitsResultsTableMarkings(rows(r)) = {'unmarked'};
+                        updateFlag = true;
+                    case 'a'
+                        app.FitsResultsTableMarkings(rows(r)) = {'approved'};
+                        updateFlag = true;
+                    case 'q'
+                        app.FitsResultsTableMarkings(rows(r)) = {'query'};
+                        updateFlag = true;
+                end
+            end
+
+            if updateFlag
+                app.UpdateCCTFitResultsTableStyles();
             end
 
             
@@ -6739,6 +6754,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                 '   -> m - Mark for exclusion (Red cell background). ',...
                                 '   -> a - Mark for accepted fit (Green font colour). ',...
                                 '   -> u - Undo marking. ',...
+                                '   -> q - Mark to query fit (Orange font colour). ',...
                                 '',...
                                 'NOTE: Entries marked wth ''m'' will be excluded from the Series Plotting.'},'Heads-Up! Marking System')
                        end
@@ -6952,6 +6968,140 @@ classdef AnalyZe < matlab.apps.AppBase
             app.setSliderVal(value);
 
             CrossSection(app,value,false);
+        end
+
+        % Callback function
+        function UITableKeyPress(app, event)
+            key = event.Key;
+            
+        end
+
+        % Button pushed function: RefreshPlotButton_2
+        function RefreshPlotButton_2Pushed(app, event)
+            app.ResultTableCellsSelected = 1;
+
+            app.PlotFromTableSelectionButtonPushed(app);
+
+        end
+
+        % Button pushed function: AutoMarkButton
+        function AutoMarkButtonPushed(app, event)
+          
+            %% Choose Marking Scheme
+
+            MarkingSchemeList = {'Mark Outliers','Mark Above a Threshold Value','Mark Below a Threshold Value','Mark Within Range','Unmark All'};
+
+            [indx,~] = listdlg('PromptString',{'Select A Marking Scheme',...
+            'Automatically mark data points using one of the following metrics',''},...
+            'SelectionMode','single','ListString',MarkingSchemeList);
+
+            if isempty(indx), msgbox('Operation Cancelled','Auto-Mark','warn'); return; end 
+
+                MarkingScheme = MarkingSchemeList{indx};
+
+                %% Clarify Metric
+                    switch MarkingScheme
+                        case 'Mark Outliers'
+                            OutlierSchemeList = {'median','mean','quartiles','grubbs','gesd'};
+
+                            [indx,~] = listdlg('PromptString',{'Select An Outlier Scheme',...
+                            'Select an outlier detection algorithm',''},...
+                            'SelectionMode','single','ListString',OutlierSchemeList);
+
+                            if isempty(indx), msgbox('Operation Cancelled','Auto-Mark','warn'); return; end 
+
+                            OutlierScheme = OutlierSchemeList{indx};
+
+                        case 'Mark Above a Threshold Value'
+                            answer = inputdlg('Enter a Threshold Value','Threshold',[1 30],{'0'});
+                            try 
+                                Threshold = eval(answer{1});
+                            catch
+                                errordlg('Please enter a numeric threshold value','Invalid Threshold');
+                                return
+                            end
+                        case 'Mark Below a Threshold Value'
+                            answer = inputdlg('Enter a Threshold Value','Threshold',[1 30],{'0'});
+                            try 
+                                Threshold = eval(answer{1});
+                            catch
+                                errordlg('Please enter a numeric threshold value','Invalid Threshold');
+                                return
+                            end
+                        case 'Mark Within Range'
+
+                            answer = inputdlg({'Enter an Upper Bound','Enter a Lower Bound'},'Interval',[1 30],{'1','0'});
+                            try 
+                                UpperBnd = eval(answer{1});
+                                LowerBnd = eval(answer{2});
+                            catch
+                                errordlg('Please enter a numeric threshold value','Invalid Threshold');
+                                return
+                            end
+
+                        case 'Unmark All'
+                            
+                             for i = 1:length(app.Fits)
+                                app.FitsResultsTableMarkings(i) = {'unmark'};
+                            end
+            
+                            app.UpdateCCTFitResultsTableStyles();
+
+                            return
+                    end
+
+           %% Choose Mark
+                MarkList = {'marked','umarked','approved','query'};
+                    
+                [indx,tf] = listdlg('PromptString',{'Select A Mark',...
+                'Mark data points selected by the marking matric as?',''},...
+                'SelectionMode','single','ListString',MarkList);
+
+                if isempty(indx), msgbox('Operation Cancelled','Auto-Mark','warn'); return; end 
+
+                Mark = MarkList(indx);
+
+
+
+            %% Choose operand 
+                 OperandList = {'Time','Rb','Cb','MSE','NRMSE','NMSE','AIC','BIC'};
+
+                [indx,tf] = listdlg('PromptString',{'Select An Operand',...
+                'Apply metric to which column?',''},...
+                'SelectionMode','single','ListString',OperandList);
+
+                if isempty(indx), msgbox('Operation Cancelled','Auto-Mark','warn'); return; end 
+    
+                    Operand = OperandList{indx};
+
+            %% Compute Markings
+                T_c =  app.ResultsTable.Data;
+                    
+                T = cell2table(T_c, 'VariableNames',...
+                       {'circuit','Condition','exp','cell','Time',...
+                      'Rb','Cb','Device CCT Params','MSE','NRMSE','NMSE','AIC','BIC'});
+
+                OperandData = table2array(T(1:length(app.Fits),string(Operand)));
+
+                switch MarkingScheme
+                    case 'Mark Outliers'
+                        MarkedIndexes = isoutlier(OperandData,OutlierScheme);
+                    case 'Mark Above a Threshold Value'
+                        MarkedIndexes = find(OperandData > Threshold);
+                    case 'Mark Below a Threshold Value'
+                        MarkedIndexes = find(OperandData < Threshold);
+                    case 'Mark Within Range'
+                        MarkedIndexes = find((OperandData < UpperBnd).*(OperandData < LowerBnd));
+                end
+    
+
+            %% Apply Markings
+                
+                app.FitsResultsTableMarkings(MarkedIndexes) = Mark;
+
+
+                app.UpdateCCTFitResultsTableStyles();
+
         end
     end
 
@@ -7872,7 +8022,16 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResultsTable.Tooltip = {'''m'' - mark for exclusion'; '''a'' - mark to accept'; '''u'' - unmark'; '''q'' - mark for query'};
             app.ResultsTable.ButtonDownFcn = createCallbackFcn(app, @ResultsTableButtonDown, true);
             app.ResultsTable.KeyPressFcn = createCallbackFcn(app, @ResultsTableKeyPress, true);
-            app.ResultsTable.Position = [11 20 461 570];
+            app.ResultsTable.Position = [11 43 461 547];
+
+            % Create AutoMarkButton
+            app.AutoMarkButton = uibutton(app.ResultsTab, 'push');
+            app.AutoMarkButton.ButtonPushedFcn = createCallbackFcn(app, @AutoMarkButtonPushed, true);
+            app.AutoMarkButton.FontSize = 14;
+            app.AutoMarkButton.FontWeight = 'bold';
+            app.AutoMarkButton.FontColor = [0.4941 0.1843 0.5569];
+            app.AutoMarkButton.Position = [186 6 90 30];
+            app.AutoMarkButton.Text = 'Auto-Mark';
 
             % Create FitDiagnosticTab
             app.FitDiagnosticTab = uitab(app.TabGroup2);
@@ -8016,11 +8175,11 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create PlotFromTableSelectionButton
             app.PlotFromTableSelectionButton = uibutton(app.SeriesPlotTab, 'push');
             app.PlotFromTableSelectionButton.ButtonPushedFcn = createCallbackFcn(app, @PlotFromTableSelectionButtonPushed, true);
-            app.PlotFromTableSelectionButton.FontSize = 16;
+            app.PlotFromTableSelectionButton.FontSize = 14;
             app.PlotFromTableSelectionButton.FontWeight = 'bold';
             app.PlotFromTableSelectionButton.FontColor = [0.4667 0.6745 0.1882];
             app.PlotFromTableSelectionButton.Tooltip = {'First highlight two columns in the Results table - clicking ''Plot From Table Selection'' will plot one data series against the other.'};
-            app.PlotFromTableSelectionButton.Position = [19 521 93 74];
+            app.PlotFromTableSelectionButton.Position = [19 537 94 58];
             app.PlotFromTableSelectionButton.Text = {'Plot From '; 'Table'; ' Selection'};
 
             % Create HoldPlotsSwitch_2Label_2
@@ -8042,24 +8201,26 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FlipAxesSwitchLabel = uilabel(app.SeriesPlotTab);
             app.FlipAxesSwitchLabel.HorizontalAlignment = 'center';
             app.FlipAxesSwitchLabel.FontWeight = 'bold';
-            app.FlipAxesSwitchLabel.Position = [37 469 58 22];
+            app.FlipAxesSwitchLabel.Position = [202 23 58 22];
             app.FlipAxesSwitchLabel.Text = 'Flip Axes';
 
             % Create FlipAxesSwitch
             app.FlipAxesSwitch = uiswitch(app.SeriesPlotTab, 'slider');
-            app.FlipAxesSwitch.Position = [43 494 45 20];
+            app.FlipAxesSwitch.Position = [208 48 45 20];
 
             % Create PlotMultiSeriesMeanSwitchLabel
             app.PlotMultiSeriesMeanSwitchLabel = uilabel(app.SeriesPlotTab);
             app.PlotMultiSeriesMeanSwitchLabel.HorizontalAlignment = 'center';
-            app.PlotMultiSeriesMeanSwitchLabel.FontSize = 18;
-            app.PlotMultiSeriesMeanSwitchLabel.Position = [286 15 186 23];
+            app.PlotMultiSeriesMeanSwitchLabel.FontSize = 14;
+            app.PlotMultiSeriesMeanSwitchLabel.FontWeight = 'bold';
+            app.PlotMultiSeriesMeanSwitchLabel.FontColor = [0.4941 0.1843 0.5569];
+            app.PlotMultiSeriesMeanSwitchLabel.Position = [303 18 155 22];
             app.PlotMultiSeriesMeanSwitchLabel.Text = 'Plot Multi-Series Mean';
 
             % Create PlotMultiSeriesMeanSwitch
             app.PlotMultiSeriesMeanSwitch = uiswitch(app.SeriesPlotTab, 'slider');
             app.PlotMultiSeriesMeanSwitch.FontSize = 18;
-            app.PlotMultiSeriesMeanSwitch.Position = [346 53 68 30];
+            app.PlotMultiSeriesMeanSwitch.Position = [346 47 68 30];
 
             % Create SeriesPlotcctFitTabGroup
             app.SeriesPlotcctFitTabGroup = uitabgroup(app.SeriesPlotTab);
@@ -8234,12 +8395,21 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LabelDataSeriesSwitchLabel.HorizontalAlignment = 'center';
             app.LabelDataSeriesSwitchLabel.FontWeight = 'bold';
             app.LabelDataSeriesSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.LabelDataSeriesSwitchLabel.Position = [14 423 105 22];
+            app.LabelDataSeriesSwitchLabel.Position = [13 480 105 22];
             app.LabelDataSeriesSwitchLabel.Text = 'Label Data Series';
 
             % Create LabelDataSeriesSwitch
             app.LabelDataSeriesSwitch = uiswitch(app.SeriesPlotTab, 'slider');
-            app.LabelDataSeriesSwitch.Position = [43 448 45 20];
+            app.LabelDataSeriesSwitch.Position = [42 505 45 20];
+
+            % Create RefreshPlotButton_2
+            app.RefreshPlotButton_2 = uibutton(app.SeriesPlotTab, 'push');
+            app.RefreshPlotButton_2.ButtonPushedFcn = createCallbackFcn(app, @RefreshPlotButton_2Pushed, true);
+            app.RefreshPlotButton_2.FontSize = 14;
+            app.RefreshPlotButton_2.FontWeight = 'bold';
+            app.RefreshPlotButton_2.FontColor = [0.4667 0.6745 0.1882];
+            app.RefreshPlotButton_2.Position = [15 446 100 26];
+            app.RefreshPlotButton_2.Text = 'Refresh Plot';
 
             % Create SaveResultsButton
             app.SaveResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
