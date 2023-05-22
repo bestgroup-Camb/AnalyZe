@@ -1938,10 +1938,17 @@ classdef AnalyZe < matlab.apps.AppBase
                     end
             end
             
-            for selection = 1:length(path)
-                if string(path{selection}) == "0"
-                    errordlg('Oops! It looks like a file name was not read properly','Invalid File Selection')
-                    return
+            if ~isempty(app.MultiFileSelectAutoIncrementArray)
+                for selection = 1:length(path)
+                    if string(path{selection}) == "0"
+                        errordlg('Oops! It looks like a file name was not read properly','Invalid File Selection')
+                        return
+                    end
+                end
+            else
+                if string(path) == "0"
+                        errordlg('Oops! It looks like a file name was not read properly','Invalid File Selection')
+                        return
                 end
             end
             
@@ -1996,7 +2003,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
                             msgbox('All Time Points Loaded! Noice :)','Auto-Time Incrementer','help')
                         else
-                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
+                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
                             app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
                         end 
                 end
@@ -2266,18 +2273,21 @@ classdef AnalyZe < matlab.apps.AppBase
                 Conditions = "Select All";
                 Exp = "Select All";
                 Well = "Select All";
-                Time = "Select All";
+                Time = [];
                 for (i=1:length(Dat))
                     Conditions(i+1) = Dat(i).Name;
                     Exp(i+1) = Dat(i).ExperimentNumber;
                     Well(i+1) = Dat(i).Well;
-                    Time(i+1) = Dat(i).Time;
+                    Time(i) = Dat(i).Time;
                 end
+
                 
                 Conditions = unique(Conditions);
                 Exp = unique(Exp);
                 Well = unique(Well);
                 Time = sort(unique(Time));
+                    Time = string((Time'));
+                    Time(end+1) = "Select All";
 
                 app.ConditionListBox.Items = Conditions;
                 app.ExperimentNumberListBox.Items = Exp;
@@ -2388,9 +2398,32 @@ classdef AnalyZe < matlab.apps.AppBase
                         
                     end
                     DatToFit_temp(indexes) = [];
-                    DatToFit_Clustered = [DatToFit_Clustered, temp];
+
+                    % Sort Cluster By Time
+                            Time_Sorted_Clustered = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+                    
+                           while length(temp) >= 1
+                               
+                               min_ind = 1;
+                               min_t = temp(1).Time;
+
+                               for i = 1:length(temp)
+                                    if temp(i).Time < min_t
+                                        min_ind = i;
+                                        min_t = temp(i).Time;
+                                    end
+                               end
+                               Time_Sorted_Clustered = [Time_Sorted_Clustered, temp(min_ind)];
+                               temp(min_ind) = [];
+
+                           end
+
+
+                    
+                    DatToFit_Clustered = [DatToFit_Clustered, Time_Sorted_Clustered];
 
                 end
+
 
 
             %% Load into table
@@ -2659,7 +2692,12 @@ classdef AnalyZe < matlab.apps.AppBase
                         case 'On'
                             ProblemSetUpString_i = ProblemSetUpString_i + " Potentiostat Error Correction Engaged (true) " + newline;
                             ProblemSetUpString_i = ProblemSetUpString_i + "     Z_meas/Z_true = " + string(app.ZmeasuredZtrueEditField.Value) + newline;
-                            ProblemSetUpString_i = ProblemSetUpString_i + "     Max Vals = " + string(app.MaxParamErrValsEditField.Value) + newline;
+                            switch app.FixedFreeParams.Value
+                                case 'Free Params'
+                                    ProblemSetUpString_i = ProblemSetUpString_i + "     Max Vals = " + string(app.MaxParamErrValsEditField.Value) + newline;
+                                case 'Fixed Params'
+                                    ProblemSetUpString_i = ProblemSetUpString_i + "     Fixed Vals = " + string(app.MaxParamErrValsEditField.Value) + newline;
+                            end
                         case 'Off'
                             ProblemSetUpString_i = ProblemSetUpString_i + "Potentiostat Error Correction Engaged (false) " + newline;
                     end
@@ -2853,6 +2891,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                     
                      DataToAddToTable = [app.ResultsTable.Data; newData];
                      app.ResultsTable.Data = DataToAddToTable;
+                    
 
                  end
 
@@ -2978,7 +3017,7 @@ classdef AnalyZe < matlab.apps.AppBase
             CurrentLog = app.CCTFitProblemLog.Value;
             app.CCTFitProblemLog.Value = [string(CurrentLog); newline + ProblemSetUpString_i]; 
             
-
+            beep
 
 
         end
@@ -4712,7 +4751,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                     app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
                                     msgbox('Time Point auto incrementer rolled back by one','Clear Last Data Point','help')
                                 end
-                                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
+                                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
                                     app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
                             end
                         
@@ -6247,6 +6286,8 @@ classdef AnalyZe < matlab.apps.AppBase
             'Only one plot can be selected at a time.',''},...
             'SelectionMode','single','ListString',plotlist);
 
+             if isempty(indx), msgbox('Operation Cancelled','Save Fig','warn'); return; end 
+
             %Choose plot to save
                 plotName = plotlist{indx};
 
@@ -6291,6 +6332,7 @@ classdef AnalyZe < matlab.apps.AppBase
                  [indx,tf] = listdlg('PromptString',{'Select a File Type',...
                 'Only one plot can be selected at a time.',''},...
                 'SelectionMode','single','ListString',FileTypeList);
+                 if isempty(indx), msgbox('Operation Cancelled','Save Fig','warn'); return; end 
                 FileType = FileTypeList{indx};
 
 
@@ -6302,8 +6344,19 @@ classdef AnalyZe < matlab.apps.AppBase
                  
 
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
-                % Copy all UIAxes children, take over axes limits and aspect ratio. 
-                allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')]; %axs.XAxis.Parent.Children;
+                % Copy all UIAxes children, take over axes limits and aspect ratio.
+                    %Check if mean only required
+                        answer = questdlg('Copy only series mean?', ...
+	                        'Isolate Mean Plot', ...
+	                        'Yes','No','No');
+                        switch answer
+                            case 'Yes'
+                                allChildren = findall(axs,'Type','ErrorBar'); %axs.XAxis.Parent.Children;
+                            otherwise
+                                allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')]; %axs.XAxis.Parent.Children;
+                        end
+
+                
                     if isempty(allChildren)
                         allChildren = findall(axs,'Type','Scatter');
                     end
@@ -6957,7 +7010,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         errordlg('Please enter numeric values separated by commas','Invalud Time Point Array')
                     end
 
-                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,int2str(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1))]};
+                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
                     app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
             end
         end
