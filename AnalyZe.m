@@ -817,7 +817,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                     
                                     CorrectionStr = ['@(b,x) ',CorrectionStr];
                                     Correction_Fn = eval(CorrectionStr);
-                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(b,x);
+                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) ./ Correction_Fn(b,x);
 
                                 case 'Fixed Params'
                                     CCT_Fn_Chosen = CCT_Fn;
@@ -834,7 +834,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                                                         
                                     CorrectionStr = ['@(x) ',CorrectionStr];
                                     Correction_Fn = eval(CorrectionStr);
-                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) .* Correction_Fn(x);
+                                    CCT_Fn = @(b,x) CCT_Fn_Chosen(b,x) ./ Correction_Fn(x);
                             end
 
                     end
@@ -2245,8 +2245,8 @@ classdef AnalyZe < matlab.apps.AppBase
 
                        switch TabTag
                            case 'ImportData'
-                                 msgbox('Enter Data Descriptiors (Time in Arb. Units) -> Select Find File to search for .txt (.csv) data file using explorer -> Select Load to Read data (-> Select Save For Later to save all loaded data as a .mat file to be recalled in a different session)' ,...
-                                            newline, 'Alternatively, Select Load From Prvious Save to reload a set of labelled, data points saved in a previous session.',...
+                                 msgbox(['Enter Data Descriptiors (Time in Arb. Units) -> Select Find File to search for .txt (.csv) data file using explorer -> Select Load to Read data (-> Select Save For Later to save all loaded data as a .mat file to be recalled in a different session)' ,...
+                                            newline, 'Alternatively, Select Load From Prvious Save to reload a set of labelled, data points saved in a previous session.'],...
                                             'Workflow','help');
                            case 'CCTFit'
                                 msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for circuit fitting -> Choose circuit fitting parameters -> Select Go! to fit slected circuit to all chosen data.' ,...
@@ -4911,18 +4911,21 @@ classdef AnalyZe < matlab.apps.AppBase
                 Conditions = "Select All";
                 Exp = "Select All";
                 Well = "Select All";
-                Time = "Select All";
+                Time = [];
                 for (i=1:length(Dat))
                     Conditions(i+1) = Dat(i).Name;
                     Exp(i+1) = Dat(i).ExperimentNumber;
                     Well(i+1) = Dat(i).Well;
-                    Time(i+1) = Dat(i).Time;
+                    Time(i) = Dat(i).Time;
                 end
+
                 
                 Conditions = unique(Conditions);
                 Exp = unique(Exp);
                 Well = unique(Well);
-                Time = unique(Time);
+                Time = sort(unique(Time));
+                    Time = string((Time'));
+                    Time(end+1) = "Select All";
 
                 app.ConditionListBox_3.Items = Conditions;
                 app.ExperimentNumberListBox_3.Items = Exp;
@@ -4935,7 +4938,7 @@ classdef AnalyZe < matlab.apps.AppBase
             Condition = app.ConditionListBox_3.Value;
             Well = app.WellNumberListBox_3.Value;
             Exp = app.ExperimentNumberListBox_3.Value;
-            Time = app.TimeListBox_2.Value;
+            Time = string(app.TimeListBox_2.Value);
 
             Dat = app.Data;
 
@@ -4975,11 +4978,16 @@ classdef AnalyZe < matlab.apps.AppBase
                  TimeAll = TimeAll(Indexes);
 
              Indexes = [];
-               switch Well
+               switch Well{1}
                     case 'Select All'
                         Indexes = [1:length(Dat)];
                    otherwise
-                        Indexes = find(WellAll == Well);
+                       Indexes = [];
+                       for j = 1:length(Well)
+                            Ind_j = find(WellAll == Well(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(WellAll == Well);
                end
                  Dat = Dat(Indexes);
                  TimeAll = TimeAll(Indexes);
@@ -4989,19 +4997,73 @@ classdef AnalyZe < matlab.apps.AppBase
                     case 'Select All'
                         Indexes = [1:length(Dat)];
                    otherwise
-                        Indexes = find(TimeAll == Time);
+                       Indexes = [];
+                       for j = 1:length(Time)
+                            Ind_j = find(TimeAll == Time(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(TimeAll == Time);
                end
                 Dat = Dat(Indexes);
 
+             %% Cluster data
+                DatToFit_temp = Dat;
+                DatToFit_Clustered  = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+        
+
+                while length(DatToFit_temp) >= 1
+                    
+                    basecase = DatToFit_temp(1);
+                    temp  = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+                    
+                    indexes = [];
+                    var = DatToFit_temp;
+                    for i = 1:length(var) 
+                        var_i = var(i);
+                        if (string(basecase.Name) == string(var_i.Name)) && (basecase.ExperimentNumber == var_i.ExperimentNumber) && (string(basecase.Well) == string(var_i.Well))
+                            temp(end+1) = var_i;
+                            indexes = [indexes,i];
+                        end
+                        
+                    end
+                    DatToFit_temp(indexes) = [];
+
+                    % Sort Cluster By Time
+                            Time_Sorted_Clustered = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+                    
+                           while length(temp) >= 1
+                               
+                               min_ind = 1;
+                               min_t = temp(1).Time;
+
+                               for i = 1:length(temp)
+                                    if temp(i).Time < min_t
+                                        min_ind = i;
+                                        min_t = temp(i).Time;
+                                    end
+                               end
+                               Time_Sorted_Clustered = [Time_Sorted_Clustered, temp(min_ind)];
+                               temp(min_ind) = [];
+
+                           end
+
+
+                    
+                    DatToFit_Clustered = [DatToFit_Clustered, Time_Sorted_Clustered];
+
+                end
+
+             %% Load into table
+
              app.ChosenDataTable_3.Data = [];
-            for (i = 1:length(Dat))
-                var = Dat;
+            for (i = 1:length(DatToFit_Clustered))
+                var = DatToFit_Clustered;
                 var = var(i);
                 newData = {var.Name var.ExperimentNumber var.Well var.Time};
                 app.ChosenDataTable_3.Data = [app.ChosenDataTable_3.Data; newData];
             end
 
-           app.DatToFit_TFest = Dat;
+           app.DatToFit_TFest = DatToFit_Clustered;
         end
 
         % Button pushed function: GoButton_2
@@ -5054,8 +5116,13 @@ classdef AnalyZe < matlab.apps.AppBase
                         Dat_i_EIS = Dat_i.Data;
                         y_z_i = Dat_i_EIS.Z - 1j*Dat_i_EIS.Z1;
                         freq_i = Dat_i_EIS.FrequencyHz;
-    
+                        
+                        try
                         FRD_i = frd(y_z_i,2*pi.*freq_i, 'FrequencyUnit', 'rad/s');
+                        catch
+                            errordlg("Frequency Response Model Creation Failed. Data Entry: Condition-"+string(Dat_i.Name)+", Time-"+string({Dat_i.Time})+", Exp-"+string(Dat_i.ExperimentNumber)+", Well-"+string(Dat_i.Well))
+                            continue
+                        end
     
                         if FreeZeros
                             SysIDresult_i = tfest( FRD_i, NumPoles, Options);
@@ -5120,16 +5187,29 @@ classdef AnalyZe < matlab.apps.AppBase
                         xlabel(app.BodeResults_2,'Frequency (Hz)');
                         ylabel(app.BodeResults_2,'Magnitude, |Z|, (\Omega )');
                         hold(app.BodeResults_2, 'on')
+                            
+                        if ~isempty(sdmag)
                             plot(app.BodeResults_2, wout./(2*pi), Mod_Results, '-r',...
                                 wout./(2*pi),Mod_Results+3*sdmag,'k:',wout./(2*pi),Mod_Results-3*sdmag,'k:',...
                                 'LineWidth',1);
+                        else
+                            plot(app.BodeResults_2, wout./(2*pi), Mod_Results, '-r',...
+                                'LineWidth',1);
+                        end
     
                              yyaxis(app.BodeResults_2, 'right')
                                ylabel(app.BodeResults_2,'-Phase, \angle Z (deg)');
                              plot(app.BodeResults_2, Freq, Arg, '*g','LineWidth',1)
-                             plot(app.BodeResults_2, wout./(2*pi), Arg_Results, '-g',...
+                        if ~isempty(sdphase)
+                            plot(app.BodeResults_2, wout./(2*pi), Arg_Results, '-g',...
                                  wout./(2*pi),Arg_Results+3*sdphase,'k:',wout./(2*pi),Arg_Results-3*sdphase,'k:',...
                                  'LineWidth',1)
+                        else
+                            plot(app.BodeResults_2, wout./(2*pi), Arg_Results, '-g',...
+                                 'LineWidth',1)
+                        end
+
+                             
                              set(app.BodeResults_2,'YScale','linear')
                              set(app.BodeResults_2,'XScale','log')
                         hold(app.BodeResults_2, 'off')
@@ -6004,11 +6084,9 @@ classdef AnalyZe < matlab.apps.AppBase
                    end
                        switch answer
                            case 'Cancel'
-                               app.EnablePolePlottingvsTimeSwitch.Value = 'Off';
-                               app.NumberofZerosSpinner.Enable = true;
-                           otherwise
-                               app.NumberofZerosSpinner.Enable = false;
+                               return
                        end
+
             end
 
            
@@ -8973,7 +9051,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create WellNumberListBox_3
             app.WellNumberListBox_3 = uilistbox(app.TrimData_3);
+            app.WellNumberListBox_3.Multiselect = 'on';
             app.WellNumberListBox_3.Position = [137 101 87 54];
+            app.WellNumberListBox_3.Value = {'Item 1'};
 
             % Create ChosenDataTable_3
             app.ChosenDataTable_3 = uitable(app.TrimData_3);
@@ -8999,7 +9079,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create TimeListBox_2
             app.TimeListBox_2 = uilistbox(app.TrimData_3);
+            app.TimeListBox_2.Multiselect = 'on';
             app.TimeListBox_2.Position = [323 165 122 57];
+            app.TimeListBox_2.Value = {'Item 1'};
 
             % Create RefreshDataOptionsButton_3
             app.RefreshDataOptionsButton_3 = uibutton(app.AnalysisEstimateTransferFunctionTab, 'push');

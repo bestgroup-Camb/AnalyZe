@@ -1,53 +1,16 @@
-<html>  
-<head>
-    <style>     
-        html{     
-        background-color: white;     
-        padding: 5px;     
-        width: 95%;     
-        }     
-        pre {     
-        overflow-x: auto;     
-        white-space: pre-wrap;     
-        white-space: -moz-pre-wrap;     
-        white-space: -pre-wrap;     
-        white-space: -o-pre-wrap;     
-        word-wrap: break-word;     
-        }     
-    </style>     
-    
-    <script type="text/javascript">     
-            
-            function setup(htmlComponent) {     
-            
-				htmlComponent.addEventListener("DataChanged", function(event) {     
-				scrollID =  htmlComponent.Data;     
-					if (scrollID != ''){
-						if(scrollID==="bottom"){         
-							scrollToBottom();     
-						} else if(scrollID==="DOWNLOAD_MCRINSTALLER" || scrollID==="BUILD_MISSING" || scrollID==="SAMPLE_GEN" || scrollID==="USER_REQUESTED_PACKAGE"){     
-							document.getElementById(scrollID).scrollIntoView(true);     
-						} else {     
-							//document.body.innerHTML = document.body.innerHTML + scrollID;     
-							document.body.appendChild(scrollID);                 
-							scrollToBottom();     
-						}    
-						htmlComponent.Data = '';
-					}		
-				});          
-            }     
-            function scrollToBottom(){     
-            var scrollingElement = (document.scrollingElement || document.body);     
-            scrollingElement.scrollTop = scrollingElement.scrollHeight;     
-            }     
-            
-    </script> 
-</head>
- <body><meta charset="UTF-8">        
- <pre><font color=blue>mcc -W 'webapp:AnalyZe,CONFIG:C:\Users\dougl\AppData\Local\Temp\tp5c04373c_b74d_40bd_8ecf_f91b210945ec.xml' -d 'C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe' -v -Z autodetect -C 'C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe.mlapp'</font>
+<html><meta charset="UTF-8"><pre>
+<font color=blue>mcc -o AnalyZe -W 'WinMain:AnalyZe,version=4.5' -T link:exe -d 'C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe (1)\for_testing' -v 'C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe.mlapp' -r 'C:\Program Files\MATLAB\R2022b\toolbox\compiler\packagingResources\default_icon.ico' </font>
 Compiler version: 8.5 (R2022b)
+
 Analyzing file dependencies. 
+
 Parsing file "C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe.mlapp"
 	(referenced from command line).
-
-</pre></body></html>
+Generating file "C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe (1)\for_testing\readme.txt".
+<font color=blue>Packaging...</font>
+Creating the bundle...
+Creating the install agent URL file...
+Web based installer created at C:\Users\dougl\OneDrive\Documents\Sensor CDT\PhD\Transmembrane\AnalysisApp\Best Group App\AnalyZe\AnalyZe (1)\for_redistribution\MyAppInstaller_web.exe.
+Packaging complete.
+Elapsed packaging time was: 30 seconds.
+</pre></html>
