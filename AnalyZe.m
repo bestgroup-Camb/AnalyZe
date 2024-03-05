@@ -28,13 +28,15 @@ classdef AnalyZe < matlab.apps.AppBase
         UIFigure                        matlab.ui.Figure
         TabGroup                        matlab.ui.container.TabGroup
         HomeTab                         matlab.ui.container.Tab
+        Image5                          matlab.ui.control.Image
+        Hyperlink                       matlab.ui.control.Hyperlink
         ExplainerModeSwitch             matlab.ui.control.Switch
         ExplainerModeSwitchLabel        matlab.ui.control.Label
         FitTransferFunctionButton       matlab.ui.control.Button
         TimeSeriesMagnitudeCrossSectionButton  matlab.ui.control.Button
         FitEquivalentCircuitButton      matlab.ui.control.Button
         ImportDataButton                matlab.ui.control.Button
-        DouglasvanNiekerkVersion4April2023Label  matlab.ui.control.Label
+        DouglasvanNiekerkVersion4March2024Label  matlab.ui.control.Label
         Image                           matlab.ui.control.Image
         BioImpedanceDataAnalysisToolLabel  matlab.ui.control.Label
         AnalyZeLabel                    matlab.ui.control.Label
@@ -128,6 +130,8 @@ classdef AnalyZe < matlab.apps.AppBase
         LabelDataSeriesSwitchLabel      matlab.ui.control.Label
         SeriesPlotcctFitTabGroup        matlab.ui.container.TabGroup
         NormalizationTab_3              matlab.ui.container.Tab
+        NormOptionListBox               matlab.ui.control.ListBox
+        NormOptionLabel                 matlab.ui.control.Label
         NormalizationSchemeListBox_6    matlab.ui.control.ListBox
         NormalizationSchemeListBox_6Label  matlab.ui.control.Label
         AreaNormalizeSwitch             matlab.ui.control.Switch
@@ -165,6 +169,9 @@ classdef AnalyZe < matlab.apps.AppBase
         FittingParams                   matlab.ui.container.Panel
         AbortButton                     matlab.ui.control.StateButton
         CCTFitOptionsTabGroup           matlab.ui.container.TabGroup
+        HyperparamsTab                  matlab.ui.container.Tab
+        Label_4                         matlab.ui.control.Label
+        TextArea                        matlab.ui.control.TextArea
         SeriesResistanceEstimateTab     matlab.ui.container.Tab
         AlternateRestimationListBox     matlab.ui.control.ListBox
         AlternateRestimationListBoxLabel  matlab.ui.control.Label
@@ -175,8 +182,8 @@ classdef AnalyZe < matlab.apps.AppBase
         FitBlankOnlyExcludeBarrierLabel  matlab.ui.control.Label
         FitSequentiallySwitch           matlab.ui.control.Switch
         FitSequentiallySwitchLabel      matlab.ui.control.Label
-        BlankFitMultiStartsEditField    matlab.ui.control.NumericEditField
-        BlankFitMultiStartsEditFieldLabel  matlab.ui.control.Label
+        BlankFitIterationsEditField     matlab.ui.control.NumericEditField
+        BlankFitIterationsEditFieldLabel  matlab.ui.control.Label
         RecursiveTimeRegularizationTab  matlab.ui.container.Tab
         RegSchemeListBox                matlab.ui.control.ListBox
         RegSchemeListBoxLabel           matlab.ui.control.Label
@@ -196,9 +203,10 @@ classdef AnalyZe < matlab.apps.AppBase
         ErrorCorrectionLabel            matlab.ui.control.Label
         ProgressGuage                   matlab.ui.control.SemicircularGauge
         CircuitToFit                    matlab.ui.container.TabGroup
-        SelectACircuitTab               matlab.ui.container.Tab
-        SelectaCircuitBarrierInclusiveListBox  matlab.ui.control.ListBox
-        SelectaCircuitBarrierInclusiveListBoxLabel  matlab.ui.control.Label
+        EquivalentCircuitTab            matlab.ui.container.Tab
+        Label_3                         matlab.ui.control.Label
+        EquivalentCCTExplainerText      matlab.ui.control.TextArea
+        Image4                          matlab.ui.control.Image
         WriteACircuitTab                matlab.ui.container.Tab
         IncludeBarrierSwitch_2          matlab.ui.control.RockerSwitch
         IncludeBarrierSwitch_2Label     matlab.ui.control.Label
@@ -209,6 +217,15 @@ classdef AnalyZe < matlab.apps.AppBase
         MaxValuesEditFieldLabel         matlab.ui.control.Label
         CircuitStringEditField          matlab.ui.control.EditField
         CircuitStringEditFieldLabel     matlab.ui.control.Label
+        SelectACircuitTab               matlab.ui.container.Tab
+        ParallelConnectionLabel         matlab.ui.control.Label
+        SeriesConnectionLabel           matlab.ui.control.Label
+        WWarburgElementLabel            matlab.ui.control.Label
+        QConstantPhaseElementLabel      matlab.ui.control.Label
+        CCapacitanceLabel               matlab.ui.control.Label
+        RResistanceLabel                matlab.ui.control.Label
+        SelectaCircuitModelBarrierInclusiveListBox  matlab.ui.control.ListBox
+        SelectaCircuitModelBarrierInclusiveListBoxLabel  matlab.ui.control.Label
         BuildACircuitTab                matlab.ui.container.Tab
         IncludeBarrierSwitch            matlab.ui.control.Switch
         IncludeBarrierSwitchLabel       matlab.ui.control.Label
@@ -218,8 +235,8 @@ classdef AnalyZe < matlab.apps.AppBase
         RunningLamp                     matlab.ui.control.Lamp
         RunningLampLabel                matlab.ui.control.Label
         GoButton                        matlab.ui.control.Button
-        MultiStartsEditField            matlab.ui.control.NumericEditField
-        MultiStartsEditFieldLabel       matlab.ui.control.Label
+        GlobalOptimizationIterationsEditField  matlab.ui.control.NumericEditField
+        GlobalOptimizationIterationsLabel  matlab.ui.control.Label
         TrimData                        matlab.ui.container.Panel
         TimeListBox                     matlab.ui.control.ListBox
         TimeListBoxLabel                matlab.ui.control.Label
@@ -249,6 +266,8 @@ classdef AnalyZe < matlab.apps.AppBase
         CrossSectionOptions             matlab.ui.container.TabGroup
         NormalizationTab_2              matlab.ui.container.Tab
         Panel_3                         matlab.ui.container.Panel
+        NormOptionListBox_2             matlab.ui.control.ListBox
+        NormOptionListBox_2Label        matlab.ui.control.Label
         ModulobeforeafternormalizingSwitch  matlab.ui.control.Switch
         NormalizationSchemeListBox_5    matlab.ui.control.ListBox
         NormalizationSchemeListBox_5Label  matlab.ui.control.Label
@@ -339,8 +358,11 @@ classdef AnalyZe < matlab.apps.AppBase
         ResultsTab_3                    matlab.ui.container.Tab
         ResultsTable_3                  matlab.ui.control.Table
         SeriesPlotTab_2                 matlab.ui.container.Tab
+        RefreshPlotButton_3             matlab.ui.control.Button
         TabGroup6                       matlab.ui.container.TabGroup
         NormalizationTab                matlab.ui.container.Tab
+        NormalizationOptionListBox      matlab.ui.control.ListBox
+        NormalizationOptionListBoxLabel  matlab.ui.control.Label
         NormalizationSchemeListBox_4Label  matlab.ui.control.Label
         ZScoreNormalizeSwitch_FitSeries_2  matlab.ui.control.Switch
         ZScoreNormalizeLabel_2          matlab.ui.control.Label
@@ -1247,17 +1269,30 @@ classdef AnalyZe < matlab.apps.AppBase
             switch (app.NormalizeSwitch.Value)
                 case 'On'
                     Scheme = string(app.NormalizationSchemeListBox_5.Value);
+
+                    scheme_option = string(app.NormOptionListBox_2.Value);
+
+                            switch Scheme
+                                case 'norm'
+                                    scheme_option = str2num(scheme_option);
+                            end
+
+                          if ~isempty(scheme_option)
+                              Scheme = {Scheme,scheme_option};
+                          else
+                              Scheme = {Scheme};
+                          end
                     
-                    if (Scheme == "range")
-                        CS_local.y_z = normalize(abs(CS_local.y_z),Scheme);
+                    if (Scheme{1} == "range")
+                        CS_local.y_z = normalize(abs(CS_local.y_z),Scheme{:});
                     else
                         
                         switch (app.ModulobeforeafternormalizingSwitch.Value)
                             case '|Z|'
-                                CS_local.y_z = normalize(abs(CS_local.y_z),Scheme);
+                                CS_local.y_z = normalize(abs(CS_local.y_z),Scheme{:});
                                 
                             case 'Z'
-                                CS_local.y_z = normalize((CS_local.y_z),Scheme);
+                                CS_local.y_z = normalize((CS_local.y_z),Scheme{:});
                         end
                        
                     end
@@ -2482,8 +2517,8 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ProgressGuage.Value = 0;
             app.ProgressGuage.Limits = [0,NumDays];
 
-            multi_starts = app.MultiStartsEditField.Value;
-            multi_starts_blank = app.BlankFitMultiStartsEditField.Value;
+            multi_starts = app.GlobalOptimizationIterationsEditField.Value;
+            multi_starts_blank = app.BlankFitIterationsEditField.Value;
            
             %fit_sequentially = true;
 
@@ -2513,7 +2548,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             if selectedTab == app.SelectACircuitTab
 
-                switch app.SelectaCircuitBarrierInclusiveListBox.Value
+                switch app.SelectaCircuitModelBarrierInclusiveListBox.Value
                     case 'R--(R//C)--((R--W)//C)' 
                         fit_cct = "2E";
                     case 'R--(R//C)--C'
@@ -2526,7 +2561,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         warning('Unexpected circuit type. No plot created.')
                 end
 
-                CircuitUsed = app.SelectaCircuitBarrierInclusiveListBox.Value;
+                CircuitUsed = app.SelectaCircuitModelBarrierInclusiveListBox.Value;
 
             elseif (selectedTab == app.BuildACircuitTab) || (selectedTab == app.BuildACircuitMaxValuesTab)
 
@@ -3860,8 +3895,6 @@ classdef AnalyZe < matlab.apps.AppBase
 
                     
 
-
-    
                     switch app.FlipAxesSwitch.Value
                         case 'On'
                             temp = y;
@@ -3973,10 +4006,23 @@ classdef AnalyZe < matlab.apps.AppBase
                      switch app.ZScoreNormalizeSwitch_FitSeries_3.Value
                         case 'On'
                           Scheme = string(app.NormalizationSchemeListBox_6.Value);
-    
+
+                          scheme_option = string(app.NormOptionListBox.Value);
+
+                            switch Scheme
+                                case 'norm'
+                                    scheme_option = str2num(scheme_option);
+                            end
+
+                          if ~isempty(scheme_option)
+                              Scheme = {Scheme,scheme_option};
+                          else
+                              Scheme = {Scheme};
+                          end
+
                           temp_y = app.CumulativeCCTfitSeriesPlot;
                               for i =1:length(temp_y(1,:))
-                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                               end
     
                            app.CumulativeCCTfitSeriesPlot = temp_y;
@@ -5556,11 +5602,24 @@ classdef AnalyZe < matlab.apps.AppBase
                      switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                         case 'On'
                           Scheme = string(app.NormalizationSchemeListBox_4.Value);
+
+                          scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                            switch Scheme
+                                case 'norm'
+                                    scheme_option = str2num(scheme_option);
+                            end
+
+                          if ~isempty(scheme_option)
+                              Scheme = {Scheme,scheme_option};
+                          else
+                              Scheme = {Scheme};
+                          end
                             
                           if ~PolePlottingActive
                               temp_y = app.CumulativeSysIDSeriesPlot;
                               for i =1:length(temp_y(1,:))
-                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                               end
                               app.CumulativeSysIDSeriesPlot = temp_y;
                           end
@@ -5588,9 +5647,22 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                    switch Scheme
+                                                        case 'norm'
+                                                            scheme_option = str2num(scheme_option);
+                                                    end
+                        
+                                                  if ~isempty(scheme_option)
+                                                      Scheme = {Scheme,scheme_option};
+                                                  else
+                                                      Scheme = {Scheme};
+                                                  end
+
                                                   temp_y = plot_dat;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                   end
                                                   plot_dat = temp_y;
                                         end
@@ -5607,11 +5679,23 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                    switch Scheme
+                                                        case 'norm'
+                                                            scheme_option = str2num(scheme_option);
+                                                    end
+                        
+                                                  if ~isempty(scheme_option)
+                                                      Scheme = {Scheme,scheme_option};
+                                                  else
+                                                      Scheme = {Scheme};
+                                                  end
                                                   temp_x = plot_dat_x;
                                                   temp_y = plot_dat_y;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
-                                                        temp_x(:,i) = normalize(temp_x(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
+                                                        temp_x(:,i) = normalize(temp_x(:,i),Scheme{:});
                                                   end
                                                   plot_dat_x = temp_x;
                                                   plot_dat_y = temp_y;
@@ -5634,9 +5718,21 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                    switch Scheme
+                                                        case 'norm'
+                                                            scheme_option = str2num(scheme_option);
+                                                    end
+                        
+                                                  if ~isempty(scheme_option)
+                                                      Scheme = {Scheme,scheme_option};
+                                                  else
+                                                      Scheme = {Scheme};
+                                                  end
                                                   temp_y = plot_dat;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                   end
                                                   plot_dat = temp_y;
                                         end
@@ -5649,9 +5745,21 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                switch Scheme
+                                                    case 'norm'
+                                                        scheme_option = str2num(scheme_option);
+                                                end
+                    
+                                              if ~isempty(scheme_option)
+                                                  Scheme = {Scheme,scheme_option};
+                                              else
+                                                  Scheme = {Scheme};
+                                              end
                                                   temp_y = plot_dat;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                   end
                                                   plot_dat = temp_y;
                                         end
@@ -5687,9 +5795,22 @@ classdef AnalyZe < matlab.apps.AppBase
                                                     switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                                         case 'On'
                                                           Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                                          scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                                switch Scheme
+                                                                    case 'norm'
+                                                                        scheme_option = str2num(scheme_option);
+                                                                end
+                                    
+                                                              if ~isempty(scheme_option)
+                                                                  Scheme = {Scheme,scheme_option};
+                                                              else
+                                                                  Scheme = {Scheme};
+                                                              end
+
                                                               temp_y = plot_dat;
                                                               for i =1:length(temp_y(1,:))
-                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                               end
                                                               plot_dat = temp_y;
                                                     end
@@ -5709,11 +5830,24 @@ classdef AnalyZe < matlab.apps.AppBase
                                                     switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                                         case 'On'
                                                           Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                                          scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                                switch Scheme
+                                                                    case 'norm'
+                                                                        scheme_option = str2num(scheme_option);
+                                                                end
+                                    
+                                                              if ~isempty(scheme_option)
+                                                                  Scheme = {Scheme,scheme_option};
+                                                              else
+                                                                  Scheme = {Scheme};
+                                                              end
+
                                                               temp_x = plot_dat_x;
                                                               temp_y = plot_dat_y;
                                                               for i =1:length(temp_y(1,:))
-                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme);
-                                                                    temp_x(:,i) = normalize(temp_x(:,i),Scheme);
+                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
+                                                                    temp_x(:,i) = normalize(temp_x(:,i),Scheme{:});
                                                               end
                                                               plot_dat_x = temp_x;
                                                               plot_dat_y = temp_y;
@@ -5739,9 +5873,22 @@ classdef AnalyZe < matlab.apps.AppBase
                                                     switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                                         case 'On'
                                                           Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                                          scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                            switch Scheme
+                                                                case 'norm'
+                                                                    scheme_option = str2num(scheme_option);
+                                                            end
+                                
+                                                          if ~isempty(scheme_option)
+                                                              Scheme = {Scheme,scheme_option};
+                                                          else
+                                                              Scheme = {Scheme};
+                                                          end
+
                                                               temp_y = plot_dat;
                                                               for i =1:length(temp_y(1,:))
-                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                               end
                                                               plot_dat = temp_y;
                                                     end
@@ -5756,9 +5903,22 @@ classdef AnalyZe < matlab.apps.AppBase
                                                     switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                                         case 'On'
                                                           Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                                          scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                                switch Scheme
+                                                                    case 'norm'
+                                                                        scheme_option = str2num(scheme_option);
+                                                                end
+                                    
+                                                              if ~isempty(scheme_option)
+                                                                  Scheme = {Scheme,scheme_option};
+                                                              else
+                                                                  Scheme = {Scheme};
+                                                              end
+
                                                               temp_y = plot_dat;
                                                               for i =1:length(temp_y(1,:))
-                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                                    temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                               end
                                                               plot_dat = temp_y;
                                                     end
@@ -5785,9 +5945,22 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                    switch Scheme
+                                                        case 'norm'
+                                                            scheme_option = str2num(scheme_option);
+                                                    end
+                        
+                                                  if ~isempty(scheme_option)
+                                                      Scheme = {Scheme,scheme_option};
+                                                  else
+                                                      Scheme = {Scheme};
+                                                  end
+
                                                   temp_y = plot_dat;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                   end
                                                   plot_dat = temp_y;
                                         end
@@ -5803,11 +5976,25 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                    switch Scheme
+                                                        case 'norm'
+                                                            scheme_option = str2num(scheme_option);
+                                                    end
+                        
+                                                  if ~isempty(scheme_option)
+                                                      Scheme = {Scheme,scheme_option};
+                                                  else
+                                                      Scheme = {Scheme};
+                                                  end
+
                                                   temp_x = plot_dat_x;
                                                   temp_y = plot_dat_y;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
-                                                        temp_x(:,i) = normalize(temp_x(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
+                                                        temp_x(:,i) = normalize(temp_x(:,i),Scheme{:});
                                                   end
                                                   plot_dat_x = temp_x;
                                                   plot_dat_y = temp_y;
@@ -5833,9 +6020,22 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                    switch Scheme
+                                                        case 'norm'
+                                                            scheme_option = str2num(scheme_option);
+                                                    end
+                        
+                                                  if ~isempty(scheme_option)
+                                                      Scheme = {Scheme,scheme_option};
+                                                  else
+                                                      Scheme = {Scheme};
+                                                  end
+
                                                   temp_y = plot_dat;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                   end
                                                   plot_dat = temp_y;
                                         end
@@ -5848,9 +6048,22 @@ classdef AnalyZe < matlab.apps.AppBase
                                         switch app.ZScoreNormalizeSwitch_FitSeries_2.Value
                                             case 'On'
                                               Scheme = string(app.NormalizationSchemeListBox_4.Value);
+                                              scheme_option = string(app.NormalizationOptionListBox.Value);
+
+                                                    switch Scheme
+                                                        case 'norm'
+                                                            scheme_option = str2num(scheme_option);
+                                                    end
+                        
+                                                  if ~isempty(scheme_option)
+                                                      Scheme = {Scheme,scheme_option};
+                                                  else
+                                                      Scheme = {Scheme};
+                                                  end
+
                                                   temp_y = plot_dat;
                                                   for i =1:length(temp_y(1,:))
-                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme);
+                                                        temp_y(:,i) = normalize(temp_y(:,i),Scheme{:});
                                                   end
                                                   plot_dat = temp_y;
                                         end
@@ -6423,16 +6636,20 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
                 % Copy all UIAxes children, take over axes limits and aspect ratio.
-                    %Check if mean only required
-                        answer = questdlg('Copy only series mean?', ...
-	                        'Isolate Mean Plot', ...
-	                        'Yes','No','No');
-                        switch answer
-                            case 'Yes'
-                                allChildren = findall(axs,'Type','ErrorBar'); %axs.XAxis.Parent.Children;
-                            otherwise
-                                allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')]; %axs.XAxis.Parent.Children;
-                        end
+                    allChildren = findall(axs,'Type','Line');
+                    switch plotName
+                        case 'Time Series'
+                             %Check if mean only required
+                                answer = questdlg('Copy only series mean?', ...
+                                    'Isolate Mean Plot', ...
+                                    'Yes','No','No');
+                                switch answer
+                                    case 'Yes'
+                                        allChildren = findall(axs,'Type','ErrorBar'); %axs.XAxis.Parent.Children;
+                                    otherwise
+                                        allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')]; %axs.XAxis.Parent.Children;
+                                end
+                    end
 
                 
                     if isempty(allChildren)
@@ -6471,7 +6688,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 fig_temp.CurrentAxes.Title.String = axs.Title.String;
                 fig_temp.CurrentAxes.Title.FontSize = axs.Title.FontSize;
 
-                switch plotName
+                switch PlotName
                     case 'Bode Fits'
                         %figAxes.DataAspectRatio = axs.DataAspectRatio;
                         yyaxis(axs,"right")
@@ -6561,8 +6778,21 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
                 % Copy all UIAxes children, take over axes limits and aspect ratio. 
-                
-                 allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')];
+                  allChildren = findall(axs,'Type','Line');
+                  switch plotName
+                        case 'Magnitude Cross Section'
+                             %Check if mean only required
+                                answer = questdlg('Copy only series mean?', ...
+                                    'Isolate Mean Plot', ...
+                                    'Yes','No','No');
+                                switch answer
+                                    case 'Yes'
+                                        allChildren = findall(axs,'Type','ErrorBar'); %axs.XAxis.Parent.Children;
+                                    otherwise
+                                        allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')]; %axs.XAxis.Parent.Children;
+                                end
+                  end
+
                     if isempty(allChildren)
                         allChildren = findall(axs,'Type','Scatter');
                     end
@@ -6666,6 +6896,7 @@ classdef AnalyZe < matlab.apps.AppBase
                  [indx,tf] = listdlg('PromptString',{'Select a File Type',...
                 'Only one plot can be selected at a time.',''},...
                 'SelectionMode','single','ListString',FileTypeList);
+                 if isempty(indx), msgbox('Operation Cancelled','Save Fig','warn'); return; end 
                 FileType = FileTypeList{indx};
 
 
@@ -6677,9 +6908,22 @@ classdef AnalyZe < matlab.apps.AppBase
                  
 
             % Copy all UIAxes children, take over axes limits and aspect ratio.            
-                % Copy all UIAxes children, take over axes limits and aspect ratio. 
-                
-                allChildren = findall(axs,'Type','Line');%axs.XAxis.Parent.Children;
+                % Copy all UIAxes children, take over axes limits and aspect ratio.
+                    allChildren = findall(axs,'Type','Line');
+                    switch plotName
+                        case 'Time Series'
+                             %Check if mean only required
+                                answer = questdlg('Copy only series mean?', ...
+                                    'Isolate Mean Plot', ...
+                                    'Yes','No','No');
+                                switch answer
+                                    case 'Yes'
+                                        allChildren = findall(axs,'Type','ErrorBar'); %axs.XAxis.Parent.Children;
+                                    otherwise
+                                        allChildren = [findall(axs,'Type','ErrorBar');findall(axs,'Type','Line')]; %axs.XAxis.Parent.Children;
+                                end
+                     end
+                    
                     if isempty(allChildren)
                         allChildren = findall(axs,'Type','Scatter');
                     end
@@ -6689,6 +6933,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     if isempty(allChildren)
                         allChildren = findall(axs,'Type','Surface');
                     end
+    
                 copyobj(allChildren, figAxes)
                 figAxes.XLim = axs.XLim;
                 figAxes.XScale = axs.XScale;
@@ -6732,9 +6977,6 @@ classdef AnalyZe < matlab.apps.AppBase
                         fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
                         fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
 
-                    case 'K-Density Estimate'
-                        figAxes.CameraPosition = axs.CameraPosition;
-                        figAxes.CameraViewAngle = axs.CameraViewAngle;
 
                 end
             % Save as png and fig files.
@@ -6744,7 +6986,6 @@ classdef AnalyZe < matlab.apps.AppBase
                 savefig(fig_temp, FullFileName);
             % Delete the temporary figure.
                 delete(fig_temp);
-
 
                 msgbox("File Saved as " + "\AnalyZeSysIDResults_<PlotType>_" + string(UserFileName))
         end
@@ -7234,6 +7475,70 @@ classdef AnalyZe < matlab.apps.AppBase
                 app.UpdateCCTFitResultsTableStyles();
 
         end
+
+        % Button pushed function: RefreshPlotButton_3
+        function RefreshPlotButton_3Pushed(app, event)
+            app.ResultTable_SysID_CellsSelected = 1;
+
+            app.PlotFromTableSelectionButton_2Pushed(app);
+        end
+
+        % Value changed function: NormalizationSchemeListBox_6
+        function NormalizationSchemeListBox_6ValueChanged(app, event)
+            value = app.NormalizationSchemeListBox_6.Value;
+            switch value
+                case 'zscore'
+                    app.NormOptionListBox.Items = {'std','robust'};
+                case 'norm'
+                    app.NormOptionListBox.Items = {'1','2','3','4','5','Inf'};
+                case 'scale'
+                    app.NormOptionListBox.Items = {'std','mad','first','iqr'};
+                case 'range'
+                    app.NormOptionListBox.Items = {};
+                case 'center'
+                    app.NormOptionListBox.Items = {'mean','median'};
+                case 'medianiqr'
+                    app.NormOptionListBox.Items = {};
+            end
+        end
+
+        % Value changed function: NormalizationSchemeListBox_5
+        function NormalizationSchemeListBox_5ValueChanged(app, event)
+            value = app.NormalizationSchemeListBox_5.Value;
+             switch value
+                case 'zscore'
+                    app.NormOptionListBox_2.Items = {'std','robust'};
+                case 'norm'
+                    app.NormOptionListBox_2.Items = {'1','2','3','4','5','Inf'};
+                case 'scale'
+                    app.NormOptionListBox_2.Items = {'std','mad','first','iqr'};
+                case 'range'
+                    app.NormOptionListBox_2.Items = {};
+                case 'center'
+                    app.NormOptionListBox_2.Items = {'mean','median'};
+                case 'medianiqr'
+                    app.NormOptionListBox_2.Items = {};
+            end
+        end
+
+        % Value changed function: NormalizationSchemeListBox_4
+        function NormalizationSchemeListBox_4ValueChanged(app, event)
+            value = app.NormalizationSchemeListBox_4.Value;
+            switch value
+                case 'zscore'
+                    app.NormalizationOptionListBox.Items = {'std','robust'};
+                case 'norm'
+                    app.NormalizationOptionListBox.Items = {'1','2','3','4','5','Inf'};
+                case 'scale'
+                    app.NormalizationOptionListBox.Items = {'std','mad','first','iqr'};
+                case 'range'
+                    app.NormalizationOptionListBox.Items = {};
+                case 'center'
+                    app.NormalizationOptionListBox.Items = {'mean','median'};
+                case 'medianiqr'
+                    app.NormalizationOptionListBox.Items = {};
+            end
+        end
     end
 
     % Component initialization
@@ -7287,12 +7592,12 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Image.Position = [739 -3 264 265];
             app.Image.ImageSource = fullfile(pathToMLAPP, 'images', 'BEST_Logo.png');
 
-            % Create DouglasvanNiekerkVersion4April2023Label
-            app.DouglasvanNiekerkVersion4April2023Label = uilabel(app.HomeTab);
-            app.DouglasvanNiekerkVersion4April2023Label.FontSize = 14;
-            app.DouglasvanNiekerkVersion4April2023Label.FontColor = [0 0.4471 0.7412];
-            app.DouglasvanNiekerkVersion4April2023Label.Position = [734 9 278 26];
-            app.DouglasvanNiekerkVersion4April2023Label.Text = 'Douglas van Niekerk Version 4 - April 2023';
+            % Create DouglasvanNiekerkVersion4March2024Label
+            app.DouglasvanNiekerkVersion4March2024Label = uilabel(app.HomeTab);
+            app.DouglasvanNiekerkVersion4March2024Label.FontSize = 14;
+            app.DouglasvanNiekerkVersion4March2024Label.FontColor = [0 0.4471 0.7412];
+            app.DouglasvanNiekerkVersion4March2024Label.Position = [734 9 286 26];
+            app.DouglasvanNiekerkVersion4March2024Label.Text = 'Douglas van Niekerk Version 4 - March 2024';
 
             % Create ImportDataButton
             app.ImportDataButton = uibutton(app.HomeTab, 'push');
@@ -7341,6 +7646,20 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ExplainerModeSwitch.FontColor = [0 1 1];
             app.ExplainerModeSwitch.Position = [479 53 90 40];
             app.ExplainerModeSwitch.Value = 'On';
+
+            % Create Hyperlink
+            app.Hyperlink = uihyperlink(app.HomeTab);
+            app.Hyperlink.FontSize = 24;
+            app.Hyperlink.FontColor = [0 1 1];
+            app.Hyperlink.Tooltip = {'Navigate to our Github project page'};
+            app.Hyperlink.URL = 'https://github.com/bestgroup-Camb/AnalyZe';
+            app.Hyperlink.Position = [861 557 154 47];
+            app.Hyperlink.Text = 'Lend a hand!';
+
+            % Create Image5
+            app.Image5 = uiimage(app.HomeTab);
+            app.Image5.Position = [857 586 151 129];
+            app.Image5.ImageSource = fullfile(pathToMLAPP, 'images', 'github_icon_2.png');
 
             % Create InportDataTab
             app.InportDataTab = uitab(app.TabGroup);
@@ -7678,21 +7997,22 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FittingParams = uipanel(app.AnalysisCCTFITTab);
             app.FittingParams.Position = [15 14 476 333];
 
-            % Create MultiStartsEditFieldLabel
-            app.MultiStartsEditFieldLabel = uilabel(app.FittingParams);
-            app.MultiStartsEditFieldLabel.HorizontalAlignment = 'right';
-            app.MultiStartsEditFieldLabel.FontSize = 24;
-            app.MultiStartsEditFieldLabel.FontWeight = 'bold';
-            app.MultiStartsEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.MultiStartsEditFieldLabel.Position = [15 287 129 31];
-            app.MultiStartsEditFieldLabel.Text = 'MultiStarts';
+            % Create GlobalOptimizationIterationsLabel
+            app.GlobalOptimizationIterationsLabel = uilabel(app.FittingParams);
+            app.GlobalOptimizationIterationsLabel.HorizontalAlignment = 'center';
+            app.GlobalOptimizationIterationsLabel.FontSize = 22;
+            app.GlobalOptimizationIterationsLabel.FontWeight = 'bold';
+            app.GlobalOptimizationIterationsLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.GlobalOptimizationIterationsLabel.Position = [8 245 138 81];
+            app.GlobalOptimizationIterationsLabel.Text = {'Global'; 'Optimization'; 'Iterations'};
 
-            % Create MultiStartsEditField
-            app.MultiStartsEditField = uieditfield(app.FittingParams, 'numeric');
-            app.MultiStartsEditField.FontSize = 36;
-            app.MultiStartsEditField.Tooltip = {'This is the primary fitting tuning parameter = the number of fitting attempts made for different initial condition candidates. In general, fitness increases with this parameter. Performance may be sensitive to the exact value.'};
-            app.MultiStartsEditField.Position = [20 245 120 35];
-            app.MultiStartsEditField.Value = 3000;
+            % Create GlobalOptimizationIterationsEditField
+            app.GlobalOptimizationIterationsEditField = uieditfield(app.FittingParams, 'numeric');
+            app.GlobalOptimizationIterationsEditField.HorizontalAlignment = 'center';
+            app.GlobalOptimizationIterationsEditField.FontSize = 36;
+            app.GlobalOptimizationIterationsEditField.Tooltip = {'This is the primary fitting tuning parameter = the number of fitting attempts made for different initial condition candidates. In general, fitness increases with this parameter. Performance may be sensitive to the exact value.'};
+            app.GlobalOptimizationIterationsEditField.Position = [16 209 120 35];
+            app.GlobalOptimizationIterationsEditField.Value = 3000;
 
             % Create GoButton
             app.GoButton = uibutton(app.FittingParams, 'push');
@@ -7721,21 +8041,28 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CircuitToFit.SelectionChangedFcn = createCallbackFcn(app, @CircuitToFitSelectionChanged, true);
             app.CircuitToFit.Position = [5 49 464 152];
 
-            % Create SelectACircuitTab
-            app.SelectACircuitTab = uitab(app.CircuitToFit);
-            app.SelectACircuitTab.Title = 'Select-A-Circuit';
+            % Create EquivalentCircuitTab
+            app.EquivalentCircuitTab = uitab(app.CircuitToFit);
+            app.EquivalentCircuitTab.Title = 'Equivalent Circuit →';
 
-            % Create SelectaCircuitBarrierInclusiveListBoxLabel
-            app.SelectaCircuitBarrierInclusiveListBoxLabel = uilabel(app.SelectACircuitTab);
-            app.SelectaCircuitBarrierInclusiveListBoxLabel.HorizontalAlignment = 'right';
-            app.SelectaCircuitBarrierInclusiveListBoxLabel.Position = [11 49 55 59];
-            app.SelectaCircuitBarrierInclusiveListBoxLabel.Text = {'Select a'; 'Circuit'; '(Barrier '; 'Inclusive)'};
+            % Create Image4
+            app.Image4 = uiimage(app.EquivalentCircuitTab);
+            app.Image4.Position = [254 6 197 116];
+            app.Image4.ImageSource = fullfile(pathToMLAPP, 'images', 'Equivalent_circuit_Barrier_2.png');
 
-            % Create SelectaCircuitBarrierInclusiveListBox
-            app.SelectaCircuitBarrierInclusiveListBox = uilistbox(app.SelectACircuitTab);
-            app.SelectaCircuitBarrierInclusiveListBox.Items = {'R--(R//C)--((R--W)//C)', 'R--(R//C)--C', 'R--(R//C)--C--Q', 'R--(R//C)--Q'};
-            app.SelectaCircuitBarrierInclusiveListBox.Position = [81 17 358 93];
-            app.SelectaCircuitBarrierInclusiveListBox.Value = 'R--(R//C)--((R--W)//C)';
+            % Create EquivalentCCTExplainerText
+            app.EquivalentCCTExplainerText = uitextarea(app.EquivalentCircuitTab);
+            app.EquivalentCCTExplainerText.Editable = 'off';
+            app.EquivalentCCTExplainerText.Position = [8 3 239 86];
+            app.EquivalentCCTExplainerText.Value = {'This module is principally designed to fit impedance data which incoporates a biological barrier (commonly an epithelial barrier or lipid bilayer); which is modelled as R//C and denoted Rb and Cb. '; ''; 'The Write-A-Circuit submodule allows for arbitrary circuit models, and need not include a barrier (R//C) component.'};
+
+            % Create Label_3
+            app.Label_3 = uilabel(app.EquivalentCircuitTab);
+            app.Label_3.HorizontalAlignment = 'center';
+            app.Label_3.FontWeight = 'bold';
+            app.Label_3.FontColor = [0.4667 0.6745 0.1882];
+            app.Label_3.Position = [6 92 242 30];
+            app.Label_3.Text = {'Choose an equivalent circuit model to fit '; 'to the measured impedance data.'};
 
             % Create WriteACircuitTab
             app.WriteACircuitTab = uitab(app.CircuitToFit);
@@ -7804,6 +8131,54 @@ classdef AnalyZe < matlab.apps.AppBase
             app.IncludeBarrierSwitch_2.ValueChangedFcn = createCallbackFcn(app, @IncludeBarrierSwitch_2ValueChanged, true);
             app.IncludeBarrierSwitch_2.Position = [127 10 45 20];
 
+            % Create SelectACircuitTab
+            app.SelectACircuitTab = uitab(app.CircuitToFit);
+            app.SelectACircuitTab.Title = 'Select-A-Circuit';
+
+            % Create SelectaCircuitModelBarrierInclusiveListBoxLabel
+            app.SelectaCircuitModelBarrierInclusiveListBoxLabel = uilabel(app.SelectACircuitTab);
+            app.SelectaCircuitModelBarrierInclusiveListBoxLabel.HorizontalAlignment = 'right';
+            app.SelectaCircuitModelBarrierInclusiveListBoxLabel.FontWeight = 'bold';
+            app.SelectaCircuitModelBarrierInclusiveListBoxLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.SelectaCircuitModelBarrierInclusiveListBoxLabel.Position = [0 51 130 59];
+            app.SelectaCircuitModelBarrierInclusiveListBoxLabel.Text = {'Select a Circuit Model'; '(Barrier Inclusive)'};
+
+            % Create SelectaCircuitModelBarrierInclusiveListBox
+            app.SelectaCircuitModelBarrierInclusiveListBox = uilistbox(app.SelectACircuitTab);
+            app.SelectaCircuitModelBarrierInclusiveListBox.Items = {'R--(R//C)--((R--W)//C)', 'R--(R//C)--C', 'R--(R//C)--C--Q', 'R--(R//C)--Q'};
+            app.SelectaCircuitModelBarrierInclusiveListBox.Position = [136 19 139 93];
+            app.SelectaCircuitModelBarrierInclusiveListBox.Value = 'R--(R//C)--((R--W)//C)';
+
+            % Create RResistanceLabel
+            app.RResistanceLabel = uilabel(app.SelectACircuitTab);
+            app.RResistanceLabel.Position = [300 102 84 22];
+            app.RResistanceLabel.Text = 'R - Resistance';
+
+            % Create CCapacitanceLabel
+            app.CCapacitanceLabel = uilabel(app.SelectACircuitTab);
+            app.CCapacitanceLabel.Position = [300 83 91 22];
+            app.CCapacitanceLabel.Text = 'C - Capacitance';
+
+            % Create QConstantPhaseElementLabel
+            app.QConstantPhaseElementLabel = uilabel(app.SelectACircuitTab);
+            app.QConstantPhaseElementLabel.Position = [300 63 158 22];
+            app.QConstantPhaseElementLabel.Text = 'Q - Constant Phase Element';
+
+            % Create WWarburgElementLabel
+            app.WWarburgElementLabel = uilabel(app.SelectACircuitTab);
+            app.WWarburgElementLabel.Position = [300 43 120 22];
+            app.WWarburgElementLabel.Text = 'W - Warburg Element';
+
+            % Create SeriesConnectionLabel
+            app.SeriesConnectionLabel = uilabel(app.SelectACircuitTab);
+            app.SeriesConnectionLabel.Position = [300 23 114 22];
+            app.SeriesConnectionLabel.Text = '-- Series Connection';
+
+            % Create ParallelConnectionLabel
+            app.ParallelConnectionLabel = uilabel(app.SelectACircuitTab);
+            app.ParallelConnectionLabel.Position = [300 3 119 22];
+            app.ParallelConnectionLabel.Text = '// Parallel Connection';
+
             % Create BuildACircuitTab
             app.BuildACircuitTab = uitab(app.CircuitToFit);
             app.BuildACircuitTab.Title = 'Build-A-Circuit';
@@ -7857,6 +8232,23 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CCTFitOptionsTabGroup.SelectionChangedFcn = createCallbackFcn(app, @CCTFitOptionsTabGroupSelectionChanged, true);
             app.CCTFitOptionsTabGroup.Position = [152 205 317 121];
 
+            % Create HyperparamsTab
+            app.HyperparamsTab = uitab(app.CCTFitOptionsTabGroup);
+            app.HyperparamsTab.Title = 'Hyperparams →';
+
+            % Create TextArea
+            app.TextArea = uitextarea(app.HyperparamsTab);
+            app.TextArea.Position = [24 6 265 70];
+            app.TextArea.Value = {'The Global Optimization Iterations is the hyperparameter with the greatest impact on fit quality and computation time. This tab group contains adittional hyperparameters and algorithm modifiers.'; ''; 'The most pertinent setting is the fitting of the series resistance - by default it is extracted from the impedance data as the highest frequency impedance (R_inf). This assumes that a sufficiently high frequency is measured.'};
+
+            % Create Label_4
+            app.Label_4 = uilabel(app.HyperparamsTab);
+            app.Label_4.HorizontalAlignment = 'center';
+            app.Label_4.FontWeight = 'bold';
+            app.Label_4.FontColor = [0.4667 0.6745 0.1882];
+            app.Label_4.Position = [24 74 268 22];
+            app.Label_4.Text = 'Adjust aspects of the equivalent circuit fitting';
+
             % Create SeriesResistanceEstimateTab
             app.SeriesResistanceEstimateTab = uitab(app.CCTFitOptionsTabGroup);
             app.SeriesResistanceEstimateTab.Title = 'Series Resistance Estimate';
@@ -7895,17 +8287,17 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SequentialBarrierFittingTab = uitab(app.CCTFitOptionsTabGroup);
             app.SequentialBarrierFittingTab.Title = 'Sequential Barrier Fitting';
 
-            % Create BlankFitMultiStartsEditFieldLabel
-            app.BlankFitMultiStartsEditFieldLabel = uilabel(app.SequentialBarrierFittingTab);
-            app.BlankFitMultiStartsEditFieldLabel.HorizontalAlignment = 'right';
-            app.BlankFitMultiStartsEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.BlankFitMultiStartsEditFieldLabel.Position = [149 59 62 30];
-            app.BlankFitMultiStartsEditFieldLabel.Text = {'Blank Fit'; 'MultiStarts'};
+            % Create BlankFitIterationsEditFieldLabel
+            app.BlankFitIterationsEditFieldLabel = uilabel(app.SequentialBarrierFittingTab);
+            app.BlankFitIterationsEditFieldLabel.HorizontalAlignment = 'right';
+            app.BlankFitIterationsEditFieldLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.BlankFitIterationsEditFieldLabel.Position = [157 59 54 30];
+            app.BlankFitIterationsEditFieldLabel.Text = {'Blank Fit'; 'Iterations'};
 
-            % Create BlankFitMultiStartsEditField
-            app.BlankFitMultiStartsEditField = uieditfield(app.SequentialBarrierFittingTab, 'numeric');
-            app.BlankFitMultiStartsEditField.Position = [216 63 68 26];
-            app.BlankFitMultiStartsEditField.Value = 1000;
+            % Create BlankFitIterationsEditField
+            app.BlankFitIterationsEditField = uieditfield(app.SequentialBarrierFittingTab, 'numeric');
+            app.BlankFitIterationsEditField.Position = [216 63 68 26];
+            app.BlankFitIterationsEditField.Value = 1000;
 
             % Create FitSequentiallySwitchLabel
             app.FitSequentiallySwitchLabel = uilabel(app.SequentialBarrierFittingTab);
@@ -8373,19 +8765,19 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ZScoreNormalizeLabel_3.FontSize = 14;
             app.ZScoreNormalizeLabel_3.FontWeight = 'bold';
             app.ZScoreNormalizeLabel_3.FontColor = [0.4667 0.6745 0.1882];
-            app.ZScoreNormalizeLabel_3.Position = [2 0 76 34];
+            app.ZScoreNormalizeLabel_3.Position = [-2 0 76 34];
             app.ZScoreNormalizeLabel_3.Text = {''; ' Normalize'};
 
             % Create ZScoreNormalizeSwitch_FitSeries_3
             app.ZScoreNormalizeSwitch_FitSeries_3 = uiswitch(app.NormalizationTab_3, 'slider');
             app.ZScoreNormalizeSwitch_FitSeries_3.Orientation = 'vertical';
             app.ZScoreNormalizeSwitch_FitSeries_3.FontWeight = 'bold';
-            app.ZScoreNormalizeSwitch_FitSeries_3.Position = [26 36 29 65];
+            app.ZScoreNormalizeSwitch_FitSeries_3.Position = [22 36 29 65];
 
             % Create Areacm2EditFieldLabel
             app.Areacm2EditFieldLabel = uilabel(app.NormalizationTab_3);
             app.Areacm2EditFieldLabel.HorizontalAlignment = 'right';
-            app.Areacm2EditFieldLabel.Position = [204 31 70 22];
+            app.Areacm2EditFieldLabel.Position = [216 31 70 22];
             app.Areacm2EditFieldLabel.Text = 'Area (cm^2)';
 
             % Create Areacm2EditField
@@ -8410,14 +8802,27 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create NormalizationSchemeListBox_6Label
             app.NormalizationSchemeListBox_6Label = uilabel(app.NormalizationTab_3);
             app.NormalizationSchemeListBox_6Label.HorizontalAlignment = 'right';
-            app.NormalizationSchemeListBox_6Label.Position = [67 13 126 22];
+            app.NormalizationSchemeListBox_6Label.Position = [78 104 126 22];
             app.NormalizationSchemeListBox_6Label.Text = 'Normalization Scheme';
 
             % Create NormalizationSchemeListBox_6
             app.NormalizationSchemeListBox_6 = uilistbox(app.NormalizationTab_3);
             app.NormalizationSchemeListBox_6.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
-            app.NormalizationSchemeListBox_6.Position = [78 35 100 56];
+            app.NormalizationSchemeListBox_6.ValueChangedFcn = createCallbackFcn(app, @NormalizationSchemeListBox_6ValueChanged, true);
+            app.NormalizationSchemeListBox_6.Position = [81 54 122 53];
             app.NormalizationSchemeListBox_6.Value = 'zscore';
+
+            % Create NormOptionLabel
+            app.NormOptionLabel = uilabel(app.NormalizationTab_3);
+            app.NormOptionLabel.HorizontalAlignment = 'right';
+            app.NormOptionLabel.Position = [80 15 40 30];
+            app.NormOptionLabel.Text = {'Norm.'; 'Option'};
+
+            % Create NormOptionListBox
+            app.NormOptionListBox = uilistbox(app.NormalizationTab_3);
+            app.NormOptionListBox.Items = {'std', 'robust'};
+            app.NormOptionListBox.Position = [129 10 73 37];
+            app.NormOptionListBox.Value = 'std';
 
             % Create OutlierRemovalTab_2
             app.OutlierRemovalTab_2 = uitab(app.SeriesPlotcctFitTabGroup);
@@ -8730,7 +9135,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create CrossSectionOptions
             app.CrossSectionOptions = uitabgroup(app.CrossSectionParametersPanel);
-            app.CrossSectionOptions.Position = [16 106 300 149];
+            app.CrossSectionOptions.Position = [16 102 300 153];
 
             % Create NormalizationTab_2
             app.NormalizationTab_2 = uitab(app.CrossSectionOptions);
@@ -8738,7 +9143,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create Panel_3
             app.Panel_3 = uipanel(app.NormalizationTab_2);
-            app.Panel_3.Position = [9 9 280 106];
+            app.Panel_3.Position = [9 6 280 118];
 
             % Create NormalizeSwitchLabel
             app.NormalizeSwitchLabel = uilabel(app.Panel_3);
@@ -8746,24 +9151,25 @@ classdef AnalyZe < matlab.apps.AppBase
             app.NormalizeSwitchLabel.FontSize = 14;
             app.NormalizeSwitchLabel.FontWeight = 'bold';
             app.NormalizeSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.NormalizeSwitchLabel.Position = [31 83 72 22];
+            app.NormalizeSwitchLabel.Position = [31 95 72 22];
             app.NormalizeSwitchLabel.Text = 'Normalize';
 
             % Create NormalizeSwitch
             app.NormalizeSwitch = uiswitch(app.Panel_3, 'slider');
             app.NormalizeSwitch.FontWeight = 'bold';
-            app.NormalizeSwitch.Position = [31 49 68 30];
+            app.NormalizeSwitch.Position = [31 61 68 30];
 
             % Create NormalizationSchemeListBox_5Label
             app.NormalizationSchemeListBox_5Label = uilabel(app.Panel_3);
             app.NormalizationSchemeListBox_5Label.HorizontalAlignment = 'right';
-            app.NormalizationSchemeListBox_5Label.Position = [141 9 126 22];
+            app.NormalizationSchemeListBox_5Label.Position = [141 98 126 22];
             app.NormalizationSchemeListBox_5Label.Text = 'Normalization Scheme';
 
             % Create NormalizationSchemeListBox_5
             app.NormalizationSchemeListBox_5 = uilistbox(app.Panel_3);
             app.NormalizationSchemeListBox_5.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
-            app.NormalizationSchemeListBox_5.Position = [140 31 131 56];
+            app.NormalizationSchemeListBox_5.ValueChangedFcn = createCallbackFcn(app, @NormalizationSchemeListBox_5ValueChanged, true);
+            app.NormalizationSchemeListBox_5.Position = [141 49 131 51];
             app.NormalizationSchemeListBox_5.Value = 'zscore';
 
             % Create ModulobeforeafternormalizingSwitch
@@ -8772,8 +9178,20 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ModulobeforeafternormalizingSwitch.FontSize = 14;
             app.ModulobeforeafternormalizingSwitch.FontWeight = 'bold';
             app.ModulobeforeafternormalizingSwitch.FontColor = [0.6353 0.0784 0.1843];
-            app.ModulobeforeafternormalizingSwitch.Position = [43 10 45 20];
+            app.ModulobeforeafternormalizingSwitch.Position = [43 22 45 20];
             app.ModulobeforeafternormalizingSwitch.Value = '|Z|';
+
+            % Create NormOptionListBox_2Label
+            app.NormOptionListBox_2Label = uilabel(app.Panel_3);
+            app.NormOptionListBox_2Label.HorizontalAlignment = 'right';
+            app.NormOptionListBox_2Label.Position = [149 12 40 30];
+            app.NormOptionListBox_2Label.Text = {'Norm.'; 'Option'};
+
+            % Create NormOptionListBox_2
+            app.NormOptionListBox_2 = uilistbox(app.Panel_3);
+            app.NormOptionListBox_2.Items = {'std', 'robust'};
+            app.NormOptionListBox_2.Position = [198 7 73 37];
+            app.NormOptionListBox_2.Value = 'std';
 
             % Create OutlierRemovalTab
             app.OutlierRemovalTab = uitab(app.CrossSectionOptions);
@@ -8785,23 +9203,23 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OutlierRemovalSwitchLabel.FontSize = 14;
             app.OutlierRemovalSwitchLabel.FontWeight = 'bold';
             app.OutlierRemovalSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.OutlierRemovalSwitchLabel.Position = [9 45 112 22];
+            app.OutlierRemovalSwitchLabel.Position = [9 49 112 22];
             app.OutlierRemovalSwitchLabel.Text = 'Outlier Removal';
 
             % Create OutlierRemovalSwitch
             app.OutlierRemovalSwitch = uiswitch(app.OutlierRemovalTab, 'slider');
-            app.OutlierRemovalSwitch.Position = [41 72 45 20];
+            app.OutlierRemovalSwitch.Position = [41 76 45 20];
 
             % Create DetectionSchemeListBoxLabel
             app.DetectionSchemeListBoxLabel = uilabel(app.OutlierRemovalTab);
             app.DetectionSchemeListBoxLabel.HorizontalAlignment = 'right';
-            app.DetectionSchemeListBoxLabel.Position = [164 19 103 22];
+            app.DetectionSchemeListBoxLabel.Position = [164 23 103 22];
             app.DetectionSchemeListBoxLabel.Text = 'Detection Scheme';
 
             % Create DetectionSchemeListBox
             app.DetectionSchemeListBox = uilistbox(app.OutlierRemovalTab);
             app.DetectionSchemeListBox.Items = {'median', 'mean', 'quartiles', 'grubbs', 'gesd'};
-            app.DetectionSchemeListBox.Position = [152 45 131 56];
+            app.DetectionSchemeListBox.Position = [152 49 131 56];
             app.DetectionSchemeListBox.Value = 'median';
 
             % Create ResampleTab
@@ -8814,19 +9232,19 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResampleSwitchLabel.FontSize = 14;
             app.ResampleSwitchLabel.FontWeight = 'bold';
             app.ResampleSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.ResampleSwitchLabel.Position = [5 7 71 22];
+            app.ResampleSwitchLabel.Position = [5 11 71 22];
             app.ResampleSwitchLabel.Text = 'Resample';
 
             % Create ResampleSwitch
             app.ResampleSwitch = uiswitch(app.ResampleTab, 'slider');
             app.ResampleSwitch.Orientation = 'vertical';
-            app.ResampleSwitch.Position = [28 52 20 45];
+            app.ResampleSwitch.Position = [28 56 20 45];
 
             % Create FinalResampleFrequencyEditFieldLabel
             app.FinalResampleFrequencyEditFieldLabel = uilabel(app.ResampleTab);
             app.FinalResampleFrequencyEditFieldLabel.HorizontalAlignment = 'right';
             app.FinalResampleFrequencyEditFieldLabel.FontWeight = 'bold';
-            app.FinalResampleFrequencyEditFieldLabel.Position = [63 89 157 22];
+            app.FinalResampleFrequencyEditFieldLabel.Position = [63 93 157 22];
             app.FinalResampleFrequencyEditFieldLabel.Text = 'Final Resample Frequency';
 
             % Create FinalResampleFrequencyEditField
@@ -8834,46 +9252,46 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FinalResampleFrequencyEditField.Limits = [0 Inf];
             app.FinalResampleFrequencyEditField.FontSize = 14;
             app.FinalResampleFrequencyEditField.FontWeight = 'bold';
-            app.FinalResampleFrequencyEditField.Position = [231 89 38 22];
+            app.FinalResampleFrequencyEditField.Position = [231 93 38 22];
             app.FinalResampleFrequencyEditField.Value = 1;
 
             % Create pEditFieldLabel
             app.pEditFieldLabel = uilabel(app.ResampleTab);
             app.pEditFieldLabel.HorizontalAlignment = 'right';
-            app.pEditFieldLabel.Position = [156 51 25 22];
+            app.pEditFieldLabel.Position = [156 55 25 22];
             app.pEditFieldLabel.Text = 'p';
 
             % Create pEditField
             app.pEditField = uieditfield(app.ResampleTab, 'numeric');
             app.pEditField.Limits = [0 Inf];
             app.pEditField.FontSize = 14;
-            app.pEditField.Position = [186 51 38 22];
+            app.pEditField.Position = [186 55 38 22];
             app.pEditField.Value = 1;
 
             % Create qEditFieldLabel
             app.qEditFieldLabel = uilabel(app.ResampleTab);
             app.qEditFieldLabel.HorizontalAlignment = 'right';
-            app.qEditFieldLabel.Position = [224 52 25 22];
+            app.qEditFieldLabel.Position = [224 56 25 22];
             app.qEditFieldLabel.Text = 'q';
 
             % Create qEditField
             app.qEditField = uieditfield(app.ResampleTab, 'numeric');
             app.qEditField.Limits = [0 Inf];
             app.qEditField.FontSize = 14;
-            app.qEditField.Position = [254 52 38 22];
+            app.qEditField.Position = [254 56 38 22];
             app.qEditField.Value = 1;
 
             % Create Label
             app.Label = uilabel(app.ResampleTab);
             app.Label.FontSize = 36;
             app.Label.FontWeight = 'bold';
-            app.Label.Position = [229 39 16 47];
+            app.Label.Position = [229 43 16 47];
             app.Label.Text = '/';
 
             % Create IntermediateResampleFactorLabel
             app.IntermediateResampleFactorLabel = uilabel(app.ResampleTab);
             app.IntermediateResampleFactorLabel.FontWeight = 'bold';
-            app.IntermediateResampleFactorLabel.Position = [69 46 102 30];
+            app.IntermediateResampleFactorLabel.Position = [69 50 102 30];
             app.IntermediateResampleFactorLabel.Text = {'Intermediate'; 'Resample Factor'};
 
             % Create ClipTimeVectorTab
@@ -8886,36 +9304,36 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ClipTimeVectorSwitchLabel.FontSize = 14;
             app.ClipTimeVectorSwitchLabel.FontWeight = 'bold';
             app.ClipTimeVectorSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.ClipTimeVectorSwitchLabel.Position = [8 41 115 22];
+            app.ClipTimeVectorSwitchLabel.Position = [8 45 115 22];
             app.ClipTimeVectorSwitchLabel.Text = 'Clip Time Vector';
 
             % Create ClipTimeVectorSwitch
             app.ClipTimeVectorSwitch = uiswitch(app.ClipTimeVectorTab, 'slider');
-            app.ClipTimeVectorSwitch.Position = [41 68 45 20];
+            app.ClipTimeVectorSwitch.Position = [41 72 45 20];
 
             % Create NumStartValuesToClipSpinnerLabel
             app.NumStartValuesToClipSpinnerLabel = uilabel(app.ClipTimeVectorTab);
             app.NumStartValuesToClipSpinnerLabel.HorizontalAlignment = 'right';
-            app.NumStartValuesToClipSpinnerLabel.Position = [142 91 138 22];
+            app.NumStartValuesToClipSpinnerLabel.Position = [142 95 138 22];
             app.NumStartValuesToClipSpinnerLabel.Text = 'Num Start Values To Clip';
 
             % Create NumStartValuesToClipSpinner
             app.NumStartValuesToClipSpinner = uispinner(app.ClipTimeVectorTab);
             app.NumStartValuesToClipSpinner.Limits = [0 Inf];
             app.NumStartValuesToClipSpinner.FontSize = 18;
-            app.NumStartValuesToClipSpinner.Position = [184 68 67 24];
+            app.NumStartValuesToClipSpinner.Position = [184 72 67 24];
 
             % Create NumTailValuesToClipSpinnerLabel
             app.NumTailValuesToClipSpinnerLabel = uilabel(app.ClipTimeVectorTab);
             app.NumTailValuesToClipSpinnerLabel.HorizontalAlignment = 'right';
-            app.NumTailValuesToClipSpinnerLabel.Position = [149 39 131 22];
+            app.NumTailValuesToClipSpinnerLabel.Position = [149 43 131 22];
             app.NumTailValuesToClipSpinnerLabel.Text = 'Num Tail Values To Clip';
 
             % Create NumTailValuesToClipSpinner
             app.NumTailValuesToClipSpinner = uispinner(app.ClipTimeVectorTab);
             app.NumTailValuesToClipSpinner.Limits = [0 Inf];
             app.NumTailValuesToClipSpinner.FontSize = 18;
-            app.NumTailValuesToClipSpinner.Position = [184 18 67 24];
+            app.NumTailValuesToClipSpinner.Position = [184 22 67 24];
 
             % Create RefreshPlotButton
             app.RefreshPlotButton = uibutton(app.CrossSectionParametersPanel, 'push');
@@ -9187,7 +9605,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.PlotFromTableSelectionButton_2.FontWeight = 'bold';
             app.PlotFromTableSelectionButton_2.FontColor = [0.4667 0.6745 0.1882];
             app.PlotFromTableSelectionButton_2.Tooltip = {'First highlight two columns in the Results table - clicking ''Plot From Table Selection'' will plot one data series against the other.'};
-            app.PlotFromTableSelectionButton_2.Position = [15 478 93 74];
+            app.PlotFromTableSelectionButton_2.Position = [15 494 93 74];
             app.PlotFromTableSelectionButton_2.Text = {'Plot From '; 'Table'; ' Selection'};
 
             % Create HoldPlotsSwitch_2Label_4
@@ -9232,7 +9650,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create NormalizationSchemeListBox_4
             app.NormalizationSchemeListBox_4 = uilistbox(app.NormalizationTab);
             app.NormalizationSchemeListBox_4.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
-            app.NormalizationSchemeListBox_4.Position = [185 33 100 89];
+            app.NormalizationSchemeListBox_4.ValueChangedFcn = createCallbackFcn(app, @NormalizationSchemeListBox_4ValueChanged, true);
+            app.NormalizationSchemeListBox_4.Position = [143 30 100 89];
             app.NormalizationSchemeListBox_4.Value = 'zscore';
 
             % Create ZScoreNormalizeLabel_2
@@ -9241,21 +9660,33 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ZScoreNormalizeLabel_2.FontSize = 18;
             app.ZScoreNormalizeLabel_2.FontWeight = 'bold';
             app.ZScoreNormalizeLabel_2.FontColor = [0.4667 0.6745 0.1882];
-            app.ZScoreNormalizeLabel_2.Position = [39 30 96 44];
+            app.ZScoreNormalizeLabel_2.Position = [21 29 96 44];
             app.ZScoreNormalizeLabel_2.Text = {''; ' Normalize'};
 
             % Create ZScoreNormalizeSwitch_FitSeries_2
             app.ZScoreNormalizeSwitch_FitSeries_2 = uiswitch(app.NormalizationTab, 'slider');
             app.ZScoreNormalizeSwitch_FitSeries_2.FontSize = 18;
             app.ZScoreNormalizeSwitch_FitSeries_2.FontWeight = 'bold';
-            app.ZScoreNormalizeSwitch_FitSeries_2.Position = [65 66 45 20];
+            app.ZScoreNormalizeSwitch_FitSeries_2.Position = [47 65 45 20];
 
             % Create NormalizationSchemeListBox_4Label
             app.NormalizationSchemeListBox_4Label = uilabel(app.NormalizationTab);
             app.NormalizationSchemeListBox_4Label.HorizontalAlignment = 'right';
             app.NormalizationSchemeListBox_4Label.FontWeight = 'bold';
-            app.NormalizationSchemeListBox_4Label.Position = [164 7 134 22];
+            app.NormalizationSchemeListBox_4Label.Position = [122 6 134 22];
             app.NormalizationSchemeListBox_4Label.Text = 'Normalization Scheme';
+
+            % Create NormalizationOptionListBoxLabel
+            app.NormalizationOptionListBoxLabel = uilabel(app.NormalizationTab);
+            app.NormalizationOptionListBoxLabel.HorizontalAlignment = 'center';
+            app.NormalizationOptionListBoxLabel.Position = [258 88 78 30];
+            app.NormalizationOptionListBoxLabel.Text = {'Normalization'; 'Option'};
+
+            % Create NormalizationOptionListBox
+            app.NormalizationOptionListBox = uilistbox(app.NormalizationTab);
+            app.NormalizationOptionListBox.Items = {'std', 'robust'};
+            app.NormalizationOptionListBox.Position = [260 30 73 55];
+            app.NormalizationOptionListBox.Value = 'std';
 
             % Create PolePlottingTab
             app.PolePlottingTab = uitab(app.TabGroup6);
@@ -9266,14 +9697,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SelectPoletoPlotFastesttoSlowestSpinnerLabel.HorizontalAlignment = 'center';
             app.SelectPoletoPlotFastesttoSlowestSpinnerLabel.FontWeight = 'bold';
             app.SelectPoletoPlotFastesttoSlowestSpinnerLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.SelectPoletoPlotFastesttoSlowestSpinnerLabel.Position = [109 16 119 59];
+            app.SelectPoletoPlotFastesttoSlowestSpinnerLabel.Position = [99 16 119 59];
             app.SelectPoletoPlotFastesttoSlowestSpinnerLabel.Text = {'Select Pole to Plot'; '(Fastest to Slowest)'; 'Assume Consistent'; 'Ordering'};
 
             % Create SelectPoletoPlotFastesttoSlowestAssumeConsistentOrderingSpinner
             app.SelectPoletoPlotFastesttoSlowestAssumeConsistentOrderingSpinner = uispinner(app.PolePlottingTab);
             app.SelectPoletoPlotFastesttoSlowestAssumeConsistentOrderingSpinner.Limits = [1 Inf];
             app.SelectPoletoPlotFastesttoSlowestAssumeConsistentOrderingSpinner.FontSize = 24;
-            app.SelectPoletoPlotFastesttoSlowestAssumeConsistentOrderingSpinner.Position = [143 81 58 38];
+            app.SelectPoletoPlotFastesttoSlowestAssumeConsistentOrderingSpinner.Position = [133 81 58 38];
             app.SelectPoletoPlotFastesttoSlowestAssumeConsistentOrderingSpinner.Value = 1;
 
             % Create EnablePolePlottingvsTimeSwitchLabel
@@ -9281,28 +9712,35 @@ classdef AnalyZe < matlab.apps.AppBase
             app.EnablePolePlottingvsTimeSwitchLabel.HorizontalAlignment = 'center';
             app.EnablePolePlottingvsTimeSwitchLabel.FontSize = 14;
             app.EnablePolePlottingvsTimeSwitchLabel.FontWeight = 'bold';
-            app.EnablePolePlottingvsTimeSwitchLabel.Position = [9 26 91 52];
+            app.EnablePolePlottingvsTimeSwitchLabel.Position = [6 26 91 52];
             app.EnablePolePlottingvsTimeSwitchLabel.Text = {'Enable'; 'Pole Plotting'; '(vs Time)'};
 
             % Create EnablePolePlottingvsTimeSwitch
             app.EnablePolePlottingvsTimeSwitch = uiswitch(app.PolePlottingTab, 'slider');
             app.EnablePolePlottingvsTimeSwitch.ValueChangedFcn = createCallbackFcn(app, @EnablePolePlottingvsTimeSwitchValueChanged, true);
-            app.EnablePolePlottingvsTimeSwitch.Position = [32 87 45 20];
+            app.EnablePolePlottingvsTimeSwitch.Position = [29 87 45 20];
 
             % Create PlotTypeListBoxLabel
             app.PlotTypeListBoxLabel = uilabel(app.PolePlottingTab);
             app.PlotTypeListBoxLabel.HorizontalAlignment = 'right';
-            app.PlotTypeListBoxLabel.FontSize = 14;
             app.PlotTypeListBoxLabel.FontWeight = 'bold';
-            app.PlotTypeListBoxLabel.Position = [248 10 67 22];
+            app.PlotTypeListBoxLabel.Position = [251 13 58 22];
             app.PlotTypeListBoxLabel.Text = 'Plot Type';
 
             % Create PlotTypeListBox
             app.PlotTypeListBox = uilistbox(app.PolePlottingTab);
             app.PlotTypeListBox.Items = {'Mag Time Series', 'Nyquist', 'Tau Time Series', 'Real Time Series'};
-            app.PlotTypeListBox.FontSize = 14;
-            app.PlotTypeListBox.Position = [237 42 106 77];
+            app.PlotTypeListBox.Position = [220 42 123 77];
             app.PlotTypeListBox.Value = 'Mag Time Series';
+
+            % Create RefreshPlotButton_3
+            app.RefreshPlotButton_3 = uibutton(app.SeriesPlotTab_2, 'push');
+            app.RefreshPlotButton_3.ButtonPushedFcn = createCallbackFcn(app, @RefreshPlotButton_3Pushed, true);
+            app.RefreshPlotButton_3.FontSize = 14;
+            app.RefreshPlotButton_3.FontWeight = 'bold';
+            app.RefreshPlotButton_3.FontColor = [0.4667 0.6745 0.1882];
+            app.RefreshPlotButton_3.Position = [12 459 100 26];
+            app.RefreshPlotButton_3.Text = 'Refresh Plot';
 
             % Create TabGroup5
             app.TabGroup5 = uitabgroup(app.AnalysisEstimateTransferFunctionTab);
@@ -9347,7 +9785,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create AuxillaryOptionsPanel
             app.AuxillaryOptionsPanel = uipanel(app.EstimateTransferFunctionoptionsTab);
             app.AuxillaryOptionsPanel.Title = 'Auxillary Options';
-            app.AuxillaryOptionsPanel.Position = [162 9 316 228];
+            app.AuxillaryOptionsPanel.Position = [162 9 299 228];
 
             % Create MaxiterationsEditFieldLabel
             app.MaxiterationsEditFieldLabel = uilabel(app.AuxillaryOptionsPanel);
@@ -9363,7 +9801,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.MaxiterationsEditField.Limits = [0 Inf];
             app.MaxiterationsEditField.ValueDisplayFormat = '%.0f';
             app.MaxiterationsEditField.FontSize = 24;
-            app.MaxiterationsEditField.Position = [159 169 100 32];
+            app.MaxiterationsEditField.Position = [155 169 102 32];
             app.MaxiterationsEditField.Value = 10000;
 
             % Create WeightingFilterListBoxLabel
@@ -9378,7 +9816,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.WeightingFilterListBox = uilistbox(app.AuxillaryOptionsPanel);
             app.WeightingFilterListBox.Items = {'inv', 'invsqrt', 'None'};
             app.WeightingFilterListBox.FontSize = 14;
-            app.WeightingFilterListBox.Position = [146 95 100 66];
+            app.WeightingFilterListBox.Position = [146 95 111 66];
             app.WeightingFilterListBox.Value = 'inv';
 
             % Create SearchMethodListBoxLabel
@@ -9393,7 +9831,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SearchMethodListBox = uilistbox(app.AuxillaryOptionsPanel);
             app.SearchMethodListBox.Items = {'auto', 'gn', 'gna', 'lm', 'lsqnonlin', 'fmincon'};
             app.SearchMethodListBox.FontSize = 14;
-            app.SearchMethodListBox.Position = [146 13 100 74];
+            app.SearchMethodListBox.Position = [146 13 110 74];
             app.SearchMethodListBox.Value = 'auto';
 
             % Create AutoNumberofZerosSwitchLabel
