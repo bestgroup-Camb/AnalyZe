@@ -69,7 +69,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
             %% Navigate To CCT Fit Tab
                 testCase.press(testCase.App.FitEquivalentCircuitButton)
 
-                 testCase.verifyEqual( ...
+                 testCase.assertEqual( ...
                                     testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
            %% Refresh Data
@@ -144,8 +144,10 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.ChooseButton)
             
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,500)
-                testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--Q')
+                SelectACircuitTab = testCase.App.SelectACircuitTab;
+                testCase.choose(SelectACircuitTab)
+                testCase.type(testCase.App.GlobalOptimizationIterationsEditField,500)
+                testCase.choose(testCase.App.SelectaCircuitModelBarrierInclusiveListBox,'R--(R//C)--Q')
                 testCase.press(testCase.App.GoButton)
 
             %% Verify barrier parameters have been fit properly
@@ -213,7 +215,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.ChooseButton)
             
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,500)
+                testCase.type(testCase.App.GlobalOptimizationIterationsEditField,500)
             
             %% Rebuild Circuit
                 BuildACircuitTab = testCase.App.BuildACircuitTab;
@@ -302,7 +304,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.ChooseButton)
             
            %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,500)
+                testCase.type(testCase.App.GlobalOptimizationIterationsEditField,500)
 
            %% Write Circuit
                 WriteACircuitTab = testCase.App.WriteACircuitTab;
@@ -386,9 +388,13 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.ChooseButton)
             
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,500)
-                testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--Q')
-
+                SelectACircuitTab = testCase.App.SelectACircuitTab;
+                testCase.choose(SelectACircuitTab)
+                testCase.type(testCase.App.GlobalOptimizationIterationsEditField,500)
+                testCase.choose(testCase.App.SelectaCircuitModelBarrierInclusiveListBox,'R--(R//C)--Q')
+                
+                SeriesRTab = testCase.App.SeriesResistanceEstimateTab;
+                testCase.choose(SeriesRTab);
                 testCase.press(testCase.App.RSeriesResistanceSwitch)
                 testCase.choose(testCase.App.AlternateRestimationListBox,'Free R Fit')
 
@@ -459,9 +465,13 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.ChooseButton)
             
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,1000)
-                testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--Q')
-
+                SelectACircuitTab = testCase.App.SelectACircuitTab;
+                testCase.choose(SelectACircuitTab)
+                testCase.type(testCase.App.GlobalOptimizationIterationsEditField,1000)
+                testCase.choose(testCase.App.SelectaCircuitModelBarrierInclusiveListBox,'R--(R//C)--Q')
+                
+                SeriesRTab = testCase.App.SeriesResistanceEstimateTab;
+                testCase.choose(SeriesRTab);
                 testCase.press(testCase.App.RSeriesResistanceSwitch)
                 testCase.choose(testCase.App.AlternateRestimationListBox,'Im(Z) Local Min')
 
@@ -537,11 +547,13 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 SequentualFitTab = testCase.App.SequentialBarrierFittingTab;
                 testCase.choose(SequentualFitTab)
                 testCase.press(testCase.App.FitSequentiallySwitch)
-                testCase.type(testCase.App.BlankFitMultiStartsEditField,1000)
+                testCase.type(testCase.App.BlankFitIterationsEditField,1000)
             
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,1000)
-                testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--((R--W)//C)')
+                SelectACircuitTab = testCase.App.SelectACircuitTab;
+                testCase.choose(SelectACircuitTab)
+                testCase.type(testCase.App.GlobalOptimizationIterationsEditField,1000)
+                testCase.choose(testCase.App.SelectaCircuitModelBarrierInclusiveListBox,'R--(R//C)--((R--W)//C)')
 
            %% Run fitting procedure
                 testCase.press(testCase.App.GoButton)
@@ -618,11 +630,15 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.press(testCase.App.ChooseButton)
 
             %% Free R Fit
+                SeriesRTab = testCase.App.SeriesResistanceEstimateTab;
+                testCase.choose(SeriesRTab);
                 testCase.press(testCase.App.RSeriesResistanceSwitch)
                 testCase.choose(testCase.App.AlternateRestimationListBox,'Free R Fit')
             %% Adjust Fit Params
-                testCase.type(testCase.App.MultiStartsEditField,50)
-                testCase.choose(testCase.App.SelectaCircuitBarrierInclusiveListBox,'R--(R//C)--Q')
+                SelectACircuitTab = testCase.App.SelectACircuitTab;
+                testCase.choose(SelectACircuitTab)
+                testCase.type(testCase.App.GlobalOptimizationIterationsEditField,50)
+                testCase.choose(testCase.App.SelectaCircuitModelBarrierInclusiveListBox,'R--(R//C)--Q')
 
             %% Get Vanilla Fit
                 testCase.press(testCase.App.GoButton)
