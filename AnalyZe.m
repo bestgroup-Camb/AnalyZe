@@ -63,6 +63,13 @@ classdef AnalyZe < matlab.apps.AppBase
         MultiSelectTab                  matlab.ui.container.Tab
         SelectMultipleFilesandautoincrementafieldLabel  matlab.ui.control.Label
         KnobMultiSelect                 matlab.ui.control.DiscreteKnob
+        AlternativeFileFormatTab        matlab.ui.container.Tab
+        CsvOrSpreadsheetSwitch          matlab.ui.control.RockerSwitch
+        stDataRowSpinner                matlab.ui.control.Spinner
+        stDataRowSpinnerLabel           matlab.ui.control.Label
+        SpecifytargetfilecolumnorderLabel  matlab.ui.control.Label
+        ArbFileFormatSpecTable          matlab.ui.control.Table
+        ArbFileFormatSwitch             matlab.ui.control.Switch
         HOMEButton                      matlab.ui.control.Button
         HoldPlotSwitchLoad              matlab.ui.control.ToggleSwitch
         HoldPlotSwitchLabel             matlab.ui.control.Label
@@ -90,12 +97,12 @@ classdef AnalyZe < matlab.apps.AppBase
         AuxCCTFitResults                matlab.ui.container.TabGroup
         Nyquist                         matlab.ui.container.Tab
         NyqResults                      matlab.ui.control.UIAxes
+        ProblemSetuplogTab              matlab.ui.container.Tab
+        CCTFitProblemLog                matlab.ui.control.TextArea
         RecursiveTimeReg                matlab.ui.container.Tab
         RecursiveTimeRegLogSwitch_2     matlab.ui.control.Switch
         RecursiveTimeRegLogSwitch       matlab.ui.control.Switch
         RecursiveTimeRegPlot            matlab.ui.control.UIAxes
-        ProblemSetuplogTab              matlab.ui.container.Tab
-        CCTFitProblemLog                matlab.ui.control.TextArea
         PlotResultsSelectionButton      matlab.ui.control.Button
         HoldPlotsSwitch                 matlab.ui.control.ToggleSwitch
         HoldPlotsSwitchLabel            matlab.ui.control.Label
@@ -414,15 +421,13 @@ classdef AnalyZe < matlab.apps.AppBase
         Fits = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'FitsResults', {},'RawData', {});% Description
         ResultTableRowSelected = NaN; % Description
         CrossSectionResultsCumulative = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {},'Indexes',{});% Description
-        CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});
- % Description
+        CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});% Description
         CrossSectionIndex = NaN; % Description
         ChosenFreq = NaN % Description
         CS_xline % Description
         CrossSectionResultsLoaded = struct('CSFreq',{},'Name',{'Start'},'ExperimentNumber',{-1},'Well',{'A0'},'Time',{-1},'Mod',{-1},'Arg',{-1});
         ResultTableCellsSelected = NaN; % Description
         FitDiagnosticQQColourCounter = 1; % Description
-         % Description
         KDensityFits_ColourMapCounter = 1;
         cct_builder_init = [' ',' ','W','R',' ',' ';' ','R',' ',' ',' ',' ';' ',' ','C',' ',' ',' '];
         cct_builder_MaxVals_init =  [0,0,1,1e6,0,0;0,1000,0,0,0,0;0,0,1,0,0,0];
@@ -450,14 +455,21 @@ classdef AnalyZe < matlab.apps.AppBase
         MultiFileSelectAutoIncrementLastInput = [];
         AutoFileTimeIncrementArray = {};
         AutoFileTimeIncremementPosition = 0;
+        csv_file_arbitrary_format_init = [-1,-1,-1,-1,-1,-1,-1,-1]
     end
     
     methods (Access = private)
         
         
         function out = MultistartFit(app, y_z,freq,multi_starts,cct_type,sequential_Fit,blank_fit, recursive_regression, varargin)
-            %UNTITLED12 Summary of this function goes here
-            %   Detailed explanation goes here
+            %MultistartFit Equivalent Circuit regression using multistart
+            %global optimization
+            %   Given the supplied form the the equivalent circuit, perform
+            %   nonlinear regression to estimate the circuit model
+            %   parameters; the function handles auxillary fitting
+            %   procedures such as sequential fitting, recursive
+            %   regularization, series reistance estimation and the
+            %   multistart global optimization.
             % Variable Arguments:
             %        1           y_z_blank
             %        2           multi_starts_blank
@@ -950,7 +962,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         end
 
 
-                    %%%%%%%%%%%%%%%%%%%%%
+                    %%%%%%%%%%%%%%%%%%%%% Run regression optimization
                             [bet,fval] = run(ms,problem,multi_starts)
                     %%%%%%%%%%%%%%%%%%%%%
                         
@@ -2070,44 +2082,172 @@ classdef AnalyZe < matlab.apps.AppBase
                         otherwise
                     end
 
-
-                    
+  
                 %% Set up the Import Options and import the data
-                opts = delimitedTextImportOptions("NumVariables", 7);
+                value = app.ArbFileFormatSwitch.Value;
+                switch value
+                    case 'Off'
+                        opts = delimitedTextImportOptions("NumVariables", 7);
                 
-                % Specify range and delimiter
-                opts.DataLines = [2, Inf];
-                opts.Delimiter = "\t";
-    
-                    %Auto-detect_delimeter
-                       AutoOpts = detectImportOptions(FileName);
-                       opts.Delimiter = string(AutoOpts.Delimiter{1});
+                        % Specify range and delimiter
+                        opts.DataLines = [2, Inf];
+                        opts.Delimiter = "\t";
+            
+                            %Auto-detect_delimeter
+                               AutoOpts = detectImportOptions(FileName);
+                               opts.Delimiter = string(AutoOpts.Delimiter{1});
+                        
+                        % Specify column names and types
+                        opts.VariableNames = ["Index", "FrequencyHz", "Z", "Z1", "Z2", "Phase", "Times"];
+                        opts.VariableTypes = ["double", "double", "double", "double", "double", "double", "double"];
+                        
+                        % Specify file level properties
+                        opts.ExtraColumnsRule = "ignore";
+                        opts.EmptyLineRule = "read";
+                        
+                        % Import the data
+                        app.CurrentEISMeasurement = readtable(FileName, opts);
+                        
+                        
+                        %% Clear temporary variables
+                        clear opts
+
+                    case 'On'
+                        ColumnOrder = app.ArbFileFormatSpecTable.Data;
+                        %1          2               3       4   5       6       7               8   
+                        %Index (AU),Frequency (Hz),Re(Z),-Im(Z),Im(Z),Mag(Z),-Phase(Z) (deg),Phase(Z) (deg)
+
+                        if (ColumnOrder{1,4}>0) && (ColumnOrder{1,5} > 0)
+                            errordlg({'Include either Im(Z) OR -Im(Z)',newline,FileName},'Invalid Column Arrangement')
+                            return
+                        end 
+
+                        if (ColumnOrder{1,7}>0) && (ColumnOrder{1,8} > 0)
+                            errordlg({'Include either Phase(Z) OR -Phase(Z)',newline,FileName},'Invalid Column Arrangement')
+                            return
+                        end
+                        
+                        if (ColumnOrder{1,3} < 0) && (ColumnOrder{1,6} < 0)
+                            errordlg({'Data must include Re(Z) or Mag(Z)',newline,FileName},'Invalid Dataset')
+                            return
+                        end
+
+                        if ColumnOrder{1,2} < 0
+                            errordlg({'Data must include Frequency',newline,FileName},'Invalid Dataset')
+                            return
+                        end
+
+                        if (((ColumnOrder{1,3}*ColumnOrder{1,4}) < 0) && ((ColumnOrder{1,3}*ColumnOrder{1,5}) < 0)) && (((ColumnOrder{1,6}*ColumnOrder{1,7}) < 0) && ((ColumnOrder{1,6}*ColumnOrder{1,8}) < 0))
+                            errordlg({'Data must include either {Re(Z) AND Im(Z)} OR {Mag(Z) AND Phase(Z)}  ',newline,FileName},'Invalid Dataset')
+                            return
+                        end
+
+                        ColOrderMat = cell2mat(ColumnOrder);
+                        AllowedVariableNames =  ["Index", "FrequencyHz", "Z", "Z1", "Z1", "Z2", "Phase", "Phase"] ;
+                        AllowedVarTypes = ["double", "double", "double", "double", "double", "double", "double", "double"];
+                        
+                        VarsInFile = AllowedVariableNames(ColOrderMat>0);
+                        TypesInFile = AllowedVarTypes(ColOrderMat>0);
+
+                        [~,SortedIndices] = sort(ColOrderMat(ColOrderMat>0));
+                        VarsInFile = VarsInFile(SortedIndices);
+                        TypesInFile = TypesInFile(SortedIndices);
+
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       
+                       
+                        filetypeval = app.CsvOrSpreadsheetSwitch.Value;
+                        switch filetypeval
+                            case 'csv (txt)'
+                                %% Set up the Import Options and import the data
+                                opts = delimitedTextImportOptions("NumVariables", length(VarsInFile));
+
+                                 % Specify column names and types
+                                opts.VariableNames = VarsInFile;
+                                opts.VariableTypes = TypesInFile;
+                                
+                                % Specify range and delimiter
+                                opts.DataLines =  app.stDataRowSpinner.Value;
+                                    %Auto-detect_delimeter
+                                       % AutoOpts = detectImportOptions(FileName);
+                                       % opts.Delimiter = string(AutoOpts.Delimiter{1});
+                                       opts.Delimiter = ",";
+                                
+                                % Specify file level properties
+                                opts.ExtraColumnsRule = "ignore";
+                                opts.EmptyLineRule = "read";
+                                
+                                % Import the data
+                                CurrentEISMeasurement_temp = readtable(FileName, opts);
+
+                                                            
+                            case 'Spreadsheet'
+                                %% Set up the Import Options and import the data
+                                opts = spreadsheetImportOptions("NumVariables", length(VarsInFile));
+
+                                 % Specify column names and types
+                                opts.VariableNames = VarsInFile;
+                                opts.VariableTypes = TypesInFile;
+                                
+                                % Specify sheet and range
+                                opts.DataRange = app.stDataRowSpinner.Value;
+                                opts.MissingRule = 'omitrow';
+
+                                 % Import the data
+                                CurrentEISMeasurement_temp = readtable(FileName, opts,"UseExcel", false);
+                        end
+                        
+                        %% Clear temporary variables
+                        clear opts
+
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %% Fill out data
+                         %1          2               3       4   5       6       7               8   
+                        %Index (AU),Frequency (Hz),Re(Z),-Im(Z),Im(Z),Mag(Z),-Phase(Z) (deg),Phase(Z) (deg)
+
+                        %["Index", "FrequencyHz", "Z", "Z1", "Z2", "Phase", "Times"];
+
+                        if ColumnOrder{1,5} > 0
+                            CurrentEISMeasurement_temp.Z1 = CurrentEISMeasurement_temp.Z1.*-1; 
+                        end
+                        if ColumnOrder{1,8} > 0
+                            CurrentEISMeasurement_temp.Phase = CurrentEISMeasurement_temp.Phase.*-1; 
+                        end
+                        
+                        if ColumnOrder{1,3} > 0 %Has imaginary components
+
+                            Z = CurrentEISMeasurement_temp.Z - 1j.*CurrentEISMeasurement_temp.Z1;
+                            CurrentEISMeasurement_temp.Z2 = abs(Z);
+                            CurrentEISMeasurement_temp.Phase = -1.*rad2deg(angle(Z));
+
+                        elseif ColumnOrder{1,6} > 0 %Has mod/arg
+
+                            CurrentEISMeasurement_temp.Z = CurrentEISMeasurement_temp.Z2.*cos(deg2rad(-1.*CurrentEISMeasurement_temp.Phase));
+                            CurrentEISMeasurement_temp.Z1 = -1.*CurrentEISMeasurement_temp.Z2.*sin(deg2rad(-1.*CurrentEISMeasurement_temp.Phase));
+
+                        else
+                            errordlg({'Oops! Dataset has no real component or magnitude!',newline,FileName},'Invalid Dataset')
+                            return
+                        end
+
+                        if ColumnOrder{1,1} <0
+                            CurrentEISMeasurement_temp.Index = transpose(1:length(CurrentEISMeasurement_temp.FrequencyHz));
+                        end
+
+                        CurrentEISMeasurement_temp.Times = ones(length(CurrentEISMeasurement_temp.FrequencyHz),1);
+
+                        %% Save to global var
+                        app.CurrentEISMeasurement = CurrentEISMeasurement_temp;
+
+                end
+
                 
-                % Specify column names and types
-                opts.VariableNames = ["Index", "FrequencyHz", "Z", "Z1", "Z2", "Phase", "Times"];
-                opts.VariableTypes = ["double", "double", "double", "double", "double", "double", "double"];
-                
-                % Specify file level properties
-                opts.ExtraColumnsRule = "ignore";
-                opts.EmptyLineRule = "read";
-                
-                % Import the data
-                app.CurrentEISMeasurement = readtable(FileName, opts);
-                
-                
-                %% Clear temporary variables
-                clear opts
     
                 %% Save Data
     
-                %struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
-    
                     app.Data(end+1) = struct('Name', {app.CurrentEISName}, 'Time', {app.CurrentEISTime}, 'ExperimentNumber', {app.CurrentExpNumber},...
                         'Well', {app.CurrentWell} ,  'Data', (app.CurrentEISMeasurement));
-                    %Data2Save = app.Data;
-                    %save("Test.mat","Data2Save")
-    
-    
+
     
                 %% Plot
                     EISDat = app.CurrentEISMeasurement;
@@ -2272,6 +2412,11 @@ classdef AnalyZe < matlab.apps.AppBase
                             end
                         end
          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            app.ArbFileFormatSpecTable.Data = num2cell(app.csv_file_arbitrary_format_init);
+            
+
+         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                 
                    flag = app.TutorialMode;
@@ -7021,7 +7166,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 flag = app.TutorialMode;
                    
                    if flag
-                        msgbox("Regularisation adds a priori information into the regression and should be used with care." + newline +...
+                        msgbox("EXPERIMENTAL: Regularisation adds a priori information into the regression and should be used with care." + newline +...
                             "Regularisation adds an additional penalty (superimposed on the fitness) to impose a priori information onto the problem. In this case, penalize deviations from smoothness or sparsity in the time or velocity domains."+newline+...
                             "The regularisation term in the objective function is of the form Lambda*||D(Xb|_i)||n" + newline +...
                             "     - Lambda is the tuning hyperparameter and it is increased linearly from zero to the user defined value with each iteration. A smaller value of Lambda is more conservative." + newline +...
@@ -7539,6 +7684,13 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.NormalizationOptionListBox.Items = {};
             end
         end
+
+        % Value changed function: ArbFileFormatSwitch
+        function ArbFileFormatSwitchValueChanged(app, event)
+            value = app.ArbFileFormatSwitch.Value;
+
+            app.ArbFileFormatSpecTable.Data = num2cell(app.csv_file_arbitrary_format_init);
+        end
     end
 
     % Component initialization
@@ -7754,13 +7906,13 @@ classdef AnalyZe < matlab.apps.AppBase
             app.WellNumberEditFieldLabel = uilabel(app.LoadDataPanel);
             app.WellNumberEditFieldLabel.HorizontalAlignment = 'right';
             app.WellNumberEditFieldLabel.FontSize = 14;
-            app.WellNumberEditFieldLabel.Position = [211 581 86 22];
+            app.WellNumberEditFieldLabel.Position = [211 585 86 22];
             app.WellNumberEditFieldLabel.Text = 'Well Number';
 
             % Create WellNumberEditField
             app.WellNumberEditField = uieditfield(app.LoadDataPanel, 'text');
             app.WellNumberEditField.ValueChangedFcn = createCallbackFcn(app, @WellNumberEditFieldValueChanged, true);
-            app.WellNumberEditField.Position = [312 572 141 39];
+            app.WellNumberEditField.Position = [312 583 141 32];
 
             % Create HoldPlotSwitchLabel
             app.HoldPlotSwitchLabel = uilabel(app.LoadDataPanel);
@@ -7784,7 +7936,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create FileFinderTab
             app.FileFinderTab = uitabgroup(app.LoadDataPanel);
-            app.FileFinderTab.Position = [212 430 241 135];
+            app.FileFinderTab.Position = [212 430 261 149];
 
             % Create FileSUBTRINGFilterTab
             app.FileSUBTRINGFilterTab = uitab(app.FileFinderTab);
@@ -7793,18 +7945,18 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create FindFilesSubtringFilter
             app.FindFilesSubtringFilter = uieditfield(app.FileSUBTRINGFilterTab, 'text');
             app.FindFilesSubtringFilter.Enable = 'off';
-            app.FindFilesSubtringFilter.Position = [75 6 149 25];
+            app.FindFilesSubtringFilter.Position = [75 20 149 25];
 
             % Create KnobSubtringFilter
             app.KnobSubtringFilter = uiknob(app.FileSUBTRINGFilterTab, 'discrete');
             app.KnobSubtringFilter.Items = {'Off', 'Condition', 'Well Number', 'Time Point', 'Substring'};
             app.KnobSubtringFilter.ValueChangedFcn = createCallbackFcn(app, @KnobSubtringFilterValueChanged, true);
-            app.KnobSubtringFilter.Position = [123 35 53 53];
+            app.KnobSubtringFilter.Position = [123 49 53 53];
 
             % Create SubstringLabel
             app.SubstringLabel = uilabel(app.FileSUBTRINGFilterTab);
             app.SubstringLabel.FontWeight = 'bold';
-            app.SubstringLabel.Position = [11 8 65 22];
+            app.SubstringLabel.Position = [11 22 65 22];
             app.SubstringLabel.Text = 'Substring:';
 
             % Create FilterFilenamesbyLabel
@@ -7813,7 +7965,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FilterFilenamesbyLabel.WordWrap = 'on';
             app.FilterFilenamesbyLabel.FontWeight = 'bold';
             app.FilterFilenamesbyLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.FilterFilenamesbyLabel.Position = [7 39 59 64];
+            app.FilterFilenamesbyLabel.Position = [7 53 59 64];
             app.FilterFilenamesbyLabel.Text = 'Filter File names by:';
 
             % Create MultiSelectTab
@@ -7824,7 +7976,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.KnobMultiSelect = uiknob(app.MultiSelectTab, 'discrete');
             app.KnobMultiSelect.Items = {'Off', 'Condition', 'Well Number', 'Time Point'};
             app.KnobMultiSelect.ValueChangedFcn = createCallbackFcn(app, @KnobMultiSelectValueChanged, true);
-            app.KnobMultiSelect.Position = [115 22 49 49];
+            app.KnobMultiSelect.Position = [115 36 49 49];
 
             % Create SelectMultipleFilesandautoincrementafieldLabel
             app.SelectMultipleFilesandautoincrementafieldLabel = uilabel(app.MultiSelectTab);
@@ -7832,8 +7984,55 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SelectMultipleFilesandautoincrementafieldLabel.WordWrap = 'on';
             app.SelectMultipleFilesandautoincrementafieldLabel.FontWeight = 'bold';
             app.SelectMultipleFilesandautoincrementafieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.SelectMultipleFilesandautoincrementafieldLabel.Position = [7 14 59 89];
+            app.SelectMultipleFilesandautoincrementafieldLabel.Position = [7 28 59 89];
             app.SelectMultipleFilesandautoincrementafieldLabel.Text = 'Select Multiple Files and auto-increment a field:';
+
+            % Create AlternativeFileFormatTab
+            app.AlternativeFileFormatTab = uitab(app.FileFinderTab);
+            app.AlternativeFileFormatTab.Title = 'Alternative File Format';
+
+            % Create ArbFileFormatSwitch
+            app.ArbFileFormatSwitch = uiswitch(app.AlternativeFileFormatTab, 'slider');
+            app.ArbFileFormatSwitch.Orientation = 'vertical';
+            app.ArbFileFormatSwitch.ValueChangedFcn = createCallbackFcn(app, @ArbFileFormatSwitchValueChanged, true);
+            app.ArbFileFormatSwitch.Position = [8 50 20 45];
+
+            % Create ArbFileFormatSpecTable
+            app.ArbFileFormatSpecTable = uitable(app.AlternativeFileFormatTab);
+            app.ArbFileFormatSpecTable.ColumnName = {'Index (AU)'; 'Freq (Hz)'; 'Re(Z)'; '-Im(Z)'; 'Im(Z)'; 'Mag(Z)'; '-Phase(Z) (deg)'; 'Phase(Z) (deg)'};
+            app.ArbFileFormatSpecTable.RowName = {};
+            app.ArbFileFormatSpecTable.ColumnEditable = true;
+            app.ArbFileFormatSpecTable.Tooltip = {'Column Number starting at 1 (-1 for excluded columns)'};
+            app.ArbFileFormatSpecTable.Position = [34 28 175 70];
+
+            % Create SpecifytargetfilecolumnorderLabel
+            app.SpecifytargetfilecolumnorderLabel = uilabel(app.AlternativeFileFormatTab);
+            app.SpecifytargetfilecolumnorderLabel.HorizontalAlignment = 'center';
+            app.SpecifytargetfilecolumnorderLabel.FontWeight = 'bold';
+            app.SpecifytargetfilecolumnorderLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.SpecifytargetfilecolumnorderLabel.Position = [25 4 190 24];
+            app.SpecifytargetfilecolumnorderLabel.Text = 'Specify target file column order';
+
+            % Create stDataRowSpinnerLabel
+            app.stDataRowSpinnerLabel = uilabel(app.AlternativeFileFormatTab);
+            app.stDataRowSpinnerLabel.HorizontalAlignment = 'center';
+            app.stDataRowSpinnerLabel.FontWeight = 'bold';
+            app.stDataRowSpinnerLabel.Position = [210 24 52 30];
+            app.stDataRowSpinnerLabel.Text = {'1st Data'; 'Row'};
+
+            % Create stDataRowSpinner
+            app.stDataRowSpinner = uispinner(app.AlternativeFileFormatTab);
+            app.stDataRowSpinner.Limits = [1 Inf];
+            app.stDataRowSpinner.FontSize = 14;
+            app.stDataRowSpinner.Position = [215 57 43 41];
+            app.stDataRowSpinner.Value = 2;
+
+            % Create CsvOrSpreadsheetSwitch
+            app.CsvOrSpreadsheetSwitch = uiswitch(app.AlternativeFileFormatTab, 'rocker');
+            app.CsvOrSpreadsheetSwitch.Items = {'csv (txt)', 'Spreadsheet'};
+            app.CsvOrSpreadsheetSwitch.Orientation = 'horizontal';
+            app.CsvOrSpreadsheetSwitch.Position = [107 101 43 19];
+            app.CsvOrSpreadsheetSwitch.Value = 'csv (txt)';
 
             % Create AutoIncrementTimePointSwitchLabel
             app.AutoIncrementTimePointSwitchLabel = uilabel(app.LoadDataPanel);
@@ -8238,6 +8437,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create TextArea
             app.TextArea = uitextarea(app.HyperparamsTab);
+            app.TextArea.Editable = 'off';
             app.TextArea.Position = [24 6 265 70];
             app.TextArea.Value = {'The Global Optimization Iterations is the hyperparameter with the greatest impact on fit quality and computation time. This tab group contains adittional hyperparameters and algorithm modifiers.'; ''; 'The most pertinent setting is the fitting of the series resistance - by default it is extracted from the impedance data as the highest frequency impedance (R_inf). This assumes that a sufficiently high frequency is measured.'};
 
@@ -8432,6 +8632,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create AbortButton
             app.AbortButton = uibutton(app.FittingParams, 'state');
+            app.AbortButton.Tooltip = {'Abort circuit fitting after completion of the current time point'};
             app.AbortButton.Text = 'Abort';
             app.AbortButton.FontSize = 18;
             app.AbortButton.FontWeight = 'bold';
@@ -8499,6 +8700,15 @@ classdef AnalyZe < matlab.apps.AppBase
             zlabel(app.NyqResults, 'Z')
             app.NyqResults.Position = [7 9 355 276];
 
+            % Create ProblemSetuplogTab
+            app.ProblemSetuplogTab = uitab(app.AuxCCTFitResults);
+            app.ProblemSetuplogTab.Title = 'Problem Setup log';
+
+            % Create CCTFitProblemLog
+            app.CCTFitProblemLog = uitextarea(app.ProblemSetuplogTab);
+            app.CCTFitProblemLog.Editable = 'off';
+            app.CCTFitProblemLog.Position = [10 11 349 274];
+
             % Create RecursiveTimeReg
             app.RecursiveTimeReg = uitab(app.AuxCCTFitResults);
             app.RecursiveTimeReg.Title = 'Recursive Time Regularization';
@@ -8522,15 +8732,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RecursiveTimeRegLogSwitch_2.Items = {'Rb', 'Cb'};
             app.RecursiveTimeRegLogSwitch_2.Position = [291 8 45 20];
             app.RecursiveTimeRegLogSwitch_2.Value = 'Rb';
-
-            % Create ProblemSetuplogTab
-            app.ProblemSetuplogTab = uitab(app.AuxCCTFitResults);
-            app.ProblemSetuplogTab.Title = 'Problem Setup log';
-
-            % Create CCTFitProblemLog
-            app.CCTFitProblemLog = uitextarea(app.ProblemSetuplogTab);
-            app.CCTFitProblemLog.Editable = 'off';
-            app.CCTFitProblemLog.Position = [10 11 349 274];
 
             % Create ResultsTab
             app.ResultsTab = uitab(app.TabGroup2);
