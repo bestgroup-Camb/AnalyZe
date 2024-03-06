@@ -26,6 +26,38 @@ classdef AnalyZe < matlab.apps.AppBase
     % Properties that correspond to app components
     properties (Access = public)
         UIFigure                        matlab.ui.Figure
+        AnalyZeMenu                     matlab.ui.container.Menu
+        NavigatetoHomePageMenu          matlab.ui.container.Menu
+        CloseApplicationMenu            matlab.ui.container.Menu
+        QuitMATLABMenu                  matlab.ui.container.Menu
+        ForceQuitMATLABMenu             matlab.ui.container.Menu
+        DataMenu                        matlab.ui.container.Menu
+        ImportDataMenu                  matlab.ui.container.Menu
+        ClearAllDataMenu                matlab.ui.container.Menu
+        DumpDataToMATLABWorkspaceMenu   matlab.ui.container.Menu
+        ImpedanceDataMenu               matlab.ui.container.Menu
+        CircuitFitResultsMenu           matlab.ui.container.Menu
+        TrasferFnFitResultsMenu         matlab.ui.container.Menu
+        ToolboxMenu                     matlab.ui.container.Menu
+        CircuitFittingMenu              matlab.ui.container.Menu
+        FitaCircuitMenu                 matlab.ui.container.Menu
+        SaveMenu                        matlab.ui.container.Menu
+        ResultsMenu                     matlab.ui.container.Menu
+        FigureMenu                      matlab.ui.container.Menu
+        TimeSeriesMagnitudeCrossSectionMenu  matlab.ui.container.Menu
+        ExamineMagCrossSectionMenu      matlab.ui.container.Menu
+        SaveMenu_3                      matlab.ui.container.Menu
+        LoadDisplayedDataintoTableMenu  matlab.ui.container.Menu
+        SaveDatainTableMenu             matlab.ui.container.Menu
+        SaveFigureMenu                  matlab.ui.container.Menu
+        TransferFunctionEstimationMenu  matlab.ui.container.Menu
+        FitLaplaceTransferFunctionsMenu  matlab.ui.container.Menu
+        SaveMenu_2                      matlab.ui.container.Menu
+        ResultsMenu_2                   matlab.ui.container.Menu
+        FigureMenu_2                    matlab.ui.container.Menu
+        HelpMenu                        matlab.ui.container.Menu
+        ToggleExplainerPopupsMenu       matlab.ui.container.Menu
+        GithubRepositoryMenu            matlab.ui.container.Menu
         TabGroup                        matlab.ui.container.TabGroup
         HomeTab                         matlab.ui.container.Tab
         Image5                          matlab.ui.control.Image
@@ -76,13 +108,12 @@ classdef AnalyZe < matlab.apps.AppBase
         MultisheetSpreadhseetTab        matlab.ui.container.Tab
         ReaddatafromspreadsheetincrementingLabel  matlab.ui.control.Label
         KnobMultiSelect_SpreadsheetMultisheet  matlab.ui.control.DiscreteKnob
-        HOMEButton                      matlab.ui.control.Button
         HoldPlotSwitchLoad              matlab.ui.control.ToggleSwitch
         HoldPlotSwitchLabel             matlab.ui.control.Label
         WellNumberEditField             matlab.ui.control.EditField
-        WellNumberEditFieldLabel        matlab.ui.control.Label
         ExperimentNumberEditField       matlab.ui.control.NumericEditField
         ExperimentNumberEditFieldLabel  matlab.ui.control.Label
+        WellNumberEditFieldLabel        matlab.ui.control.Label
         LOADButton                      matlab.ui.control.Button
         FindFileButton                  matlab.ui.control.Button
         OrEnterFilePathEditField        matlab.ui.control.EditField
@@ -95,7 +126,6 @@ classdef AnalyZe < matlab.apps.AppBase
         AnalysisCCTFITTab               matlab.ui.container.Tab
         SaveFigureButton                matlab.ui.control.Button
         LoadResultsButton               matlab.ui.control.Button
-        HOMEButton_2                    matlab.ui.control.Button
         ClearResultsButton              matlab.ui.control.Button
         SaveResultsButton               matlab.ui.control.Button
         TabGroup2                       matlab.ui.container.TabGroup
@@ -109,7 +139,7 @@ classdef AnalyZe < matlab.apps.AppBase
         RecursiveTimeRegLogSwitch_2     matlab.ui.control.Switch
         RecursiveTimeRegLogSwitch       matlab.ui.control.Switch
         RecursiveTimeRegPlot            matlab.ui.control.UIAxes
-        PlotResultsSelectionButton      matlab.ui.control.Button
+        PlotResultsfromTableSelectionButton  matlab.ui.control.Button
         HoldPlotsSwitch                 matlab.ui.control.ToggleSwitch
         HoldPlotsSwitchLabel            matlab.ui.control.Label
         BodeResults                     matlab.ui.control.UIAxes
@@ -178,7 +208,6 @@ classdef AnalyZe < matlab.apps.AppBase
         HoldPlotsSwitch_2Label_2        matlab.ui.control.Label
         PlotFromTableSelectionButton    matlab.ui.control.Button
         FitSeriesPlot                   matlab.ui.control.UIAxes
-        RefreshDataOptionsButton        matlab.ui.control.Button
         FittingParams                   matlab.ui.container.Panel
         AbortButton                     matlab.ui.control.StateButton
         CCTFitOptionsTabGroup           matlab.ui.container.TabGroup
@@ -251,6 +280,7 @@ classdef AnalyZe < matlab.apps.AppBase
         GlobalOptimizationIterationsEditField  matlab.ui.control.NumericEditField
         GlobalOptimizationIterationsLabel  matlab.ui.control.Label
         TrimData                        matlab.ui.container.Panel
+        RefreshData                     matlab.ui.control.Button
         TimeListBox                     matlab.ui.control.ListBox
         TimeListBoxLabel                matlab.ui.control.Label
         ChooseButton                    matlab.ui.control.Button
@@ -263,8 +293,6 @@ classdef AnalyZe < matlab.apps.AppBase
         ConditionListBoxLabel           matlab.ui.control.Label
         AnalysisTimeSeriesMagnitudeCrossSectionTab  matlab.ui.container.Tab
         SaveFigureButton_2              matlab.ui.control.Button
-        HOMEButton_3                    matlab.ui.control.Button
-        RefreshDataOptionsButton_2      matlab.ui.control.Button
         TabGroup4                       matlab.ui.container.TabGroup
         PlotsTab_2                      matlab.ui.container.Tab
         LoadDataIntoResultsTableButton  matlab.ui.control.Button
@@ -323,6 +351,7 @@ classdef AnalyZe < matlab.apps.AppBase
         OffsetRemovalSwitch             matlab.ui.control.Switch
         OffsetRemovalSwitchLabel        matlab.ui.control.Label
         TrimData_2                      matlab.ui.container.Panel
+        RefreshData_2                   matlab.ui.control.Button
         ChooseandPlotButton             matlab.ui.control.Button
         ChosenDataTable_2               matlab.ui.control.Table
         WellNumberListBox_2             matlab.ui.control.ListBox
@@ -338,7 +367,6 @@ classdef AnalyZe < matlab.apps.AppBase
         ProgressGuage_2                 matlab.ui.control.SemicircularGauge
         GoButton_2                      matlab.ui.control.Button
         LoadResultsButton_2             matlab.ui.control.Button
-        HOMEButton_4                    matlab.ui.control.Button
         ClearResultsButton_3            matlab.ui.control.Button
         SaveResultsButton_3             matlab.ui.control.Button
         TabGroup5                       matlab.ui.container.TabGroup
@@ -395,8 +423,8 @@ classdef AnalyZe < matlab.apps.AppBase
         HoldPlotsSwitch_2Label_4        matlab.ui.control.Label
         PlotFromTableSelectionButton_2  matlab.ui.control.Button
         FitSeriesPlot_2                 matlab.ui.control.UIAxes
-        RefreshDataOptionsButton_3      matlab.ui.control.Button
         TrimData_3                      matlab.ui.container.Panel
+        RefreshData_3                   matlab.ui.control.Button
         TimeListBox_2                   matlab.ui.control.ListBox
         TimeListBox_2Label              matlab.ui.control.Label
         ChooseButton_2                  matlab.ui.control.Button
@@ -2523,8 +2551,8 @@ classdef AnalyZe < matlab.apps.AppBase
                         
         end
 
-        % Button pushed function: RefreshDataOptionsButton
-        function RefreshDataOptionsButtonPushed(app, event)
+        % Button pushed function: RefreshData
+        function RefreshDataPushed(app, event)
                 Dat = app.Data;
 
                 Conditions = "Select All";
@@ -3806,8 +3834,8 @@ classdef AnalyZe < matlab.apps.AppBase
 
         end
 
-        % Button pushed function: RefreshDataOptionsButton_2
-        function RefreshDataOptionsButton_2Pushed(app, event)
+        % Button pushed function: RefreshData_2
+        function RefreshData_2Pushed(app, event)
             Dat = app.Data;
 
                 Conditions = "Select All";
@@ -4376,6 +4404,7 @@ classdef AnalyZe < matlab.apps.AppBase
         % Button pushed function: FitEquivalentCircuitButton
         function FitEquivalentCircuitButtonPushed(app, event)
             app.TabGroup.SelectedTab = app.AnalysisCCTFITTab;
+            app.RefreshData.ButtonPushedFcn(app,event);
 
         
                 app.CircuitBuilderTable.Data = num2cell(app.cct_builder_init);
@@ -4424,6 +4453,7 @@ classdef AnalyZe < matlab.apps.AppBase
         % Button pushed function: TimeSeriesMagnitudeCrossSectionButton
         function TimeSeriesMagnitudeCrossSectionButtonPushed(app, event)
             app.TabGroup.SelectedTab = app.AnalysisTimeSeriesMagnitudeCrossSectionTab;
+            app.RefreshData_2.ButtonPushedFcn(app,event);
 
 
             flag = app.TutorialMode;
@@ -4435,17 +4465,17 @@ classdef AnalyZe < matlab.apps.AppBase
 
         end
 
-        % Button pushed function: HOMEButton
+        % Callback function: not associated with a component
         function HOMEButtonPushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
 
-        % Button pushed function: HOMEButton_2
+        % Callback function: not associated with a component
         function HOMEButton_2Pushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
 
-        % Button pushed function: HOMEButton_3
+        % Callback function: not associated with a component
         function HOMEButton_3Pushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
@@ -5080,8 +5110,8 @@ classdef AnalyZe < matlab.apps.AppBase
             end
         end
 
-        % Button pushed function: PlotResultsSelectionButton
-        function PlotResultsSelectionButtonPushed(app, event)
+        % Button pushed function: PlotResultsfromTableSelectionButton
+        function PlotResultsfromTableSelectionButtonPushed(app, event)
               
            answer = 'Continue';
            flag = app.TutorialMode;
@@ -5182,8 +5212,8 @@ classdef AnalyZe < matlab.apps.AppBase
   
         end
 
-        % Button pushed function: RefreshDataOptionsButton_3
-        function RefreshDataOptionsButton_3Pushed(app, event)
+        % Button pushed function: RefreshData_3
+        function RefreshData_3Pushed(app, event)
              Dat = app.Data;
 
                 Conditions = "Select All";
@@ -6344,6 +6374,11 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Button pushed function: SaveResultsButton_3
         function SaveResultsButton_3Pushed(app, event)
+            if isempty(app.Fits_TFest)
+                errordlg('No results to save!','Results Not Found')
+                return
+            end
+            
             UserFileName = inputdlg("Enter File Name: ");
             
             selpath = uigetdir();
@@ -6482,7 +6517,7 @@ classdef AnalyZe < matlab.apps.AppBase
             end
         end
 
-        % Button pushed function: HOMEButton_4
+        % Callback function: not associated with a component
         function HOMEButton_4Pushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
@@ -6490,6 +6525,7 @@ classdef AnalyZe < matlab.apps.AppBase
         % Button pushed function: FitTransferFunctionButton
         function FitTransferFunctionButtonPushed(app, event)
             app.TabGroup.SelectedTab = app.AnalysisEstimateTransferFunctionTab;
+            app.RefreshData_3.ButtonPushedFcn(app,event);
 
             flag = app.TutorialMode;
                    if flag
@@ -7096,6 +7132,8 @@ classdef AnalyZe < matlab.apps.AppBase
              [indx,tf] = listdlg('PromptString',{'Select a Plot To Save',...
             'Only one plot can be selected at a time.',''},...
             'SelectionMode','single','ListString',plotlist);
+
+              if isempty(indx), msgbox('Operation Cancelled','Save Fig','warn'); return; end 
 
             %Choose plot to save
                 plotName = plotlist{indx};
@@ -7977,6 +8015,239 @@ classdef AnalyZe < matlab.apps.AppBase
             item = event.InteractionInformation.Item;
              
         end
+
+        % Menu selected function: NavigatetoHomePageMenu
+        function NavigatetoHomePageMenuSelected(app, event)
+             app.TabGroup.SelectedTab = app.HomeTab;
+        end
+
+        % Menu selected function: CloseApplicationMenu
+        function CloseApplicationMenuSelected(app, event)
+            
+        end
+
+        % Menu selected function: ForceQuitMATLABMenu
+        function ForceQuitMATLABMenuSelected(app, event)
+            quit force;
+        end
+
+        % Menu selected function: ToggleExplainerPopupsMenu
+        function ToggleExplainerPopupsMenuSelected(app, event)
+             value = app.ExplainerModeSwitch.Value;
+             
+            switch value
+                case 'On'
+                    app.TutorialMode = false;
+                    app.ExplainerModeSwitch.Value = 'Off';
+                case 'Off'
+                    app.TutorialMode = true;
+                    app.ExplainerModeSwitch.Value = 'On';
+                    msgbox('Explainers On!','Heads Up!','help')
+                    
+            end
+        end
+
+        % Callback function: Hyperlink
+        function HyperlinkClicked(app, event)
+            
+        end
+
+        % Menu selected function: GithubRepositoryMenu
+        function GithubRepositoryMenuSelected(app, event)
+            web('https://github.com/bestgroup-Camb/AnalyZe');
+        end
+
+        % Menu selected function: ClearAllDataMenu
+        function ClearAllDataMenuSelected(app, event)
+             answer = 'Continue';
+
+               answer = questdlg('Are you sure that you want to delete all loaded data from the App (saved files are unaffected)?',...
+                                    'Clear Data',...
+                                   'Continue','Cancel','Continue');
+               switch answer
+                   case 'Cancel'
+                       return
+               end
+            
+            app.Data = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+            app.UITable.Data = [];
+            
+            yyaxis(app.LoadEISDat, 'right')
+            cla(app.LoadEISDat)
+            yyaxis(app.LoadEISDat, 'left')
+            cla(app.LoadEISDat)
+
+
+            %% Time auto incrementer
+                    app.TimePointAUEditField.Enable = true;
+                    app.AutoFileTimeIncrementArray = [];
+                    app.AutoFileTimeIncremementPosition = 0;
+                    app.AutoIncrementTimePointperfileSwitch.Value = 'Off';
+                    app.AutoIncrementTimePointperfileLabel.Text = {'Auto-Increment','Time Point','per file'};
+                    app.AutoIncrementTimePointperfileLabel.FontColor = '0.49,0.18,0.56';
+
+                    
+           
+
+             f = msgbox("Data Cleared Successfully!",'Clear Data','help');
+        end
+
+        % Menu selected function: ImportDataMenu
+        function ImportDataMenuSelected(app, event)
+            app.TabGroup.SelectedTab = app.InportDataTab;
+
+            flag = app.TutorialMode;
+            if flag
+
+                 msgbox('Enter Data Descriptiors (Time in Arb. Units) -> Select Find File to search for .txt (.csv) data file using explorer -> Select Load to Read data' ,...
+                                            'Workflow','help');
+            end
+        end
+
+        % Menu selected function: ImpedanceDataMenu
+        function ImpedanceDataMenuSelected(app, event)
+            try
+            assignin('base','AnalyZeData',app.Data);
+            msgbox('Data Export Sucessful!','Dump Data to Workspace','help')
+            catch
+                errordlg("Data Export Failed","Dump Data to Workspace")
+            end
+        end
+
+        % Menu selected function: CircuitFitResultsMenu
+        function CircuitFitResultsMenuSelected(app, event)
+            try
+            assignin('base','AnalyZeCCTFits',app.Fits);
+            msgbox('Data Export Sucessful!','Dump Data to Workspace','help')
+            catch
+                errordlg("Data Export Failed","Dump Data to Workspace")
+            end
+        end
+
+        % Menu selected function: TrasferFnFitResultsMenu
+        function TrasferFnFitResultsMenuSelected(app, event)
+            try
+            assignin('base','AnalyZeTFEstFits',app.Fits_TFest);
+            msgbox('Data Export Sucessful!','Dump Data to Workspace','help')
+            catch
+                errordlg("Data Export Failed","Dump Data to Workspace")
+            end
+        end
+
+        % Menu selected function: FitaCircuitMenu
+        function FitaCircuitMenuSelected(app, event)
+            app.TabGroup.SelectedTab = app.AnalysisCCTFITTab;
+            app.RefreshData.ButtonPushedFcn(app,event);
+
+
+                app.CircuitBuilderTable.Data = num2cell(app.cct_builder_init);
+                app.CircuitBuilderTable_MaxVals.Data = num2cell(app.cct_builder_MaxVals_init);
+           
+
+            app.IncludeBarrierSwitch.Value = 'Off';
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+                    TableSize = size(app.CircuitBuilderTable.Data);
+
+                    s_empty = uistyle('BackgroundColor','white');
+                    s_full = uistyle('BackgroundColor','green');
+                    
+
+                        for (i = 1:TableSize(1))
+                            for (j = 1:TableSize(2))
+                                  value = app.CircuitBuilderTable.Data(i,j);
+                                  value = value{1};
+            
+                                  if value == ' '
+                                      addStyle(app.CircuitBuilderTable,s_empty,'cell',[i,j]);
+                                      addStyle(app.CircuitBuilderTable_MaxVals,s_empty,'cell',[i,j]);
+                                  else
+                                    addStyle(app.CircuitBuilderTable,s_full,'cell',[i,j]);
+                                      addStyle(app.CircuitBuilderTable_MaxVals,s_full,'cell',[i,j]);
+                                  end
+            
+            
+                            end
+                        end
+         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                flag = app.TutorialMode;
+                   if flag
+
+                      msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for circuit fitting -> Choose circuit fitting parameters -> Select Go! to fit slected circuit to all chosen data.' ,...
+                                            'Workflow','help');
+
+                   end
+                
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        end
+
+        % Menu selected function: ExamineMagCrossSectionMenu
+        function ExamineMagCrossSectionMenuSelected(app, event)
+            app.TabGroup.SelectedTab = app.AnalysisTimeSeriesMagnitudeCrossSectionTab;
+            app.RefreshData_2.ButtonPushedFcn(app,event);
+
+               flag = app.TutorialMode;
+                   if flag
+
+                       msgbox('Refresh Data to load data options for selection -> Select Choose and Plot to define subset of the full dataset for analysis and plot the time series of the magnitude cross section -> Explore the spectrum by slecting different frequencies.' ,...
+                                            'Workflow','help');
+                   end
+        end
+
+        % Menu selected function: FitLaplaceTransferFunctionsMenu
+        function FitLaplaceTransferFunctionsMenuSelected(app, event)
+            app.TabGroup.SelectedTab = app.AnalysisEstimateTransferFunctionTab;
+            app.RefreshData_3.ButtonPushedFcn(app,event);
+
+             flag = app.TutorialMode;
+                   if flag
+
+                         msgbox('Refresh Data to load data options for selection -> Select Choose to define subset of the full dataset for Transfer function estimation -> Choose the Number of poles and zeros -> Select Go! to fit an nth order transfer dunction to all chosen data.' ,...
+                                            'Workflow','help');
+
+                   end
+        end
+
+        % Menu selected function: QuitMATLABMenu
+        function QuitMATLABMenuSelected(app, event)
+            quit;
+        end
+
+        % Menu selected function: ResultsMenu
+        function ResultsMenuSelected(app, event)
+            app.SaveResultsButton.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: FigureMenu
+        function FigureMenuSelected(app, event)
+            app.SaveFigureButton.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: ResultsMenu_2
+        function ResultsMenu_2Selected(app, event)
+            app.SaveResultsButton_3.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: FigureMenu_2
+        function FigureMenu_2Selected(app, event)
+            app.SaveFigureButton_3.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: LoadDisplayedDataintoTableMenu
+        function LoadDisplayedDataintoTableMenuSelected(app, event)
+            app.LoadDataIntoResultsTableButton.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: SaveDatainTableMenu
+        function SaveDatainTableMenuSelected(app, event)
+            app.SaveResultsButton_2.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: SaveFigureMenu
+        function SaveFigureMenuSelected(app, event)
+            app.SaveFigureButton_2.ButtonPushedFcn(app,event);
+        end
     end
 
     % Component initialization
@@ -7993,8 +8264,158 @@ classdef AnalyZe < matlab.apps.AppBase
             app.UIFigure.Position = [100 100 1022 735];
             app.UIFigure.Name = 'MATLAB App';
 
+            % Create AnalyZeMenu
+            app.AnalyZeMenu = uimenu(app.UIFigure);
+            app.AnalyZeMenu.Text = 'AnalyZe';
+
+            % Create NavigatetoHomePageMenu
+            app.NavigatetoHomePageMenu = uimenu(app.AnalyZeMenu);
+            app.NavigatetoHomePageMenu.MenuSelectedFcn = createCallbackFcn(app, @NavigatetoHomePageMenuSelected, true);
+            app.NavigatetoHomePageMenu.Text = 'Navigate to Home Page';
+
+            % Create CloseApplicationMenu
+            app.CloseApplicationMenu = uimenu(app.AnalyZeMenu);
+            app.CloseApplicationMenu.MenuSelectedFcn = createCallbackFcn(app, @CloseApplicationMenuSelected, true);
+            app.CloseApplicationMenu.Text = 'Close Application';
+
+            % Create QuitMATLABMenu
+            app.QuitMATLABMenu = uimenu(app.CloseApplicationMenu);
+            app.QuitMATLABMenu.MenuSelectedFcn = createCallbackFcn(app, @QuitMATLABMenuSelected, true);
+            app.QuitMATLABMenu.Text = 'Quit MATLAB';
+
+            % Create ForceQuitMATLABMenu
+            app.ForceQuitMATLABMenu = uimenu(app.CloseApplicationMenu);
+            app.ForceQuitMATLABMenu.MenuSelectedFcn = createCallbackFcn(app, @ForceQuitMATLABMenuSelected, true);
+            app.ForceQuitMATLABMenu.Text = 'Force Quit MATLAB';
+
+            % Create DataMenu
+            app.DataMenu = uimenu(app.UIFigure);
+            app.DataMenu.Text = 'Data';
+
+            % Create ImportDataMenu
+            app.ImportDataMenu = uimenu(app.DataMenu);
+            app.ImportDataMenu.MenuSelectedFcn = createCallbackFcn(app, @ImportDataMenuSelected, true);
+            app.ImportDataMenu.Text = 'Import Data';
+
+            % Create ClearAllDataMenu
+            app.ClearAllDataMenu = uimenu(app.DataMenu);
+            app.ClearAllDataMenu.MenuSelectedFcn = createCallbackFcn(app, @ClearAllDataMenuSelected, true);
+            app.ClearAllDataMenu.Text = 'Clear All Data';
+
+            % Create DumpDataToMATLABWorkspaceMenu
+            app.DumpDataToMATLABWorkspaceMenu = uimenu(app.DataMenu);
+            app.DumpDataToMATLABWorkspaceMenu.Text = 'Dump Data To MATLAB Workspace';
+
+            % Create ImpedanceDataMenu
+            app.ImpedanceDataMenu = uimenu(app.DumpDataToMATLABWorkspaceMenu);
+            app.ImpedanceDataMenu.MenuSelectedFcn = createCallbackFcn(app, @ImpedanceDataMenuSelected, true);
+            app.ImpedanceDataMenu.Text = 'Impedance Data';
+
+            % Create CircuitFitResultsMenu
+            app.CircuitFitResultsMenu = uimenu(app.DumpDataToMATLABWorkspaceMenu);
+            app.CircuitFitResultsMenu.MenuSelectedFcn = createCallbackFcn(app, @CircuitFitResultsMenuSelected, true);
+            app.CircuitFitResultsMenu.Text = 'Circuit Fit Results';
+
+            % Create TrasferFnFitResultsMenu
+            app.TrasferFnFitResultsMenu = uimenu(app.DumpDataToMATLABWorkspaceMenu);
+            app.TrasferFnFitResultsMenu.MenuSelectedFcn = createCallbackFcn(app, @TrasferFnFitResultsMenuSelected, true);
+            app.TrasferFnFitResultsMenu.Text = 'Trasfer Fn Fit Results';
+
+            % Create ToolboxMenu
+            app.ToolboxMenu = uimenu(app.UIFigure);
+            app.ToolboxMenu.Text = 'Toolbox';
+
+            % Create CircuitFittingMenu
+            app.CircuitFittingMenu = uimenu(app.ToolboxMenu);
+            app.CircuitFittingMenu.Text = 'Circuit Fitting';
+
+            % Create FitaCircuitMenu
+            app.FitaCircuitMenu = uimenu(app.CircuitFittingMenu);
+            app.FitaCircuitMenu.MenuSelectedFcn = createCallbackFcn(app, @FitaCircuitMenuSelected, true);
+            app.FitaCircuitMenu.Text = 'Fit a Circuit!';
+
+            % Create SaveMenu
+            app.SaveMenu = uimenu(app.CircuitFittingMenu);
+            app.SaveMenu.Text = 'Save';
+
+            % Create ResultsMenu
+            app.ResultsMenu = uimenu(app.SaveMenu);
+            app.ResultsMenu.MenuSelectedFcn = createCallbackFcn(app, @ResultsMenuSelected, true);
+            app.ResultsMenu.Text = 'Results';
+
+            % Create FigureMenu
+            app.FigureMenu = uimenu(app.SaveMenu);
+            app.FigureMenu.MenuSelectedFcn = createCallbackFcn(app, @FigureMenuSelected, true);
+            app.FigureMenu.Text = 'Figure';
+
+            % Create TimeSeriesMagnitudeCrossSectionMenu
+            app.TimeSeriesMagnitudeCrossSectionMenu = uimenu(app.ToolboxMenu);
+            app.TimeSeriesMagnitudeCrossSectionMenu.Text = 'Time Series Magnitude Cross Section';
+
+            % Create ExamineMagCrossSectionMenu
+            app.ExamineMagCrossSectionMenu = uimenu(app.TimeSeriesMagnitudeCrossSectionMenu);
+            app.ExamineMagCrossSectionMenu.MenuSelectedFcn = createCallbackFcn(app, @ExamineMagCrossSectionMenuSelected, true);
+            app.ExamineMagCrossSectionMenu.Text = 'Examine Mag Cross Section';
+
+            % Create SaveMenu_3
+            app.SaveMenu_3 = uimenu(app.TimeSeriesMagnitudeCrossSectionMenu);
+            app.SaveMenu_3.Text = 'Save';
+
+            % Create LoadDisplayedDataintoTableMenu
+            app.LoadDisplayedDataintoTableMenu = uimenu(app.SaveMenu_3);
+            app.LoadDisplayedDataintoTableMenu.MenuSelectedFcn = createCallbackFcn(app, @LoadDisplayedDataintoTableMenuSelected, true);
+            app.LoadDisplayedDataintoTableMenu.Text = 'Load Displayed Data into Table';
+
+            % Create SaveDatainTableMenu
+            app.SaveDatainTableMenu = uimenu(app.SaveMenu_3);
+            app.SaveDatainTableMenu.MenuSelectedFcn = createCallbackFcn(app, @SaveDatainTableMenuSelected, true);
+            app.SaveDatainTableMenu.Text = 'Save Data in Table';
+
+            % Create SaveFigureMenu
+            app.SaveFigureMenu = uimenu(app.SaveMenu_3);
+            app.SaveFigureMenu.MenuSelectedFcn = createCallbackFcn(app, @SaveFigureMenuSelected, true);
+            app.SaveFigureMenu.Text = 'Save Figure';
+
+            % Create TransferFunctionEstimationMenu
+            app.TransferFunctionEstimationMenu = uimenu(app.ToolboxMenu);
+            app.TransferFunctionEstimationMenu.Text = 'Transfer Function Estimation';
+
+            % Create FitLaplaceTransferFunctionsMenu
+            app.FitLaplaceTransferFunctionsMenu = uimenu(app.TransferFunctionEstimationMenu);
+            app.FitLaplaceTransferFunctionsMenu.MenuSelectedFcn = createCallbackFcn(app, @FitLaplaceTransferFunctionsMenuSelected, true);
+            app.FitLaplaceTransferFunctionsMenu.Text = 'Fit Laplace Transfer Functions';
+
+            % Create SaveMenu_2
+            app.SaveMenu_2 = uimenu(app.TransferFunctionEstimationMenu);
+            app.SaveMenu_2.Text = 'Save';
+
+            % Create ResultsMenu_2
+            app.ResultsMenu_2 = uimenu(app.SaveMenu_2);
+            app.ResultsMenu_2.MenuSelectedFcn = createCallbackFcn(app, @ResultsMenu_2Selected, true);
+            app.ResultsMenu_2.Text = 'Results';
+
+            % Create FigureMenu_2
+            app.FigureMenu_2 = uimenu(app.SaveMenu_2);
+            app.FigureMenu_2.MenuSelectedFcn = createCallbackFcn(app, @FigureMenu_2Selected, true);
+            app.FigureMenu_2.Text = 'Figure';
+
+            % Create HelpMenu
+            app.HelpMenu = uimenu(app.UIFigure);
+            app.HelpMenu.Text = 'Help';
+
+            % Create ToggleExplainerPopupsMenu
+            app.ToggleExplainerPopupsMenu = uimenu(app.HelpMenu);
+            app.ToggleExplainerPopupsMenu.MenuSelectedFcn = createCallbackFcn(app, @ToggleExplainerPopupsMenuSelected, true);
+            app.ToggleExplainerPopupsMenu.Text = 'Toggle Explainer Pop-ups';
+
+            % Create GithubRepositoryMenu
+            app.GithubRepositoryMenu = uimenu(app.HelpMenu);
+            app.GithubRepositoryMenu.MenuSelectedFcn = createCallbackFcn(app, @GithubRepositoryMenuSelected, true);
+            app.GithubRepositoryMenu.Text = 'Github Repository';
+
             % Create TabGroup
             app.TabGroup = uitabgroup(app.UIFigure);
+            app.TabGroup.TabLocation = 'bottom';
             app.TabGroup.SelectionChangedFcn = createCallbackFcn(app, @TabGroupSelectionChanged, true);
             app.TabGroup.Position = [2 1 1021 734];
 
@@ -8006,7 +8427,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create Image2
             app.Image2 = uiimage(app.HomeTab);
             app.Image2.ScaleMethod = 'fill';
-            app.Image2.Position = [2 -2 1020 709];
+            app.Image2.Position = [-1 -23 1020 733];
             app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectronicist.png');
 
             % Create AnalyZeLabel
@@ -8087,6 +8508,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create Hyperlink
             app.Hyperlink = uihyperlink(app.HomeTab);
+            app.Hyperlink.HyperlinkClickedFcn = createCallbackFcn(app, @HyperlinkClicked, true);
             app.Hyperlink.FontSize = 24;
             app.Hyperlink.FontColor = [0 1 1];
             app.Hyperlink.Tooltip = {'Navigate to our Github project page'};
@@ -8176,6 +8598,13 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LOADButton.Position = [187 347 118 38];
             app.LOADButton.Text = 'LOAD';
 
+            % Create WellNumberEditFieldLabel
+            app.WellNumberEditFieldLabel = uilabel(app.LoadDataPanel);
+            app.WellNumberEditFieldLabel.HorizontalAlignment = 'right';
+            app.WellNumberEditFieldLabel.FontSize = 14;
+            app.WellNumberEditFieldLabel.Position = [211 585 86 22];
+            app.WellNumberEditFieldLabel.Text = 'Well Number';
+
             % Create ExperimentNumberEditFieldLabel
             app.ExperimentNumberEditFieldLabel = uilabel(app.LoadDataPanel);
             app.ExperimentNumberEditFieldLabel.HorizontalAlignment = 'right';
@@ -8189,13 +8618,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ExperimentNumberEditField.FontSize = 18;
             app.ExperimentNumberEditField.Position = [139 569 50 40];
             app.ExperimentNumberEditField.Value = -1;
-
-            % Create WellNumberEditFieldLabel
-            app.WellNumberEditFieldLabel = uilabel(app.LoadDataPanel);
-            app.WellNumberEditFieldLabel.HorizontalAlignment = 'right';
-            app.WellNumberEditFieldLabel.FontSize = 14;
-            app.WellNumberEditFieldLabel.Position = [211 585 86 22];
-            app.WellNumberEditFieldLabel.Text = 'Well Number';
 
             % Create WellNumberEditField
             app.WellNumberEditField = uieditfield(app.LoadDataPanel, 'text');
@@ -8215,15 +8637,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HoldPlotSwitchLoad.Orientation = 'horizontal';
             app.HoldPlotSwitchLoad.FontSize = 18;
             app.HoldPlotSwitchLoad.Position = [35 27 78 35];
-
-            % Create HOMEButton
-            app.HOMEButton = uibutton(app.LoadDataPanel, 'push');
-            app.HOMEButton.ButtonPushedFcn = createCallbackFcn(app, @HOMEButtonPushed, true);
-            app.HOMEButton.FontSize = 18;
-            app.HOMEButton.FontWeight = 'bold';
-            app.HOMEButton.FontColor = [0 0.4471 0.7412];
-            app.HOMEButton.Position = [368 8 102 32];
-            app.HOMEButton.Text = 'HOME';
 
             % Create FileFinderTab
             app.FileFinderTab = uitabgroup(app.LoadDataPanel);
@@ -8465,52 +8878,52 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create TrimData
             app.TrimData = uipanel(app.AnalysisCCTFITTab);
             app.TrimData.Title = 'Select Data';
-            app.TrimData.Position = [15 352 476 322];
+            app.TrimData.Position = [15 352 476 352];
 
             % Create ConditionListBoxLabel
             app.ConditionListBoxLabel = uilabel(app.TrimData);
             app.ConditionListBoxLabel.HorizontalAlignment = 'right';
             app.ConditionListBoxLabel.FontSize = 14;
-            app.ConditionListBoxLabel.Position = [9 254 64 22];
+            app.ConditionListBoxLabel.Position = [38 267 64 22];
             app.ConditionListBoxLabel.Text = 'Condition';
 
             % Create ConditionListBox
             app.ConditionListBox = uilistbox(app.TrimData);
             app.ConditionListBox.Multiselect = 'on';
-            app.ConditionListBox.Position = [88 233 356 65];
+            app.ConditionListBox.Position = [110 268 356 61];
             app.ConditionListBox.Value = {'Item 1'};
 
             % Create ExperimentNumberListBoxLabel
             app.ExperimentNumberListBoxLabel = uilabel(app.TrimData);
             app.ExperimentNumberListBoxLabel.HorizontalAlignment = 'right';
             app.ExperimentNumberListBoxLabel.FontSize = 14;
-            app.ExperimentNumberListBoxLabel.Position = [-32 167 165 43];
+            app.ExperimentNumberListBoxLabel.Position = [-32 209 165 43];
             app.ExperimentNumberListBoxLabel.Text = 'Experiment Number';
 
             % Create ExperimentNumberListBox
             app.ExperimentNumberListBox = uilistbox(app.TrimData);
             app.ExperimentNumberListBox.Multiselect = 'on';
-            app.ExperimentNumberListBox.Position = [144 164 87 58];
+            app.ExperimentNumberListBox.Position = [144 206 122 58];
             app.ExperimentNumberListBox.Value = {'Item 1'};
 
             % Create WellNumberListBoxLabel
             app.WellNumberListBoxLabel = uilabel(app.TrimData);
             app.WellNumberListBoxLabel.HorizontalAlignment = 'right';
             app.WellNumberListBoxLabel.FontSize = 14;
-            app.WellNumberListBoxLabel.Position = [45 117 86 22];
+            app.WellNumberListBoxLabel.Position = [45 164 86 22];
             app.WellNumberListBoxLabel.Text = 'Well Number';
 
             % Create WellNumberListBox
             app.WellNumberListBox = uilistbox(app.TrimData);
             app.WellNumberListBox.Multiselect = 'on';
-            app.WellNumberListBox.Position = [145 101 87 54];
+            app.WellNumberListBox.Position = [145 142 120 59];
             app.WellNumberListBox.Value = {'Item 1'};
 
             % Create ChosenDataTable
             app.ChosenDataTable = uitable(app.TrimData);
             app.ChosenDataTable.ColumnName = {'Condition'; 'Experiment Number'; 'Well'; 'Time Point'};
             app.ChosenDataTable.RowName = {};
-            app.ChosenDataTable.Position = [28 9 417 85];
+            app.ChosenDataTable.Position = [11 9 450 130];
 
             % Create ChooseButton
             app.ChooseButton = uibutton(app.TrimData, 'push');
@@ -8519,21 +8932,31 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ChooseButton.FontWeight = 'bold';
             app.ChooseButton.FontColor = [0.4667 0.6745 0.1882];
             app.ChooseButton.Tooltip = {'Select the Data subset to be fit'};
-            app.ChooseButton.Position = [269 113 146 30];
+            app.ChooseButton.Position = [289 149 146 30];
             app.ChooseButton.Text = 'Choose';
 
             % Create TimeListBoxLabel
             app.TimeListBoxLabel = uilabel(app.TrimData);
             app.TimeListBoxLabel.HorizontalAlignment = 'right';
             app.TimeListBoxLabel.FontSize = 14;
-            app.TimeListBoxLabel.Position = [260 182 48 23];
+            app.TimeListBoxLabel.Position = [281 224 48 23];
             app.TimeListBoxLabel.Text = 'Time';
 
             % Create TimeListBox
             app.TimeListBox = uilistbox(app.TrimData);
             app.TimeListBox.Multiselect = 'on';
-            app.TimeListBox.Position = [323 165 122 57];
+            app.TimeListBox.Position = [344 188 121 75];
             app.TimeListBox.Value = {'Item 1'};
+
+            % Create RefreshData
+            app.RefreshData = uibutton(app.TrimData, 'push');
+            app.RefreshData.ButtonPushedFcn = createCallbackFcn(app, @RefreshDataPushed, true);
+            app.RefreshData.Icon = fullfile(pathToMLAPP, 'images', 'Refresh_icon.png');
+            app.RefreshData.FontWeight = 'bold';
+            app.RefreshData.FontColor = [0.4667 0.6745 0.1882];
+            app.RefreshData.Tooltip = {'Refresh Data Options'};
+            app.RefreshData.Position = [6 293 41 36];
+            app.RefreshData.Text = '';
 
             % Create FittingParams
             app.FittingParams = uipanel(app.AnalysisCCTFITTab);
@@ -8987,14 +9410,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.AbortButton.FontColor = [0.6353 0.0784 0.1843];
             app.AbortButton.Position = [277 7 63 30];
 
-            % Create RefreshDataOptionsButton
-            app.RefreshDataOptionsButton = uibutton(app.AnalysisCCTFITTab, 'push');
-            app.RefreshDataOptionsButton.ButtonPushedFcn = createCallbackFcn(app, @RefreshDataOptionsButtonPushed, true);
-            app.RefreshDataOptionsButton.FontWeight = 'bold';
-            app.RefreshDataOptionsButton.FontColor = [0.4667 0.6745 0.1882];
-            app.RefreshDataOptionsButton.Position = [178 679 138 27];
-            app.RefreshDataOptionsButton.Text = 'Refresh Data Options';
-
             % Create TabGroup2
             app.TabGroup2 = uitabgroup(app.AnalysisCCTFITTab);
             app.TabGroup2.SelectionChangedFcn = createCallbackFcn(app, @TabGroup2SelectionChanged, true);
@@ -9024,14 +9439,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HoldPlotsSwitch.FontSize = 18;
             app.HoldPlotsSwitch.Position = [39 157 32 72];
 
-            % Create PlotResultsSelectionButton
-            app.PlotResultsSelectionButton = uibutton(app.PlotsTab, 'push');
-            app.PlotResultsSelectionButton.ButtonPushedFcn = createCallbackFcn(app, @PlotResultsSelectionButtonPushed, true);
-            app.PlotResultsSelectionButton.FontSize = 18;
-            app.PlotResultsSelectionButton.FontWeight = 'bold';
-            app.PlotResultsSelectionButton.FontColor = [0.302 0.7451 0.9333];
-            app.PlotResultsSelectionButton.Position = [6 33 100 74];
-            app.PlotResultsSelectionButton.Text = {'Plot'; 'Results'; 'Selection'};
+            % Create PlotResultsfromTableSelectionButton
+            app.PlotResultsfromTableSelectionButton = uibutton(app.PlotsTab, 'push');
+            app.PlotResultsfromTableSelectionButton.ButtonPushedFcn = createCallbackFcn(app, @PlotResultsfromTableSelectionButtonPushed, true);
+            app.PlotResultsfromTableSelectionButton.FontSize = 17;
+            app.PlotResultsfromTableSelectionButton.FontWeight = 'bold';
+            app.PlotResultsfromTableSelectionButton.FontColor = [0.302 0.7451 0.9333];
+            app.PlotResultsfromTableSelectionButton.Position = [7 17 96 92];
+            app.PlotResultsfromTableSelectionButton.Text = {'Plot'; 'Results'; 'from Table'; 'Selection'};
 
             % Create AuxCCTFitResults
             app.AuxCCTFitResults = uitabgroup(app.PlotsTab);
@@ -9500,7 +9915,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SaveResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
             app.SaveResultsButton.ButtonPushedFcn = createCallbackFcn(app, @SaveResultsButtonPushed, true);
             app.SaveResultsButton.FontSize = 14;
-            app.SaveResultsButton.Position = [670 13 114 30];
+            app.SaveResultsButton.Position = [759 12 114 30];
             app.SaveResultsButton.Text = 'Save Results';
 
             % Create ClearResultsButton
@@ -9512,20 +9927,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ClearResultsButton.Position = [511 13 108 30];
             app.ClearResultsButton.Text = 'Clear Results';
 
-            % Create HOMEButton_2
-            app.HOMEButton_2 = uibutton(app.AnalysisCCTFITTab, 'push');
-            app.HOMEButton_2.ButtonPushedFcn = createCallbackFcn(app, @HOMEButton_2Pushed, true);
-            app.HOMEButton_2.FontSize = 18;
-            app.HOMEButton_2.FontWeight = 'bold';
-            app.HOMEButton_2.FontColor = [0 0.4471 0.7412];
-            app.HOMEButton_2.Position = [930 14 82 30];
-            app.HOMEButton_2.Text = 'HOME';
-
             % Create LoadResultsButton
             app.LoadResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
             app.LoadResultsButton.ButtonPushedFcn = createCallbackFcn(app, @LoadResultsButtonPushed, true);
             app.LoadResultsButton.FontSize = 14;
-            app.LoadResultsButton.Position = [792 14 114 30];
+            app.LoadResultsButton.Position = [881 13 114 30];
             app.LoadResultsButton.Text = 'Load Results';
 
             % Create SaveFigureButton
@@ -9545,63 +9951,73 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create TrimData_2
             app.TrimData_2 = uipanel(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
             app.TrimData_2.Title = 'Select Time Series';
-            app.TrimData_2.Position = [15 376 476 295];
+            app.TrimData_2.Position = [15 376 476 328];
 
             % Create ConditionListBox_2Label
             app.ConditionListBox_2Label = uilabel(app.TrimData_2);
             app.ConditionListBox_2Label.HorizontalAlignment = 'right';
             app.ConditionListBox_2Label.FontSize = 14;
-            app.ConditionListBox_2Label.Position = [9 247 64 22];
+            app.ConditionListBox_2Label.Position = [62 252 64 22];
             app.ConditionListBox_2Label.Text = 'Condition';
 
             % Create ConditionListBox_2
             app.ConditionListBox_2 = uilistbox(app.TrimData_2);
-            app.ConditionListBox_2.Position = [88 209 356 62];
+            app.ConditionListBox_2.Position = [134 229 324 73];
 
             % Create ExperimentNumberListBox_2Label
             app.ExperimentNumberListBox_2Label = uilabel(app.TrimData_2);
             app.ExperimentNumberListBox_2Label.HorizontalAlignment = 'right';
             app.ExperimentNumberListBox_2Label.FontSize = 14;
-            app.ExperimentNumberListBox_2Label.Position = [0 148 130 43];
+            app.ExperimentNumberListBox_2Label.Position = [207 111 130 43];
             app.ExperimentNumberListBox_2Label.Text = 'Experiment Number';
 
             % Create ExperimentNumberListBox_2
             app.ExperimentNumberListBox_2 = uilistbox(app.TrimData_2);
-            app.ExperimentNumberListBox_2.Position = [159 140 81 63];
+            app.ExperimentNumberListBox_2.Position = [215 145 119 74];
 
             % Create WellNumberListBox_2Label
             app.WellNumberListBox_2Label = uilabel(app.TrimData_2);
             app.WellNumberListBox_2Label.HorizontalAlignment = 'right';
             app.WellNumberListBox_2Label.FontSize = 14;
-            app.WellNumberListBox_2Label.Position = [260 164 86 22];
+            app.WellNumberListBox_2Label.Position = [360 121 86 22];
             app.WellNumberListBox_2Label.Text = 'Well Number';
 
             % Create WellNumberListBox_2
             app.WellNumberListBox_2 = uilistbox(app.TrimData_2);
             app.WellNumberListBox_2.Multiselect = 'on';
-            app.WellNumberListBox_2.Position = [364 140 80 63];
+            app.WellNumberListBox_2.Position = [354 145 104 75];
             app.WellNumberListBox_2.Value = {'Item 1'};
 
             % Create ChosenDataTable_2
             app.ChosenDataTable_2 = uitable(app.TrimData_2);
             app.ChosenDataTable_2.ColumnName = {'Condition'; 'Experiment Number'; 'Well'; 'Time Point'};
             app.ChosenDataTable_2.RowName = {};
-            app.ChosenDataTable_2.Position = [28 9 417 85];
+            app.ChosenDataTable_2.Position = [14 10 450 109];
 
             % Create ChooseandPlotButton
             app.ChooseandPlotButton = uibutton(app.TrimData_2, 'push');
             app.ChooseandPlotButton.ButtonPushedFcn = createCallbackFcn(app, @ChooseandPlotButtonPushed, true);
-            app.ChooseandPlotButton.FontSize = 14;
+            app.ChooseandPlotButton.FontSize = 18;
             app.ChooseandPlotButton.FontWeight = 'bold';
             app.ChooseandPlotButton.FontColor = [0.4667 0.6745 0.1882];
             app.ChooseandPlotButton.Tooltip = {'Select Data subset to process'};
-            app.ChooseandPlotButton.Position = [174 103 146 28];
+            app.ChooseandPlotButton.Position = [28 159 157 30];
             app.ChooseandPlotButton.Text = 'Choose and Plot';
+
+            % Create RefreshData_2
+            app.RefreshData_2 = uibutton(app.TrimData_2, 'push');
+            app.RefreshData_2.ButtonPushedFcn = createCallbackFcn(app, @RefreshData_2Pushed, true);
+            app.RefreshData_2.Icon = fullfile(pathToMLAPP, 'images', 'Refresh_icon.png');
+            app.RefreshData_2.FontWeight = 'bold';
+            app.RefreshData_2.FontColor = [0.4667 0.6745 0.1882];
+            app.RefreshData_2.Tooltip = {'Refresh Data Options'};
+            app.RefreshData_2.Position = [5 271 41 33];
+            app.RefreshData_2.Text = '';
 
             % Create CrossSectionParametersPanel
             app.CrossSectionParametersPanel = uipanel(app.AnalysisTimeSeriesMagnitudeCrossSectionTab);
             app.CrossSectionParametersPanel.Title = 'Cross Section Parameters';
-            app.CrossSectionParametersPanel.Position = [15 43 478 328];
+            app.CrossSectionParametersPanel.Position = [15 12 478 359];
 
             % Create OffsetRemovalSwitchLabel
             app.OffsetRemovalSwitchLabel = uilabel(app.CrossSectionParametersPanel);
@@ -9609,12 +10025,12 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OffsetRemovalSwitchLabel.FontSize = 14;
             app.OffsetRemovalSwitchLabel.FontWeight = 'bold';
             app.OffsetRemovalSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.OffsetRemovalSwitchLabel.Position = [121 254 107 22];
+            app.OffsetRemovalSwitchLabel.Position = [121 285 107 22];
             app.OffsetRemovalSwitchLabel.Text = 'Offset Removal';
 
             % Create OffsetRemovalSwitch
             app.OffsetRemovalSwitch = uiswitch(app.CrossSectionParametersPanel, 'slider');
-            app.OffsetRemovalSwitch.Position = [151 281 45 20];
+            app.OffsetRemovalSwitch.Position = [151 312 45 20];
 
             % Create CrossSectionFrequencySliderLabel
             app.CrossSectionFrequencySliderLabel = uilabel(app.CrossSectionParametersPanel);
@@ -9622,7 +10038,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CrossSectionFrequencySliderLabel.FontSize = 18;
             app.CrossSectionFrequencySliderLabel.FontWeight = 'bold';
             app.CrossSectionFrequencySliderLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.CrossSectionFrequencySliderLabel.Position = [113 80 224 23];
+            app.CrossSectionFrequencySliderLabel.Position = [113 85 224 23];
             app.CrossSectionFrequencySliderLabel.Text = 'Cross Section Frequency';
 
             % Create CrossSectionFrequencySlider
@@ -9630,24 +10046,24 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CrossSectionFrequencySlider.ValueChangedFcn = createCallbackFcn(app, @CrossSectionFrequencySliderValueChanged, true);
             app.CrossSectionFrequencySlider.ValueChangingFcn = createCallbackFcn(app, @CrossSectionFrequencySliderValueChanging, true);
             app.CrossSectionFrequencySlider.FontColor = [0.4667 0.6745 0.1882];
-            app.CrossSectionFrequencySlider.Position = [6 74 449 3];
+            app.CrossSectionFrequencySlider.Position = [6 79 449 3];
 
             % Create HzEditFieldLabel
             app.HzEditFieldLabel = uilabel(app.CrossSectionParametersPanel);
             app.HzEditFieldLabel.HorizontalAlignment = 'right';
             app.HzEditFieldLabel.FontSize = 18;
-            app.HzEditFieldLabel.Position = [322 12 27 23];
+            app.HzEditFieldLabel.Position = [322 17 27 23];
             app.HzEditFieldLabel.Text = 'Hz';
 
             % Create HzEditField
             app.HzEditField = uieditfield(app.CrossSectionParametersPanel, 'numeric');
             app.HzEditField.ValueChangedFcn = createCallbackFcn(app, @HzEditFieldValueChanged, true);
             app.HzEditField.FontSize = 18;
-            app.HzEditField.Position = [205 5 105 35];
+            app.HzEditField.Position = [205 10 105 35];
 
             % Create Panel_2
             app.Panel_2 = uipanel(app.CrossSectionParametersPanel);
-            app.Panel_2.Position = [327 107 138 196];
+            app.Panel_2.Position = [327 121 138 213];
 
             % Create OverlayTimeSeriesSwitchLabel
             app.OverlayTimeSeriesSwitchLabel = uilabel(app.Panel_2);
@@ -9655,7 +10071,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OverlayTimeSeriesSwitchLabel.FontSize = 14;
             app.OverlayTimeSeriesSwitchLabel.FontWeight = 'bold';
             app.OverlayTimeSeriesSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.OverlayTimeSeriesSwitchLabel.Position = [-1 123 139 22];
+            app.OverlayTimeSeriesSwitchLabel.Position = [-2 140 139 22];
             app.OverlayTimeSeriesSwitchLabel.Text = 'Overlay Time Series';
 
             % Create OverlayTimeSeriesSwitch
@@ -9663,31 +10079,31 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OverlayTimeSeriesSwitch.Orientation = 'horizontal';
             app.OverlayTimeSeriesSwitch.ValueChangedFcn = createCallbackFcn(app, @OverlayTimeSeriesSwitchValueChanged, true);
             app.OverlayTimeSeriesSwitch.FontWeight = 'bold';
-            app.OverlayTimeSeriesSwitch.Position = [33 149 72 32];
+            app.OverlayTimeSeriesSwitch.Position = [33 166 72 32];
 
             % Create WaterFallSwitchLabel
             app.WaterFallSwitchLabel = uilabel(app.Panel_2);
             app.WaterFallSwitchLabel.HorizontalAlignment = 'center';
-            app.WaterFallSwitchLabel.Position = [38 9 56 22];
+            app.WaterFallSwitchLabel.Position = [39 8 56 22];
             app.WaterFallSwitchLabel.Text = 'WaterFall';
 
             % Create WaterFallSwitch
             app.WaterFallSwitch = uiswitch(app.Panel_2, 'slider');
-            app.WaterFallSwitch.Position = [44 32 45 20];
+            app.WaterFallSwitch.Position = [44 37 45 20];
 
             % Create PlotMeanSwitchLabel
             app.PlotMeanSwitchLabel = uilabel(app.Panel_2);
             app.PlotMeanSwitchLabel.HorizontalAlignment = 'center';
-            app.PlotMeanSwitchLabel.Position = [37 59 59 22];
+            app.PlotMeanSwitchLabel.Position = [37 64 59 22];
             app.PlotMeanSwitchLabel.Text = 'Plot Mean';
 
             % Create PlotMeanSwitch
             app.PlotMeanSwitch = uiswitch(app.Panel_2, 'slider');
-            app.PlotMeanSwitch.Position = [44 83 45 20];
+            app.PlotMeanSwitch.Position = [44 88 45 20];
 
             % Create CrossSectionOptions
             app.CrossSectionOptions = uitabgroup(app.CrossSectionParametersPanel);
-            app.CrossSectionOptions.Position = [16 102 300 153];
+            app.CrossSectionOptions.Position = [16 119 300 167];
 
             % Create NormalizationTab_2
             app.NormalizationTab_2 = uitab(app.CrossSectionOptions);
@@ -9695,7 +10111,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create Panel_3
             app.Panel_3 = uipanel(app.NormalizationTab_2);
-            app.Panel_3.Position = [9 6 280 118];
+            app.Panel_3.Position = [9 8 280 130];
 
             % Create NormalizeSwitchLabel
             app.NormalizeSwitchLabel = uilabel(app.Panel_3);
@@ -9703,25 +10119,25 @@ classdef AnalyZe < matlab.apps.AppBase
             app.NormalizeSwitchLabel.FontSize = 14;
             app.NormalizeSwitchLabel.FontWeight = 'bold';
             app.NormalizeSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.NormalizeSwitchLabel.Position = [31 95 72 22];
+            app.NormalizeSwitchLabel.Position = [31 98 72 22];
             app.NormalizeSwitchLabel.Text = 'Normalize';
 
             % Create NormalizeSwitch
             app.NormalizeSwitch = uiswitch(app.Panel_3, 'slider');
             app.NormalizeSwitch.FontWeight = 'bold';
-            app.NormalizeSwitch.Position = [31 61 68 30];
+            app.NormalizeSwitch.Position = [31 64 68 30];
 
             % Create NormalizationSchemeListBox_5Label
             app.NormalizationSchemeListBox_5Label = uilabel(app.Panel_3);
             app.NormalizationSchemeListBox_5Label.HorizontalAlignment = 'right';
-            app.NormalizationSchemeListBox_5Label.Position = [141 98 126 22];
+            app.NormalizationSchemeListBox_5Label.Position = [141 104 126 22];
             app.NormalizationSchemeListBox_5Label.Text = 'Normalization Scheme';
 
             % Create NormalizationSchemeListBox_5
             app.NormalizationSchemeListBox_5 = uilistbox(app.Panel_3);
             app.NormalizationSchemeListBox_5.Items = {'zscore', 'norm', 'scale', 'range', 'center', 'medianiqr'};
             app.NormalizationSchemeListBox_5.ValueChangedFcn = createCallbackFcn(app, @NormalizationSchemeListBox_5ValueChanged, true);
-            app.NormalizationSchemeListBox_5.Position = [141 49 131 51];
+            app.NormalizationSchemeListBox_5.Position = [141 51 131 55];
             app.NormalizationSchemeListBox_5.Value = 'zscore';
 
             % Create ModulobeforeafternormalizingSwitch
@@ -9730,19 +10146,19 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ModulobeforeafternormalizingSwitch.FontSize = 14;
             app.ModulobeforeafternormalizingSwitch.FontWeight = 'bold';
             app.ModulobeforeafternormalizingSwitch.FontColor = [0.6353 0.0784 0.1843];
-            app.ModulobeforeafternormalizingSwitch.Position = [43 22 45 20];
+            app.ModulobeforeafternormalizingSwitch.Position = [44 24 45 20];
             app.ModulobeforeafternormalizingSwitch.Value = '|Z|';
 
             % Create NormOptionListBox_2Label
             app.NormOptionListBox_2Label = uilabel(app.Panel_3);
             app.NormOptionListBox_2Label.HorizontalAlignment = 'right';
-            app.NormOptionListBox_2Label.Position = [149 12 40 30];
+            app.NormOptionListBox_2Label.Position = [149 14 40 30];
             app.NormOptionListBox_2Label.Text = {'Norm.'; 'Option'};
 
             % Create NormOptionListBox_2
             app.NormOptionListBox_2 = uilistbox(app.Panel_3);
             app.NormOptionListBox_2.Items = {'std', 'robust'};
-            app.NormOptionListBox_2.Position = [198 7 73 37];
+            app.NormOptionListBox_2.Position = [198 9 73 37];
             app.NormOptionListBox_2.Value = 'std';
 
             % Create OutlierRemovalTab
@@ -9755,23 +10171,23 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OutlierRemovalSwitchLabel.FontSize = 14;
             app.OutlierRemovalSwitchLabel.FontWeight = 'bold';
             app.OutlierRemovalSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.OutlierRemovalSwitchLabel.Position = [9 49 112 22];
+            app.OutlierRemovalSwitchLabel.Position = [9 63 112 22];
             app.OutlierRemovalSwitchLabel.Text = 'Outlier Removal';
 
             % Create OutlierRemovalSwitch
             app.OutlierRemovalSwitch = uiswitch(app.OutlierRemovalTab, 'slider');
-            app.OutlierRemovalSwitch.Position = [41 76 45 20];
+            app.OutlierRemovalSwitch.Position = [41 90 45 20];
 
             % Create DetectionSchemeListBoxLabel
             app.DetectionSchemeListBoxLabel = uilabel(app.OutlierRemovalTab);
             app.DetectionSchemeListBoxLabel.HorizontalAlignment = 'right';
-            app.DetectionSchemeListBoxLabel.Position = [164 23 103 22];
+            app.DetectionSchemeListBoxLabel.Position = [160 35 103 22];
             app.DetectionSchemeListBoxLabel.Text = 'Detection Scheme';
 
             % Create DetectionSchemeListBox
             app.DetectionSchemeListBox = uilistbox(app.OutlierRemovalTab);
             app.DetectionSchemeListBox.Items = {'median', 'mean', 'quartiles', 'grubbs', 'gesd'};
-            app.DetectionSchemeListBox.Position = [152 49 131 56];
+            app.DetectionSchemeListBox.Position = [148 61 131 56];
             app.DetectionSchemeListBox.Value = 'median';
 
             % Create ResampleTab
@@ -9784,19 +10200,19 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ResampleSwitchLabel.FontSize = 14;
             app.ResampleSwitchLabel.FontWeight = 'bold';
             app.ResampleSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.ResampleSwitchLabel.Position = [5 11 71 22];
+            app.ResampleSwitchLabel.Position = [6 14 71 22];
             app.ResampleSwitchLabel.Text = 'Resample';
 
             % Create ResampleSwitch
             app.ResampleSwitch = uiswitch(app.ResampleTab, 'slider');
             app.ResampleSwitch.Orientation = 'vertical';
-            app.ResampleSwitch.Position = [28 56 20 45];
+            app.ResampleSwitch.Position = [29 59 20 45];
 
             % Create FinalResampleFrequencyEditFieldLabel
             app.FinalResampleFrequencyEditFieldLabel = uilabel(app.ResampleTab);
             app.FinalResampleFrequencyEditFieldLabel.HorizontalAlignment = 'right';
             app.FinalResampleFrequencyEditFieldLabel.FontWeight = 'bold';
-            app.FinalResampleFrequencyEditFieldLabel.Position = [63 93 157 22];
+            app.FinalResampleFrequencyEditFieldLabel.Position = [64 89 157 22];
             app.FinalResampleFrequencyEditFieldLabel.Text = 'Final Resample Frequency';
 
             % Create FinalResampleFrequencyEditField
@@ -9804,46 +10220,46 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FinalResampleFrequencyEditField.Limits = [0 Inf];
             app.FinalResampleFrequencyEditField.FontSize = 14;
             app.FinalResampleFrequencyEditField.FontWeight = 'bold';
-            app.FinalResampleFrequencyEditField.Position = [231 93 38 22];
+            app.FinalResampleFrequencyEditField.Position = [232 89 38 22];
             app.FinalResampleFrequencyEditField.Value = 1;
 
             % Create pEditFieldLabel
             app.pEditFieldLabel = uilabel(app.ResampleTab);
             app.pEditFieldLabel.HorizontalAlignment = 'right';
-            app.pEditFieldLabel.Position = [156 55 25 22];
+            app.pEditFieldLabel.Position = [157 51 25 22];
             app.pEditFieldLabel.Text = 'p';
 
             % Create pEditField
             app.pEditField = uieditfield(app.ResampleTab, 'numeric');
             app.pEditField.Limits = [0 Inf];
             app.pEditField.FontSize = 14;
-            app.pEditField.Position = [186 55 38 22];
+            app.pEditField.Position = [187 51 38 22];
             app.pEditField.Value = 1;
 
             % Create qEditFieldLabel
             app.qEditFieldLabel = uilabel(app.ResampleTab);
             app.qEditFieldLabel.HorizontalAlignment = 'right';
-            app.qEditFieldLabel.Position = [224 56 25 22];
+            app.qEditFieldLabel.Position = [225 52 25 22];
             app.qEditFieldLabel.Text = 'q';
 
             % Create qEditField
             app.qEditField = uieditfield(app.ResampleTab, 'numeric');
             app.qEditField.Limits = [0 Inf];
             app.qEditField.FontSize = 14;
-            app.qEditField.Position = [254 56 38 22];
+            app.qEditField.Position = [255 52 38 22];
             app.qEditField.Value = 1;
 
             % Create Label
             app.Label = uilabel(app.ResampleTab);
             app.Label.FontSize = 36;
             app.Label.FontWeight = 'bold';
-            app.Label.Position = [229 43 16 47];
+            app.Label.Position = [230 43 16 47];
             app.Label.Text = '/';
 
             % Create IntermediateResampleFactorLabel
             app.IntermediateResampleFactorLabel = uilabel(app.ResampleTab);
             app.IntermediateResampleFactorLabel.FontWeight = 'bold';
-            app.IntermediateResampleFactorLabel.Position = [69 50 102 30];
+            app.IntermediateResampleFactorLabel.Position = [70 46 102 30];
             app.IntermediateResampleFactorLabel.Text = {'Intermediate'; 'Resample Factor'};
 
             % Create ClipTimeVectorTab
@@ -9856,36 +10272,36 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ClipTimeVectorSwitchLabel.FontSize = 14;
             app.ClipTimeVectorSwitchLabel.FontWeight = 'bold';
             app.ClipTimeVectorSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.ClipTimeVectorSwitchLabel.Position = [8 45 115 22];
+            app.ClipTimeVectorSwitchLabel.Position = [8 59 115 22];
             app.ClipTimeVectorSwitchLabel.Text = 'Clip Time Vector';
 
             % Create ClipTimeVectorSwitch
             app.ClipTimeVectorSwitch = uiswitch(app.ClipTimeVectorTab, 'slider');
-            app.ClipTimeVectorSwitch.Position = [41 72 45 20];
+            app.ClipTimeVectorSwitch.Position = [41 86 45 20];
 
             % Create NumStartValuesToClipSpinnerLabel
             app.NumStartValuesToClipSpinnerLabel = uilabel(app.ClipTimeVectorTab);
             app.NumStartValuesToClipSpinnerLabel.HorizontalAlignment = 'right';
-            app.NumStartValuesToClipSpinnerLabel.Position = [142 95 138 22];
+            app.NumStartValuesToClipSpinnerLabel.Position = [142 109 138 22];
             app.NumStartValuesToClipSpinnerLabel.Text = 'Num Start Values To Clip';
 
             % Create NumStartValuesToClipSpinner
             app.NumStartValuesToClipSpinner = uispinner(app.ClipTimeVectorTab);
             app.NumStartValuesToClipSpinner.Limits = [0 Inf];
             app.NumStartValuesToClipSpinner.FontSize = 18;
-            app.NumStartValuesToClipSpinner.Position = [184 72 67 24];
+            app.NumStartValuesToClipSpinner.Position = [184 86 67 24];
 
             % Create NumTailValuesToClipSpinnerLabel
             app.NumTailValuesToClipSpinnerLabel = uilabel(app.ClipTimeVectorTab);
             app.NumTailValuesToClipSpinnerLabel.HorizontalAlignment = 'right';
-            app.NumTailValuesToClipSpinnerLabel.Position = [149 43 131 22];
+            app.NumTailValuesToClipSpinnerLabel.Position = [149 57 131 22];
             app.NumTailValuesToClipSpinnerLabel.Text = 'Num Tail Values To Clip';
 
             % Create NumTailValuesToClipSpinner
             app.NumTailValuesToClipSpinner = uispinner(app.ClipTimeVectorTab);
             app.NumTailValuesToClipSpinner.Limits = [0 Inf];
             app.NumTailValuesToClipSpinner.FontSize = 18;
-            app.NumTailValuesToClipSpinner.Position = [184 22 67 24];
+            app.NumTailValuesToClipSpinner.Position = [184 36 67 24];
 
             % Create RefreshPlotButton
             app.RefreshPlotButton = uibutton(app.CrossSectionParametersPanel, 'push');
@@ -9893,7 +10309,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RefreshPlotButton.FontSize = 14;
             app.RefreshPlotButton.FontWeight = 'bold';
             app.RefreshPlotButton.FontColor = [0.4667 0.6745 0.1882];
-            app.RefreshPlotButton.Position = [96 10 100 26];
+            app.RefreshPlotButton.Position = [96 15 100 26];
             app.RefreshPlotButton.Text = 'Refresh Plot';
 
             % Create TabGroup4
@@ -9957,23 +10373,6 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SaveResultsButton_2.Position = [320 10 156 51];
             app.SaveResultsButton_2.Text = 'Save Results';
 
-            % Create RefreshDataOptionsButton_2
-            app.RefreshDataOptionsButton_2 = uibutton(app.AnalysisTimeSeriesMagnitudeCrossSectionTab, 'push');
-            app.RefreshDataOptionsButton_2.ButtonPushedFcn = createCallbackFcn(app, @RefreshDataOptionsButton_2Pushed, true);
-            app.RefreshDataOptionsButton_2.FontWeight = 'bold';
-            app.RefreshDataOptionsButton_2.FontColor = [0.4667 0.6745 0.1882];
-            app.RefreshDataOptionsButton_2.Position = [173 676 138 27];
-            app.RefreshDataOptionsButton_2.Text = 'Refresh Data Options';
-
-            % Create HOMEButton_3
-            app.HOMEButton_3 = uibutton(app.AnalysisTimeSeriesMagnitudeCrossSectionTab, 'push');
-            app.HOMEButton_3.ButtonPushedFcn = createCallbackFcn(app, @HOMEButton_3Pushed, true);
-            app.HOMEButton_3.FontSize = 18;
-            app.HOMEButton_3.FontWeight = 'bold';
-            app.HOMEButton_3.FontColor = [0 0.4471 0.7412];
-            app.HOMEButton_3.Position = [176 5 131 30];
-            app.HOMEButton_3.Text = 'HOME';
-
             % Create SaveFigureButton_2
             app.SaveFigureButton_2 = uibutton(app.AnalysisTimeSeriesMagnitudeCrossSectionTab, 'push');
             app.SaveFigureButton_2.ButtonPushedFcn = createCallbackFcn(app, @SaveFigureButton_2Pushed, true);
@@ -9991,48 +10390,48 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create TrimData_3
             app.TrimData_3 = uipanel(app.AnalysisEstimateTransferFunctionTab);
             app.TrimData_3.Title = 'Select Data';
-            app.TrimData_3.Position = [15 352 476 322];
+            app.TrimData_3.Position = [15 352 476 353];
 
             % Create ConditionListBox_3Label
             app.ConditionListBox_3Label = uilabel(app.TrimData_3);
             app.ConditionListBox_3Label.HorizontalAlignment = 'right';
             app.ConditionListBox_3Label.FontSize = 14;
-            app.ConditionListBox_3Label.Position = [9 254 64 22];
+            app.ConditionListBox_3Label.Position = [33 257 64 22];
             app.ConditionListBox_3Label.Text = 'Condition';
 
             % Create ConditionListBox_3
             app.ConditionListBox_3 = uilistbox(app.TrimData_3);
-            app.ConditionListBox_3.Position = [88 233 356 65];
+            app.ConditionListBox_3.Position = [110 257 356 72];
 
             % Create ExperimentNumberListBox_3Label
             app.ExperimentNumberListBox_3Label = uilabel(app.TrimData_3);
             app.ExperimentNumberListBox_3Label.HorizontalAlignment = 'right';
             app.ExperimentNumberListBox_3Label.FontSize = 14;
-            app.ExperimentNumberListBox_3Label.Position = [4 167 130 43];
+            app.ExperimentNumberListBox_3Label.Position = [4 198 130 43];
             app.ExperimentNumberListBox_3Label.Text = 'Experiment Number';
 
             % Create ExperimentNumberListBox_3
             app.ExperimentNumberListBox_3 = uilistbox(app.TrimData_3);
-            app.ExperimentNumberListBox_3.Position = [146 164 87 58];
+            app.ExperimentNumberListBox_3.Position = [146 195 114 58];
 
             % Create WellNumberListBox_3Label
             app.WellNumberListBox_3Label = uilabel(app.TrimData_3);
             app.WellNumberListBox_3Label.HorizontalAlignment = 'right';
             app.WellNumberListBox_3Label.FontSize = 14;
-            app.WellNumberListBox_3Label.Position = [47 117 86 22];
+            app.WellNumberListBox_3Label.Position = [46 151 86 22];
             app.WellNumberListBox_3Label.Text = 'Well Number';
 
             % Create WellNumberListBox_3
             app.WellNumberListBox_3 = uilistbox(app.TrimData_3);
             app.WellNumberListBox_3.Multiselect = 'on';
-            app.WellNumberListBox_3.Position = [147 101 87 54];
+            app.WellNumberListBox_3.Position = [146 135 114 54];
             app.WellNumberListBox_3.Value = {'Item 1'};
 
             % Create ChosenDataTable_3
             app.ChosenDataTable_3 = uitable(app.TrimData_3);
             app.ChosenDataTable_3.ColumnName = {'Condition'; 'Experiment Number'; 'Well'; 'Time Point'};
             app.ChosenDataTable_3.RowName = {};
-            app.ChosenDataTable_3.Position = [28 9 417 85];
+            app.ChosenDataTable_3.Position = [11 9 456 116];
 
             % Create ChooseButton_2
             app.ChooseButton_2 = uibutton(app.TrimData_3, 'push');
@@ -10041,29 +10440,31 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ChooseButton_2.FontWeight = 'bold';
             app.ChooseButton_2.FontColor = [0.4667 0.6745 0.1882];
             app.ChooseButton_2.Tooltip = {'Select the Data subset to be fit'};
-            app.ChooseButton_2.Position = [269 113 146 30];
+            app.ChooseButton_2.Position = [291 137 146 30];
             app.ChooseButton_2.Text = 'Choose';
 
             % Create TimeListBox_2Label
             app.TimeListBox_2Label = uilabel(app.TrimData_3);
             app.TimeListBox_2Label.HorizontalAlignment = 'right';
             app.TimeListBox_2Label.FontSize = 14;
-            app.TimeListBox_2Label.Position = [260 183 48 22];
+            app.TimeListBox_2Label.Position = [282 205 48 22];
             app.TimeListBox_2Label.Text = 'Time';
 
             % Create TimeListBox_2
             app.TimeListBox_2 = uilistbox(app.TrimData_3);
             app.TimeListBox_2.Multiselect = 'on';
-            app.TimeListBox_2.Position = [323 165 122 57];
+            app.TimeListBox_2.Position = [345 178 122 75];
             app.TimeListBox_2.Value = {'Item 1'};
 
-            % Create RefreshDataOptionsButton_3
-            app.RefreshDataOptionsButton_3 = uibutton(app.AnalysisEstimateTransferFunctionTab, 'push');
-            app.RefreshDataOptionsButton_3.ButtonPushedFcn = createCallbackFcn(app, @RefreshDataOptionsButton_3Pushed, true);
-            app.RefreshDataOptionsButton_3.FontWeight = 'bold';
-            app.RefreshDataOptionsButton_3.FontColor = [0.4667 0.6745 0.1882];
-            app.RefreshDataOptionsButton_3.Position = [178 679 138 27];
-            app.RefreshDataOptionsButton_3.Text = 'Refresh Data Options';
+            % Create RefreshData_3
+            app.RefreshData_3 = uibutton(app.TrimData_3, 'push');
+            app.RefreshData_3.ButtonPushedFcn = createCallbackFcn(app, @RefreshData_3Pushed, true);
+            app.RefreshData_3.Icon = fullfile(pathToMLAPP, 'images', 'Refresh_icon.png');
+            app.RefreshData_3.FontWeight = 'bold';
+            app.RefreshData_3.FontColor = [0.4667 0.6745 0.1882];
+            app.RefreshData_3.Tooltip = {'Refresh Data Options'};
+            app.RefreshData_3.Position = [5 292 42 37];
+            app.RefreshData_3.Text = '';
 
             % Create estTfResultsTab
             app.estTfResultsTab = uitabgroup(app.AnalysisEstimateTransferFunctionTab);
@@ -10406,7 +10807,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SaveResultsButton_3 = uibutton(app.AnalysisEstimateTransferFunctionTab, 'push');
             app.SaveResultsButton_3.ButtonPushedFcn = createCallbackFcn(app, @SaveResultsButton_3Pushed, true);
             app.SaveResultsButton_3.FontSize = 14;
-            app.SaveResultsButton_3.Position = [670 13 114 30];
+            app.SaveResultsButton_3.Position = [751 13 114 30];
             app.SaveResultsButton_3.Text = 'Save Results';
 
             % Create ClearResultsButton_3
@@ -10418,20 +10819,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ClearResultsButton_3.Position = [511 13 108 30];
             app.ClearResultsButton_3.Text = 'Clear Results';
 
-            % Create HOMEButton_4
-            app.HOMEButton_4 = uibutton(app.AnalysisEstimateTransferFunctionTab, 'push');
-            app.HOMEButton_4.ButtonPushedFcn = createCallbackFcn(app, @HOMEButton_4Pushed, true);
-            app.HOMEButton_4.FontSize = 18;
-            app.HOMEButton_4.FontWeight = 'bold';
-            app.HOMEButton_4.FontColor = [0 0.4471 0.7412];
-            app.HOMEButton_4.Position = [930 14 82 30];
-            app.HOMEButton_4.Text = 'HOME';
-
             % Create LoadResultsButton_2
             app.LoadResultsButton_2 = uibutton(app.AnalysisEstimateTransferFunctionTab, 'push');
             app.LoadResultsButton_2.ButtonPushedFcn = createCallbackFcn(app, @LoadResultsButton_2Pushed, true);
             app.LoadResultsButton_2.FontSize = 14;
-            app.LoadResultsButton_2.Position = [792 14 114 30];
+            app.LoadResultsButton_2.Position = [873 14 114 30];
             app.LoadResultsButton_2.Text = 'Load Results';
 
             % Create GoButton_2

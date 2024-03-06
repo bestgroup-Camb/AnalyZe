@@ -73,7 +73,7 @@ classdef AnalyZeTransferFnFitTest < matlab.uitest.TestCase
                                     testCase.App.TabGroup.SelectedTab.Title,'Analysis Estimate Transfer Function')
 
            %% Refresh Data
-            testCase.press(testCase.App.RefreshDataOptionsButton_3)
+            testCase.press(testCase.App.RefreshData_3)
 
            %% Choose Data
             testCase.press(testCase.App.ChooseButton_2)
@@ -129,7 +129,7 @@ classdef AnalyZeTransferFnFitTest < matlab.uitest.TestCase
                                     testCase.App.TabGroup.SelectedTab.Title,'Analysis Estimate Transfer Function')
 
            %% Refresh Data
-            testCase.press(testCase.App.RefreshDataOptionsButton_3)
+            testCase.press(testCase.App.RefreshData_3)
 
            %% Choose Data
             testCase.press(testCase.App.ChooseButton_2)

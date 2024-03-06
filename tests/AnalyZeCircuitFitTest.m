@@ -73,7 +73,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                                     testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
            %% Refresh Data
-            testCase.press(testCase.App.RefreshDataOptionsButton)
+            testCase.press(testCase.App.RefreshData)
 
            %% Choose Data
             testCase.press(testCase.App.ChooseButton)
@@ -138,7 +138,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                                     testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
                %% Refresh Data
-                testCase.press(testCase.App.RefreshDataOptionsButton)
+                testCase.press(testCase.App.RefreshData)
     
                %% Choose Data
                 testCase.press(testCase.App.ChooseButton)
@@ -209,7 +209,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.assertEqual(testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
                %% Refresh Data
-                testCase.press(testCase.App.RefreshDataOptionsButton)
+                testCase.press(testCase.App.RefreshData)
     
                %% Choose Data
                 testCase.press(testCase.App.ChooseButton)
@@ -298,7 +298,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.assertEqual(testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
            %% Refresh Data
-                testCase.press(testCase.App.RefreshDataOptionsButton)
+                testCase.press(testCase.App.RefreshData)
     
            %% Choose Data
                 testCase.press(testCase.App.ChooseButton)
@@ -382,7 +382,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                  testCase.assertEqual(testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
              %% Refresh Data
-                testCase.press(testCase.App.RefreshDataOptionsButton)
+                testCase.press(testCase.App.RefreshData)
     
             %% Choose Data
                 testCase.press(testCase.App.ChooseButton)
@@ -459,7 +459,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                  testCase.assertEqual(testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
              %% Refresh Data
-                testCase.press(testCase.App.RefreshDataOptionsButton)
+                testCase.press(testCase.App.RefreshData)
     
             %% Choose Data
                 testCase.press(testCase.App.ChooseButton)
@@ -538,7 +538,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                                     testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
                %% Refresh Data
-                testCase.press(testCase.App.RefreshDataOptionsButton)
+                testCase.press(testCase.App.RefreshData)
     
                %% Choose Data
                 testCase.press(testCase.App.ChooseButton)
@@ -623,7 +623,7 @@ classdef AnalyZeCircuitFitTest < matlab.uitest.TestCase
                 testCase.assertEqual(testCase.App.TabGroup.SelectedTab.Title,'Analysis CCT FIT')
 
               %% Refresh Data
-                testCase.press(testCase.App.RefreshDataOptionsButton)
+                testCase.press(testCase.App.RefreshData)
     
              %% Choose Data
                 testCase.choose(testCase.App.TimeListBox,'Select All')

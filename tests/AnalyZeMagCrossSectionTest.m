@@ -72,7 +72,7 @@ classdef AnalyZeMagCrossSectionTest < matlab.uitest.TestCase
                  testCase.verifyEqual(testCase.App.TabGroup.SelectedTab.Title,'Analysis Time Series Magnitude Cross Section')
 
            %% Refresh Data
-            testCase.press(testCase.App.RefreshDataOptionsButton_2)
+            testCase.press(testCase.App.RefreshData_2)
 
            
            %% Choose Data
@@ -134,7 +134,7 @@ classdef AnalyZeMagCrossSectionTest < matlab.uitest.TestCase
                  testCase.assertEqual(testCase.App.TabGroup.SelectedTab.Title,'Analysis Time Series Magnitude Cross Section')
 
            %% Refresh Data
-            testCase.press(testCase.App.RefreshDataOptionsButton_2)
+            testCase.press(testCase.App.RefreshData_2)
 
            
            %% Choose Data
