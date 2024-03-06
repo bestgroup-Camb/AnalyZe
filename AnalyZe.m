@@ -2582,11 +2582,16 @@ classdef AnalyZe < matlab.apps.AppBase
                 end
                 
                Indexes = [];
-               switch Condition
+               switch Condition{1}
                     case 'Select All'
                         Indexes = [1:length(Dat)];
                    otherwise
-                        Indexes = find(ConditionsAll == Condition);
+                        Indexes = [];
+                       for j = 1:length(Condition)
+                            Ind_j = find(ConditionsAll == Condition(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(ConditionsAll == Condition);
                end
                  Dat = Dat(Indexes);
                  ExpAll = ExpAll(Indexes);
@@ -2595,11 +2600,16 @@ classdef AnalyZe < matlab.apps.AppBase
 
 
              Indexes = [];
-               switch Exp
+               switch Exp{1}
                     case 'Select All'
                         Indexes = [1:length(Dat)];
                    otherwise
-                        Indexes = find(ExpAll == Exp);
+                       Indexes = [];
+                       for j = 1:length(Exp)
+                            Ind_j = find(ExpAll == Exp(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(ExpAll == Exp);
                end
                  Dat = Dat(Indexes);
                  WellAll = WellAll(Indexes);
@@ -8466,7 +8476,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create ConditionListBox
             app.ConditionListBox = uilistbox(app.TrimData);
+            app.ConditionListBox.Multiselect = 'on';
             app.ConditionListBox.Position = [88 233 356 65];
+            app.ConditionListBox.Value = {'Item 1'};
 
             % Create ExperimentNumberListBoxLabel
             app.ExperimentNumberListBoxLabel = uilabel(app.TrimData);
@@ -8477,7 +8489,9 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create ExperimentNumberListBox
             app.ExperimentNumberListBox = uilistbox(app.TrimData);
+            app.ExperimentNumberListBox.Multiselect = 'on';
             app.ExperimentNumberListBox.Position = [144 164 87 58];
+            app.ExperimentNumberListBox.Value = {'Item 1'};
 
             % Create WellNumberListBoxLabel
             app.WellNumberListBoxLabel = uilabel(app.TrimData);
@@ -9536,7 +9550,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ConditionListBox_2Label
             app.ConditionListBox_2Label = uilabel(app.TrimData_2);
             app.ConditionListBox_2Label.HorizontalAlignment = 'right';
-            app.ConditionListBox_2Label.Position = [18 247 55 22];
+            app.ConditionListBox_2Label.FontSize = 14;
+            app.ConditionListBox_2Label.Position = [9 247 64 22];
             app.ConditionListBox_2Label.Text = 'Condition';
 
             % Create ConditionListBox_2
@@ -9546,7 +9561,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ExperimentNumberListBox_2Label
             app.ExperimentNumberListBox_2Label = uilabel(app.TrimData_2);
             app.ExperimentNumberListBox_2Label.HorizontalAlignment = 'right';
-            app.ExperimentNumberListBox_2Label.Position = [11 148 119 43];
+            app.ExperimentNumberListBox_2Label.FontSize = 14;
+            app.ExperimentNumberListBox_2Label.Position = [0 148 130 43];
             app.ExperimentNumberListBox_2Label.Text = 'Experiment Number';
 
             % Create ExperimentNumberListBox_2
@@ -9556,7 +9572,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create WellNumberListBox_2Label
             app.WellNumberListBox_2Label = uilabel(app.TrimData_2);
             app.WellNumberListBox_2Label.HorizontalAlignment = 'right';
-            app.WellNumberListBox_2Label.Position = [272 164 74 22];
+            app.WellNumberListBox_2Label.FontSize = 14;
+            app.WellNumberListBox_2Label.Position = [260 164 86 22];
             app.WellNumberListBox_2Label.Text = 'Well Number';
 
             % Create WellNumberListBox_2
@@ -9979,7 +9996,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ConditionListBox_3Label
             app.ConditionListBox_3Label = uilabel(app.TrimData_3);
             app.ConditionListBox_3Label.HorizontalAlignment = 'right';
-            app.ConditionListBox_3Label.Position = [18 254 55 22];
+            app.ConditionListBox_3Label.FontSize = 14;
+            app.ConditionListBox_3Label.Position = [9 254 64 22];
             app.ConditionListBox_3Label.Text = 'Condition';
 
             % Create ConditionListBox_3
@@ -9989,23 +10007,25 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ExperimentNumberListBox_3Label
             app.ExperimentNumberListBox_3Label = uilabel(app.TrimData_3);
             app.ExperimentNumberListBox_3Label.HorizontalAlignment = 'right';
-            app.ExperimentNumberListBox_3Label.Position = [5 167 119 43];
+            app.ExperimentNumberListBox_3Label.FontSize = 14;
+            app.ExperimentNumberListBox_3Label.Position = [4 167 130 43];
             app.ExperimentNumberListBox_3Label.Text = 'Experiment Number';
 
             % Create ExperimentNumberListBox_3
             app.ExperimentNumberListBox_3 = uilistbox(app.TrimData_3);
-            app.ExperimentNumberListBox_3.Position = [136 164 87 58];
+            app.ExperimentNumberListBox_3.Position = [146 164 87 58];
 
             % Create WellNumberListBox_3Label
             app.WellNumberListBox_3Label = uilabel(app.TrimData_3);
             app.WellNumberListBox_3Label.HorizontalAlignment = 'right';
-            app.WellNumberListBox_3Label.Position = [49 117 74 22];
+            app.WellNumberListBox_3Label.FontSize = 14;
+            app.WellNumberListBox_3Label.Position = [47 117 86 22];
             app.WellNumberListBox_3Label.Text = 'Well Number';
 
             % Create WellNumberListBox_3
             app.WellNumberListBox_3 = uilistbox(app.TrimData_3);
             app.WellNumberListBox_3.Multiselect = 'on';
-            app.WellNumberListBox_3.Position = [137 101 87 54];
+            app.WellNumberListBox_3.Position = [147 101 87 54];
             app.WellNumberListBox_3.Value = {'Item 1'};
 
             % Create ChosenDataTable_3
@@ -10027,6 +10047,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create TimeListBox_2Label
             app.TimeListBox_2Label = uilabel(app.TrimData_3);
             app.TimeListBox_2Label.HorizontalAlignment = 'right';
+            app.TimeListBox_2Label.FontSize = 14;
             app.TimeListBox_2Label.Position = [260 183 48 22];
             app.TimeListBox_2Label.Text = 'Time';
 
