@@ -52,24 +52,30 @@ classdef AnalyZe < matlab.apps.AppBase
         LoadDataPanel                   matlab.ui.container.Panel
         ThenLabel                       matlab.ui.control.Label
         FirstLabel                      matlab.ui.control.Label
-        AutoIncrementTimePointSwitch    matlab.ui.control.Switch
-        AutoIncrementTimePointSwitchLabel  matlab.ui.control.Label
+        AutoIncrementTimePointperfileSwitch  matlab.ui.control.Switch
+        AutoIncrementTimePointperfileLabel  matlab.ui.control.Label
         FileFinderTab                   matlab.ui.container.TabGroup
+        ImportUtilitiesTab              matlab.ui.container.Tab
+        DropDown                        matlab.ui.control.DropDown
+        ModifythedataimportworkflowusingvariedutilitiesLabel  matlab.ui.control.Label
         FileSUBTRINGFilterTab           matlab.ui.container.Tab
         FilterFilenamesbyLabel          matlab.ui.control.Label
         SubstringLabel                  matlab.ui.control.Label
         KnobSubtringFilter              matlab.ui.control.DiscreteKnob
         FindFilesSubtringFilter         matlab.ui.control.EditField
         MultiSelectTab                  matlab.ui.container.Tab
-        SelectMultipleFilesandautoincrementafieldLabel  matlab.ui.control.Label
+        SelectMultipleFilesandautoincrementafieldperfileLabel  matlab.ui.control.Label
         KnobMultiSelect                 matlab.ui.control.DiscreteKnob
         AlternativeFileFormatTab        matlab.ui.container.Tab
         CsvOrSpreadsheetSwitch          matlab.ui.control.RockerSwitch
-        stDataRowSpinner                matlab.ui.control.Spinner
-        stDataRowSpinnerLabel           matlab.ui.control.Label
+        RowdatastartsonSpinner          matlab.ui.control.Spinner
+        RowdatastartsonSpinnerLabel     matlab.ui.control.Label
         SpecifytargetfilecolumnorderLabel  matlab.ui.control.Label
         ArbFileFormatSpecTable          matlab.ui.control.Table
         ArbFileFormatSwitch             matlab.ui.control.Switch
+        MultisheetSpreadhseetTab        matlab.ui.container.Tab
+        ReaddatafromspreadsheetincrementingLabel  matlab.ui.control.Label
+        KnobMultiSelect_SpreadsheetMultisheet  matlab.ui.control.DiscreteKnob
         HOMEButton                      matlab.ui.control.Button
         HoldPlotSwitchLoad              matlab.ui.control.ToggleSwitch
         HoldPlotSwitchLabel             matlab.ui.control.Label
@@ -177,8 +183,8 @@ classdef AnalyZe < matlab.apps.AppBase
         AbortButton                     matlab.ui.control.StateButton
         CCTFitOptionsTabGroup           matlab.ui.container.TabGroup
         HyperparamsTab                  matlab.ui.container.Tab
+        DropDown_2                      matlab.ui.control.DropDown
         Label_4                         matlab.ui.control.Label
-        TextArea                        matlab.ui.control.TextArea
         SeriesResistanceEstimateTab     matlab.ui.container.Tab
         AlternateRestimationListBox     matlab.ui.control.ListBox
         AlternateRestimationListBoxLabel  matlab.ui.control.Label
@@ -1773,6 +1779,115 @@ classdef AnalyZe < matlab.apps.AppBase
             end
             
         end
+        
+        function CurrentEISMeasurement_temp = fillOutArbColumnFormatData(app,ColumnOrder,CurrentEISMeasurement_temp)
+              %% Fill out data
+                 %1          2               3       4   5       6       7               8   
+                %Index (AU),Frequency (Hz),Re(Z),-Im(Z),Im(Z),Mag(Z),-Phase(Z) (deg),Phase(Z) (deg)
+
+                %["Index", "FrequencyHz", "Z", "Z1", "Z2", "Phase", "Times"];
+
+                if ColumnOrder{1,5} > 0
+                    CurrentEISMeasurement_temp.Z1 = CurrentEISMeasurement_temp.Z1.*-1; 
+                end
+                if ColumnOrder{1,8} > 0
+                    CurrentEISMeasurement_temp.Phase = CurrentEISMeasurement_temp.Phase.*-1; 
+                end
+                
+                if ColumnOrder{1,3} > 0 %Has imaginary components
+
+                    Z = CurrentEISMeasurement_temp.Z - 1j.*CurrentEISMeasurement_temp.Z1;
+                    CurrentEISMeasurement_temp.Z2 = abs(Z);
+                    CurrentEISMeasurement_temp.Phase = -1.*rad2deg(angle(Z));
+
+                elseif ColumnOrder{1,6} > 0 %Has mod/arg
+
+                    CurrentEISMeasurement_temp.Z = CurrentEISMeasurement_temp.Z2.*cos(deg2rad(-1.*CurrentEISMeasurement_temp.Phase));
+                    CurrentEISMeasurement_temp.Z1 = -1.*CurrentEISMeasurement_temp.Z2.*sin(deg2rad(-1.*CurrentEISMeasurement_temp.Phase));
+
+                else
+                    errordlg({'Oops! Dataset has no real component or magnitude!',newline,FileName},'Invalid Dataset')
+                    return
+                end
+
+                if ColumnOrder{1,1} <0
+                    CurrentEISMeasurement_temp.Index = transpose(1:length(CurrentEISMeasurement_temp.FrequencyHz));
+                end
+
+                CurrentEISMeasurement_temp.Times = ones(length(CurrentEISMeasurement_temp.FrequencyHz),1);
+            
+        end
+        
+        function saveNewDataEntryAndPlot(app,varargin)
+            %Varargin{1} = {EIS Measurements}
+            %varargin{2} = {Field Names}
+           %varargin{3} = Field = E{Condition, Time Point, Well Number, Exp Number}
+            
+            if ~isempty(varargin)
+                numEntries = length(varargin{2});
+            else
+                numEntries = 1;
+            end
+
+            for e = 1:numEntries
+                if ~isempty(varargin)
+                    EISMeasurement_temp = varargin{1};
+                    FieldNames_temp = varargin{2};
+                    Field = varargin{3};
+
+                    app.CurrentEISMeasurement = EISMeasurement_temp{e};
+                    switch Field
+                        case 'Condition'
+                            app.CurrentEISName = FieldNames_temp{e};
+                        case 'Time Point'
+                            app.CurrentEISTime = FieldNames_temp{e};
+
+                            if ~all(isstrprop(app.CurrentEISTime,'digit'))
+                                errordlg({'Time point read from sheetname non-numeric'},'Invalid Timepoint')
+                                return
+                            end
+                        case 'Well Number'
+                            app.CurrentWell = FieldNames_temp{e};
+                    end
+                end
+
+                %% Save Data
+    
+                    app.Data(end+1) = struct('Name', {app.CurrentEISName}, 'Time', {app.CurrentEISTime}, 'ExperimentNumber', {app.CurrentExpNumber},...
+                        'Well', {app.CurrentWell} ,  'Data', (app.CurrentEISMeasurement));
+
+    
+                %% Plot
+                    EISDat = app.CurrentEISMeasurement;
+                    Freq = EISDat.FrequencyHz;
+                    Mod = EISDat.Z2;
+                    Arg = EISDat.Phase;
+    
+                    switch app.HoldPlotSwitchLoad.Value
+                            case 'On'
+                                hold(app.LoadEISDat, 'on');
+    
+                            case 'Off'
+                                hold(app.LoadEISDat, 'off');
+                                cla(app.LoadEISDat)
+                        end
+                    
+                    yyaxis(app.LoadEISDat, 'left')
+                    plot(app.LoadEISDat, Freq, Mod,'LineWidth',3)
+                    set(app.LoadEISDat,'YScale','log')
+                    set(app.LoadEISDat,'XScale','log')
+                    hold(app.LoadEISDat, 'on')
+                         yyaxis(app.LoadEISDat, 'right')
+                         plot(app.LoadEISDat, Freq, Arg,'LineWidth',3)
+                         set(app.LoadEISDat,'YScale','linear')
+                    hold(app.LoadEISDat, 'on')
+    
+               %% Add Table Entry
+                     newData = {app.CurrentEISName app.CurrentExpNumber app.CurrentWell app.CurrentEISTime};
+                     app.UITable.Data = [app.UITable.Data; newData];
+            end
+            
+        end
     end
     
     methods (Access = public)
@@ -2032,7 +2147,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
             %% Time AutoIncrementer
 
-                value = app.AutoIncrementTimePointSwitch.Value;
+                value = app.AutoIncrementTimePointperfileSwitch.Value;
                 switch value
                     case 'On'
                         app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition+1;
@@ -2040,18 +2155,18 @@ classdef AnalyZe < matlab.apps.AppBase
                         app.CurrentEISTime =app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition);
                         
                         if app.AutoFileTimeIncremementPosition == length(app.AutoFileTimeIncrementArray)
-                            app.AutoIncrementTimePointSwitch.Value = 'Off';
+                            app.AutoIncrementTimePointperfileSwitch.Value = 'Off';
                             app.TimePointAUEditField.Enable = true;
                             app.AutoFileTimeIncrementArray = [];
                             app.AutoFileTimeIncremementPosition = 0;
 
-                            app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
-                            app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
+                            app.AutoIncrementTimePointperfileLabel.Text = {'Auto-Increment','Time Point','per file'};
+                            app.AutoIncrementTimePointperfileLabel.FontColor = '0.49,0.18,0.56';
 
                             msgbox('All Time Points Loaded! Noice :)','Auto-Time Incrementer','help')
                         else
-                            app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
-                            app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
+                            app.AutoIncrementTimePointperfileLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
+                            app.AutoIncrementTimePointperfileLabel.FontColor = 'red';
                         end 
                 end
         
@@ -2167,7 +2282,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                 opts.VariableTypes = TypesInFile;
                                 
                                 % Specify range and delimiter
-                                opts.DataLines =  app.stDataRowSpinner.Value;
+                                opts.DataLines =  app.RowdatastartsonSpinner.Value;
                                     %Auto-detect_delimeter
                                        % AutoOpts = detectImportOptions(FileName);
                                        % opts.Delimiter = string(AutoOpts.Delimiter{1});
@@ -2180,8 +2295,13 @@ classdef AnalyZe < matlab.apps.AppBase
                                 % Import the data
                                 CurrentEISMeasurement_temp = readtable(FileName, opts);
 
+                                %Fill out data
+                                app.CurrentEISMeasurement = app.fillOutArbColumnFormatData(ColumnOrder,CurrentEISMeasurement_temp);
+
                                                             
                             case 'Spreadsheet'
+
+                              
                                 %% Set up the Import Options and import the data
                                 opts = spreadsheetImportOptions("NumVariables", length(VarsInFile));
 
@@ -2190,94 +2310,51 @@ classdef AnalyZe < matlab.apps.AppBase
                                 opts.VariableTypes = TypesInFile;
                                 
                                 % Specify sheet and range
-                                opts.DataRange = app.stDataRowSpinner.Value;
+                                opts.DataRange = app.RowdatastartsonSpinner.Value;
                                 opts.MissingRule = 'omitrow';
-
+                                
                                  % Import the data
-                                CurrentEISMeasurement_temp = readtable(FileName, opts,"UseExcel", false);
+                                val_multisheetfield = app.KnobMultiSelect_SpreadsheetMultisheet.Value;
+                                switch val_multisheetfield
+                                    case 'Off'
+                                         CurrentEISMeasurement_temp = readtable(FileName, opts,"UseExcel", false);
+                                         %Fill out data
+                                            app.CurrentEISMeasurement = app.fillOutArbColumnFormatData(ColumnOrder,CurrentEISMeasurement_temp);
+
+                                         SheetNames = "";
+                                    otherwise
+                                        [~,SheetNames] = xlsfinfo(FileName);
+                                        SheetEISMeasurement_temp = [];
+
+                                        for s = 1:length(SheetNames)
+                                            
+                                            opts.Sheet = s;
+                                            SheetEISMeasurement_temp{s} = readtable(FileName, opts,"UseExcel", false);
+
+                                            %Fill out data
+                                            SheetEISMeasurement_temp{s} = app.fillOutArbColumnFormatData(ColumnOrder,SheetEISMeasurement_temp{s});
+                                        end
+                                end
+                                
                         end
                         
                         %% Clear temporary variables
                         clear opts
 
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                        %% Fill out data
-                         %1          2               3       4   5       6       7               8   
-                        %Index (AU),Frequency (Hz),Re(Z),-Im(Z),Im(Z),Mag(Z),-Phase(Z) (deg),Phase(Z) (deg)
-
-                        %["Index", "FrequencyHz", "Z", "Z1", "Z2", "Phase", "Times"];
-
-                        if ColumnOrder{1,5} > 0
-                            CurrentEISMeasurement_temp.Z1 = CurrentEISMeasurement_temp.Z1.*-1; 
-                        end
-                        if ColumnOrder{1,8} > 0
-                            CurrentEISMeasurement_temp.Phase = CurrentEISMeasurement_temp.Phase.*-1; 
-                        end
-                        
-                        if ColumnOrder{1,3} > 0 %Has imaginary components
-
-                            Z = CurrentEISMeasurement_temp.Z - 1j.*CurrentEISMeasurement_temp.Z1;
-                            CurrentEISMeasurement_temp.Z2 = abs(Z);
-                            CurrentEISMeasurement_temp.Phase = -1.*rad2deg(angle(Z));
-
-                        elseif ColumnOrder{1,6} > 0 %Has mod/arg
-
-                            CurrentEISMeasurement_temp.Z = CurrentEISMeasurement_temp.Z2.*cos(deg2rad(-1.*CurrentEISMeasurement_temp.Phase));
-                            CurrentEISMeasurement_temp.Z1 = -1.*CurrentEISMeasurement_temp.Z2.*sin(deg2rad(-1.*CurrentEISMeasurement_temp.Phase));
-
-                        else
-                            errordlg({'Oops! Dataset has no real component or magnitude!',newline,FileName},'Invalid Dataset')
-                            return
-                        end
-
-                        if ColumnOrder{1,1} <0
-                            CurrentEISMeasurement_temp.Index = transpose(1:length(CurrentEISMeasurement_temp.FrequencyHz));
-                        end
-
-                        CurrentEISMeasurement_temp.Times = ones(length(CurrentEISMeasurement_temp.FrequencyHz),1);
-
-                        %% Save to global var
-                        app.CurrentEISMeasurement = CurrentEISMeasurement_temp;
-
                 end
 
                 
-    
-                %% Save Data
-    
-                    app.Data(end+1) = struct('Name', {app.CurrentEISName}, 'Time', {app.CurrentEISTime}, 'ExperimentNumber', {app.CurrentExpNumber},...
-                        'Well', {app.CurrentWell} ,  'Data', (app.CurrentEISMeasurement));
-
-    
-                %% Plot
-                    EISDat = app.CurrentEISMeasurement;
-                    Freq = EISDat.FrequencyHz;
-                    Mod = EISDat.Z2;
-                    Arg = EISDat.Phase;
-    
-                    switch app.HoldPlotSwitchLoad.Value
-                            case 'On'
-                                hold(app.LoadEISDat, 'on');
-    
-                            case 'Off'
-                                hold(app.LoadEISDat, 'off');
-                                cla(app.LoadEISDat)
-                        end
-                    
-                    yyaxis(app.LoadEISDat, 'left')
-                    plot(app.LoadEISDat, Freq, Mod,'LineWidth',3)
-                    set(app.LoadEISDat,'YScale','log')
-                    set(app.LoadEISDat,'XScale','log')
-                    hold(app.LoadEISDat, 'on')
-                         yyaxis(app.LoadEISDat, 'right')
-                         plot(app.LoadEISDat, Freq, Arg,'LineWidth',3)
-                         set(app.LoadEISDat,'YScale','linear')
-                    hold(app.LoadEISDat, 'on')
-    
-               %% Add Table Entry
-                     newData = {app.CurrentEISName app.CurrentExpNumber app.CurrentWell app.CurrentEISTime};
-                     app.UITable.Data = [app.UITable.Data; newData];
-
+                %% Save and plot
+                val_multisheetfield = app.KnobMultiSelect_SpreadsheetMultisheet.Value;
+                switch val_multisheetfield
+                    case 'Off'
+                         app.saveNewDataEntryAndPlot()
+                    otherwise
+                         app.saveNewDataEntryAndPlot(SheetEISMeasurement_temp,SheetNames,val_multisheetfield)
+                            %Varargin{1} = {EIS Measurements}
+                            %varargin{2} = {Field Names}
+                            %varargin{3} = Field = E{Condition, Time Point, Well Number}
+                end
 
         
             end
@@ -4891,9 +4968,9 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.TimePointAUEditField.Enable = true;
                     app.AutoFileTimeIncrementArray = [];
                     app.AutoFileTimeIncremementPosition = 0;
-                    app.AutoIncrementTimePointSwitch.Value = 'Off';
-                    app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
-                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
+                    app.AutoIncrementTimePointperfileSwitch.Value = 'Off';
+                    app.AutoIncrementTimePointperfileLabel.Text = {'Auto-Increment','Time Point','per file'};
+                    app.AutoIncrementTimePointperfileLabel.FontColor = '0.49,0.18,0.56';
 
                     
            
@@ -4931,7 +5008,7 @@ classdef AnalyZe < matlab.apps.AppBase
                    f = msgbox("All Data purged :)",'Clear Last Data Point','help');
                end
 
-               value = app.AutoIncrementTimePointSwitch.Value;
+               value = app.AutoIncrementTimePointperfileSwitch.Value;
                switch value
                    case 'On'
                         answer = 'No';
@@ -4942,8 +5019,8 @@ classdef AnalyZe < matlab.apps.AppBase
                                     app.AutoFileTimeIncremementPosition = app.AutoFileTimeIncremementPosition-1;
                                     msgbox('Time Point auto incrementer rolled back by one','Clear Last Data Point','help')
                                 end
-                                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
-                                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
+                                    app.AutoIncrementTimePointperfileLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
+                                    app.AutoIncrementTimePointperfileLabel.FontColor = 'red';
                             end
                         
                end
@@ -7395,7 +7472,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.WellNumberEditField.Enable = false;
                     app.TimePointAUEditField.Enable = true;
                 case 'Time Point'
-                    AutoTime = app.AutoIncrementTimePointSwitch.Value;
+                    AutoTime = app.AutoIncrementTimePointperfileSwitch.Value;
                     switch AutoTime
                         case 'On'
                             errordlg('This option cannot be used concurrently with the auto-time point incrementer.')
@@ -7404,6 +7481,8 @@ classdef AnalyZe < matlab.apps.AppBase
                             app.WellNumberEditField.Enable = true;
                             app.TimePointAUEditField.Enable = false;
                             return
+                        otherwise
+                            app.AutoIncrementTimePointperfileSwitch.Enable = false;
                     end
 
                     app.ConditionEditField.Enable = true;
@@ -7413,18 +7492,19 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.ConditionEditField.Enable = true;
                     app.WellNumberEditField.Enable = true;
                     app.TimePointAUEditField.Enable = true;
+                    app.AutoIncrementTimePointperfileSwitch.Enable = true;
 
             end
 
-            value = app.AutoIncrementTimePointSwitch.Value;
+            value = app.AutoIncrementTimePointperfileSwitch.Value;
             switch value
                 case 'on'
                     app.TimePointAUEditField.Enable = false;
             end
         end
 
-        % Value changed function: AutoIncrementTimePointSwitch
-        function AutoIncrementTimePointSwitchValueChanged(app, event)
+        % Value changed function: AutoIncrementTimePointperfileSwitch
+        function AutoIncrementTimePointperfileSwitchValueChanged(app, event)
                      answer = 'Continue';
            flag = app.TutorialMode;
            if flag
@@ -7436,19 +7516,19 @@ classdef AnalyZe < matlab.apps.AppBase
            end
                switch answer
                    case 'Cancel'
-                       app.AutoIncrementTimePointSwitch.Value = 'Off';
+                       app.AutoIncrementTimePointperfileSwitch.Value = 'Off';
                        return
                end
             
             
-            value = app.AutoIncrementTimePointSwitch.Value;
+            value = app.AutoIncrementTimePointperfileSwitch.Value;
             switch value 
                 case 'Off'
                     app.TimePointAUEditField.Enable = true;
                     app.AutoFileTimeIncrementArray = [];
                     app.AutoFileTimeIncremementPosition = 0;
-                    app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
-                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
+                    app.AutoIncrementTimePointperfileLabel.Text = {'Auto-Increment','Time Point','per file'};
+                    app.AutoIncrementTimePointperfileLabel.FontColor = '0.49,0.18,0.56';
                 case 'On'
                     app.TimePointAUEditField.Enable = false;
 
@@ -7460,11 +7540,11 @@ classdef AnalyZe < matlab.apps.AppBase
 
                     if isempty(answer)
                         app.TimePointAUEditField.Enable = true;
-                        app.AutoIncrementTimePointSwitch.Value = 'Off';
+                        app.AutoIncrementTimePointperfileSwitch.Value = 'Off';
                         app.AutoFileTimeIncrementArray = [];
                         app.AutoFileTimeIncremementPosition = 0;
-                        app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment','Time Point'};
-                        app.AutoIncrementTimePointSwitchLabel.FontColor = 'black';
+                        app.AutoIncrementTimePointperfileLabel.Text = {'Auto-Increment','Time Point','per file'};
+                        app.AutoIncrementTimePointperfileLabel.FontColor = '0.49,0.18,0.56';
                         return
                     end
                     
@@ -7474,8 +7554,8 @@ classdef AnalyZe < matlab.apps.AppBase
                         errordlg('Please enter numeric values separated by commas','Invalud Time Point Array')
                     end
 
-                    app.AutoIncrementTimePointSwitchLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
-                    app.AutoIncrementTimePointSwitchLabel.FontColor = 'red';
+                    app.AutoIncrementTimePointperfileLabel.Text = {'NEXT TIME', ['POINT: ' ,convertStringsToChars(string(app.AutoFileTimeIncrementArray(app.AutoFileTimeIncremementPosition+1)))]};
+                    app.AutoIncrementTimePointperfileLabel.FontColor = 'red';
             end
         end
 
@@ -7690,6 +7770,202 @@ classdef AnalyZe < matlab.apps.AppBase
             value = app.ArbFileFormatSwitch.Value;
 
             app.ArbFileFormatSpecTable.Data = num2cell(app.csv_file_arbitrary_format_init);
+
+           answer = 'Continue';
+           flag = app.TutorialMode;
+           if flag
+                
+               answer = questdlg({'This utility enables you to define a set of columns other than that which AnalyZe imports by default.',...
+                                    newline,...
+                                    'The datafile to be read can be either a csv (delimited text file) or a spreadsheet (e.g. .xls, .xlsx)',...
+                                    newline,...
+                                    'The datafile must include a frequency column as well as (Real(Z) AND Imaginary(Z) ) OR (Magnitude(Z) AND Phase(Z)), where Z is the measured impedance. Which is to say, the data must include either both complex (cartesian) components or both polar (mod-arg) components. From the supplied data, the cartesian or polar values will be calculated automatically. Furthermore, the phase and imaginary component can be supplied as either positive or negative.',...
+                                    newline,...
+                                    'The column names in the table (within the utility tab) indicate the set of allowed columns in the datafile to be imported. Modify the table values beneath each heading with the column order, so that they reflect the columns in the datafile; the first column in the datafile is at position 1, the next at 2 and so on. Use -1 to indicate that a column is not present in the datafile.',...
+                                    newline,...
+                                    'Alongside, enter the row number at which the first data value appears in the datafile (if there are column headings in the file, the first data will appear at row 2).'},...
+                                    'Import a Semi-Arbitrary Datafile',...
+                                   'Continue','Cancel','Continue');
+           end
+               switch answer
+                   case 'Cancel'
+                       app.ArbFileFormatSwitch.Value = 'Off';
+                       return
+               end
+        end
+
+        % Value changed function: KnobMultiSelect_SpreadsheetMultisheet
+        function KnobMultiSelect_SpreadsheetMultisheetValueChanged(app, event)
+            
+            answer = 'Continue';
+           flag = app.TutorialMode;
+           if flag
+                
+               answer = questdlg({'This utility allows for a single spreadsheet file (e.g. .xls) to be imported, where the spreadsheet contains multiple sheets.',...
+                                   newline,...
+                                   'This utility is required to work in cojunction with the arbitrary file format utility.',...
+                                   newline,...
+                                   'Each sheet within the file is considered to contain a single impedance spectrum, corresponding to a particular time point, well number or experimental condition. Within a spreadsheet file, all sheets are constrained to be of a single field category (e.g. all sheets are different time points but the same condition and well number.)',...
+                                   'The names of each sheet are used to populate the selected field name (time point, well number or condition).'},...
+                                    'Import a Spreadsheet File with multiple Sheets',...
+                                   'Continue','Cancel','Continue');
+           end
+               switch answer
+                   case 'Cancel'
+                       app.KnobMultiSelect_SpreadsheetMultisheet.Value = 'Off';
+                       return
+               end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            value = app.KnobMultiSelect_SpreadsheetMultisheet.Value;
+            
+            app.CsvOrSpreadsheetSwitch.Value = 'Spreadsheet';
+
+            switch value
+                case 'Off'
+                otherwise
+                    val_arbFormat = app.ArbFileFormatSwitch.Value;
+                    switch val_arbFormat
+                        case 'Off'
+                       errordlg('Engage the Alternate File Format utility and input file format parameters before using this feature');
+                       app.KnobMultiSelect_SpreadsheetMultisheet.Value = 'Off';
+                       return
+                    end
+            end
+
+
+            val_MultiFileSel = app.KnobMultiSelect.Value;
+            switch value
+                case 'Condition'
+                    switch val_MultiFileSel
+                        case 'Condition'
+                            errordlg('Cannot incrememnt field by file name and sheet name simultaneously.')
+                            app.KnobMultiSelect_SpreadsheetMultisheet.Value = 'Off';
+                            app.ConditionEditField.Enable = true;
+                            app.WellNumberEditField.Enable = true;
+                            app.TimePointAUEditField.Enable = false;
+                            return
+                    end
+
+                    app.ConditionEditField.Enable = false;
+                    app.WellNumberEditField.Enable = true;
+                    app.TimePointAUEditField.Enable = true;
+                case 'Well Number'
+                    switch val_MultiFileSel
+                        case 'Well Number'
+                            errordlg('Cannot incrememnt field by file name and sheet name simultaneously.')
+                            app.KnobMultiSelect_SpreadsheetMultisheet.Value = 'Off';
+                            app.ConditionEditField.Enable = true;
+                            app.WellNumberEditField.Enable = true;
+                            app.TimePointAUEditField.Enable = false;
+                            return
+                    end
+
+                    app.ConditionEditField.Enable = true;
+                    app.WellNumberEditField.Enable = false;
+                    app.TimePointAUEditField.Enable = true;
+                case 'Time Point'
+                    switch val_MultiFileSel
+                        case 'Time Point'
+                            errordlg('Cannot incrememnt field by file name and sheet name simultaneously.')
+                            app.KnobMultiSelect_SpreadsheetMultisheet.Value = 'Off';
+                            app.ConditionEditField.Enable = true;
+                            app.WellNumberEditField.Enable = true;
+                            app.TimePointAUEditField.Enable = false;
+                            return
+                    end
+
+                    AutoTime = app.AutoIncrementTimePointperfileSwitch.Value;
+                    switch AutoTime
+                        case 'On'
+                            errordlg('This option cannot be used concurrently with the auto-time point incrementer.')
+                            app.KnobMultiSelect_SpreadsheetMultisheet.Value = 'Off';
+                            app.ConditionEditField.Enable = true;
+                            app.WellNumberEditField.Enable = true;
+                            app.TimePointAUEditField.Enable = false;
+                            return
+                         otherwise
+                            app.AutoIncrementTimePointperfileSwitch.Enable = false;
+                    end
+
+                    app.ConditionEditField.Enable = true;
+                    app.WellNumberEditField.Enable = true;
+                    app.TimePointAUEditField.Enable = false;
+                otherwise
+                    app.ConditionEditField.Enable = true;
+                    app.WellNumberEditField.Enable = true;
+                    app.TimePointAUEditField.Enable = true;
+                    app.AutoIncrementTimePointperfileSwitch.Enable = true;
+
+                    app.CsvOrSpreadsheetSwitch.Value = 'csv (txt)';
+
+            end
+
+            value = app.AutoIncrementTimePointperfileSwitch.Value;
+            switch value
+                case 'on'
+                    app.TimePointAUEditField.Enable = false;
+            end
+        end
+
+        % Value changed function: DropDown
+        function DropDownValueChanged(app, event)
+            value = app.DropDown.Value;
+
+            switch value
+                case 'Filename Filter'
+                    app.FileFinderTab.SelectedTab = app.FileSUBTRINGFilterTab ;  
+                case 'Auto-Increment Fieldname over many Files'
+                    app.FileFinderTab.SelectedTab = app.MultiSelectTab;
+                case 'Import Data from a Datafile with Alternate Format'
+                    app.FileFinderTab.SelectedTab = app.AlternativeFileFormatTab;
+                case 'Import Data From a Spreadsheet'
+                    app.FileFinderTab.SelectedTab = app.MultisheetSpreadhseetTab;
+            end
+
+            app.DropDown.Value = 'Choose Utility';
+            
+        end
+
+        % Value changed function: DropDown_2
+        function DropDown_2ValueChanged(app, event)
+            value = app.DropDown_2.Value;
+            
+            switch value
+                case 'Choose Utility'
+                case 'Alternate Series Resistance Estimate'
+                    app.CCTFitOptionsTabGroup.SelectedTab  = app.SeriesResistanceEstimateTab;
+                case 'Fit the Electrode and Barrier Sequentially (Select-A-Circuit Only)'
+                    app.CCTFitOptionsTabGroup.SelectedTab  = app.SequentialBarrierFittingTab;
+                case 'Regularize in the Time Domain (EXPERIMENTAL)'
+                    app.CCTFitOptionsTabGroup.SelectedTab  = app.RecursiveTimeRegularizationTab;
+                case 'Apply an Error Correction Factor (Zmeasured/Ztrue)'
+                    app.CCTFitOptionsTabGroup.SelectedTab  = app.ErrorCorrectionTab;
+            end
+
+            app.DropDown_2.Value = 'Choose Utility';
+
+            flag = app.TutorialMode;
+                       
+                       if flag
+                            
+                            msgbox({'The Global Optimization Iterations is the hyperparameter with the greatest impact on fit quality and computation time. This tab group contains adittional hyperparameters and algorithm modifiers.',...
+                                newline,...
+                                'The most pertinent setting is the fitting of the series resistance - by default it is extracted from the impedance data as the highest frequency impedance (R_inf). This assumes that a sufficiently high frequency is measured.'},...
+                                    'Circuit Fit Utilities')
+                       end
+            
+        end
+
+        % Drop down opening function: DropDown_2
+        function DropDown_2Opening(app, event)
+            
+        end
+
+        % Clicked callback: DropDown_2
+        function DropDown_2Clicked(app, event)
+            item = event.InteractionInformation.Item;
+             
         end
     end
 
@@ -7852,7 +8128,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create TimePointAUEditField
             app.TimePointAUEditField = uieditfield(app.LoadDataPanel, 'numeric');
             app.TimePointAUEditField.ValueChangedFcn = createCallbackFcn(app, @TimePointAUEditFieldValueChanged, true);
-            app.TimePointAUEditField.Position = [150 524 51 34];
+            app.TimePointAUEditField.FontSize = 18;
+            app.TimePointAUEditField.Position = [140 524 51 34];
             app.TimePointAUEditField.Value = -1;
 
             % Create OrEnterFilePathEditFieldLabel
@@ -7876,7 +8153,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FindFileButton.FontWeight = 'bold';
             app.FindFileButton.FontColor = [0.4667 0.6745 0.1882];
             app.FindFileButton.Tooltip = {'Find file from local storage'};
-            app.FindFileButton.Position = [75 431 131 34];
+            app.FindFileButton.Position = [58 431 131 34];
             app.FindFileButton.Text = 'Find File';
 
             % Create LOADButton
@@ -7893,13 +8170,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ExperimentNumberEditFieldLabel = uilabel(app.LoadDataPanel);
             app.ExperimentNumberEditFieldLabel.HorizontalAlignment = 'right';
             app.ExperimentNumberEditFieldLabel.FontSize = 14;
-            app.ExperimentNumberEditFieldLabel.Position = [6 578 130 22];
+            app.ExperimentNumberEditFieldLabel.Position = [4 578 130 22];
             app.ExperimentNumberEditFieldLabel.Text = 'Experiment Number';
 
             % Create ExperimentNumberEditField
             app.ExperimentNumberEditField = uieditfield(app.LoadDataPanel, 'numeric');
             app.ExperimentNumberEditField.ValueChangedFcn = createCallbackFcn(app, @ExperimentNumberEditFieldValueChanged, true);
-            app.ExperimentNumberEditField.Position = [151 569 50 40];
+            app.ExperimentNumberEditField.FontSize = 18;
+            app.ExperimentNumberEditField.Position = [139 569 50 40];
             app.ExperimentNumberEditField.Value = -1;
 
             % Create WellNumberEditFieldLabel
@@ -7912,18 +8190,21 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create WellNumberEditField
             app.WellNumberEditField = uieditfield(app.LoadDataPanel, 'text');
             app.WellNumberEditField.ValueChangedFcn = createCallbackFcn(app, @WellNumberEditFieldValueChanged, true);
+            app.WellNumberEditField.FontSize = 18;
             app.WellNumberEditField.Position = [312 583 141 32];
 
             % Create HoldPlotSwitchLabel
             app.HoldPlotSwitchLabel = uilabel(app.LoadDataPanel);
             app.HoldPlotSwitchLabel.HorizontalAlignment = 'center';
-            app.HoldPlotSwitchLabel.Position = [50 -4 54 22];
+            app.HoldPlotSwitchLabel.FontSize = 18;
+            app.HoldPlotSwitchLabel.Position = [26 3 78 23];
             app.HoldPlotSwitchLabel.Text = 'Hold Plot';
 
             % Create HoldPlotSwitchLoad
             app.HoldPlotSwitchLoad = uiswitch(app.LoadDataPanel, 'toggle');
             app.HoldPlotSwitchLoad.Orientation = 'horizontal';
-            app.HoldPlotSwitchLoad.Position = [47 19 78 35];
+            app.HoldPlotSwitchLoad.FontSize = 18;
+            app.HoldPlotSwitchLoad.Position = [35 27 78 35];
 
             % Create HOMEButton
             app.HOMEButton = uibutton(app.LoadDataPanel, 'push');
@@ -7936,7 +8217,28 @@ classdef AnalyZe < matlab.apps.AppBase
 
             % Create FileFinderTab
             app.FileFinderTab = uitabgroup(app.LoadDataPanel);
-            app.FileFinderTab.Position = [212 430 261 149];
+            app.FileFinderTab.Position = [196 430 277 149];
+
+            % Create ImportUtilitiesTab
+            app.ImportUtilitiesTab = uitab(app.FileFinderTab);
+            app.ImportUtilitiesTab.Title = 'Import Utilities →';
+
+            % Create ModifythedataimportworkflowusingvariedutilitiesLabel
+            app.ModifythedataimportworkflowusingvariedutilitiesLabel = uilabel(app.ImportUtilitiesTab);
+            app.ModifythedataimportworkflowusingvariedutilitiesLabel.HorizontalAlignment = 'center';
+            app.ModifythedataimportworkflowusingvariedutilitiesLabel.FontSize = 14;
+            app.ModifythedataimportworkflowusingvariedutilitiesLabel.FontWeight = 'bold';
+            app.ModifythedataimportworkflowusingvariedutilitiesLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.ModifythedataimportworkflowusingvariedutilitiesLabel.Position = [25 82 226 34];
+            app.ModifythedataimportworkflowusingvariedutilitiesLabel.Text = {'Modify the data import workflow '; 'using varied utilities:'};
+
+            % Create DropDown
+            app.DropDown = uidropdown(app.ImportUtilitiesTab);
+            app.DropDown.Items = {'Choose Utility', 'Filename Filter', 'Auto-Increment Fieldname over many Files', 'Import Data from a Datafile with Alternate Format', 'Import Data From a Spreadsheet'};
+            app.DropDown.ValueChangedFcn = createCallbackFcn(app, @DropDownValueChanged, true);
+            app.DropDown.FontSize = 14;
+            app.DropDown.Position = [15 12 246 61];
+            app.DropDown.Value = 'Choose Utility';
 
             % Create FileSUBTRINGFilterTab
             app.FileSUBTRINGFilterTab = uitab(app.FileFinderTab);
@@ -7945,18 +8247,18 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create FindFilesSubtringFilter
             app.FindFilesSubtringFilter = uieditfield(app.FileSUBTRINGFilterTab, 'text');
             app.FindFilesSubtringFilter.Enable = 'off';
-            app.FindFilesSubtringFilter.Position = [75 20 149 25];
+            app.FindFilesSubtringFilter.Position = [75 10 186 25];
 
             % Create KnobSubtringFilter
             app.KnobSubtringFilter = uiknob(app.FileSUBTRINGFilterTab, 'discrete');
             app.KnobSubtringFilter.Items = {'Off', 'Condition', 'Well Number', 'Time Point', 'Substring'};
             app.KnobSubtringFilter.ValueChangedFcn = createCallbackFcn(app, @KnobSubtringFilterValueChanged, true);
-            app.KnobSubtringFilter.Position = [123 49 53 53];
+            app.KnobSubtringFilter.Position = [128 42 53 53];
 
             % Create SubstringLabel
             app.SubstringLabel = uilabel(app.FileSUBTRINGFilterTab);
             app.SubstringLabel.FontWeight = 'bold';
-            app.SubstringLabel.Position = [11 22 65 22];
+            app.SubstringLabel.Position = [11 12 65 22];
             app.SubstringLabel.Text = 'Substring:';
 
             % Create FilterFilenamesbyLabel
@@ -7965,7 +8267,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FilterFilenamesbyLabel.WordWrap = 'on';
             app.FilterFilenamesbyLabel.FontWeight = 'bold';
             app.FilterFilenamesbyLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.FilterFilenamesbyLabel.Position = [7 53 59 64];
+            app.FilterFilenamesbyLabel.Position = [9 48 59 64];
             app.FilterFilenamesbyLabel.Text = 'Filter File names by:';
 
             % Create MultiSelectTab
@@ -7976,16 +8278,17 @@ classdef AnalyZe < matlab.apps.AppBase
             app.KnobMultiSelect = uiknob(app.MultiSelectTab, 'discrete');
             app.KnobMultiSelect.Items = {'Off', 'Condition', 'Well Number', 'Time Point'};
             app.KnobMultiSelect.ValueChangedFcn = createCallbackFcn(app, @KnobMultiSelectValueChanged, true);
-            app.KnobMultiSelect.Position = [115 36 49 49];
+            app.KnobMultiSelect.FontSize = 14;
+            app.KnobMultiSelect.Position = [119 20 64 64];
 
-            % Create SelectMultipleFilesandautoincrementafieldLabel
-            app.SelectMultipleFilesandautoincrementafieldLabel = uilabel(app.MultiSelectTab);
-            app.SelectMultipleFilesandautoincrementafieldLabel.HorizontalAlignment = 'center';
-            app.SelectMultipleFilesandautoincrementafieldLabel.WordWrap = 'on';
-            app.SelectMultipleFilesandautoincrementafieldLabel.FontWeight = 'bold';
-            app.SelectMultipleFilesandautoincrementafieldLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.SelectMultipleFilesandautoincrementafieldLabel.Position = [7 28 59 89];
-            app.SelectMultipleFilesandautoincrementafieldLabel.Text = 'Select Multiple Files and auto-increment a field:';
+            % Create SelectMultipleFilesandautoincrementafieldperfileLabel
+            app.SelectMultipleFilesandautoincrementafieldperfileLabel = uilabel(app.MultiSelectTab);
+            app.SelectMultipleFilesandautoincrementafieldperfileLabel.HorizontalAlignment = 'center';
+            app.SelectMultipleFilesandautoincrementafieldperfileLabel.WordWrap = 'on';
+            app.SelectMultipleFilesandautoincrementafieldperfileLabel.FontWeight = 'bold';
+            app.SelectMultipleFilesandautoincrementafieldperfileLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.SelectMultipleFilesandautoincrementafieldperfileLabel.Position = [4 20 81 89];
+            app.SelectMultipleFilesandautoincrementafieldperfileLabel.Text = 'Select Multiple Files and auto-increment a field (per file)';
 
             % Create AlternativeFileFormatTab
             app.AlternativeFileFormatTab = uitab(app.FileFinderTab);
@@ -7995,7 +8298,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ArbFileFormatSwitch = uiswitch(app.AlternativeFileFormatTab, 'slider');
             app.ArbFileFormatSwitch.Orientation = 'vertical';
             app.ArbFileFormatSwitch.ValueChangedFcn = createCallbackFcn(app, @ArbFileFormatSwitchValueChanged, true);
-            app.ArbFileFormatSwitch.Position = [8 50 20 45];
+            app.ArbFileFormatSwitch.Position = [5 41 20 45];
 
             % Create ArbFileFormatSpecTable
             app.ArbFileFormatSpecTable = uitable(app.AlternativeFileFormatTab);
@@ -8003,29 +8306,29 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ArbFileFormatSpecTable.RowName = {};
             app.ArbFileFormatSpecTable.ColumnEditable = true;
             app.ArbFileFormatSpecTable.Tooltip = {'Column Number starting at 1 (-1 for excluded columns)'};
-            app.ArbFileFormatSpecTable.Position = [34 28 175 70];
+            app.ArbFileFormatSpecTable.Position = [34 28 186 70];
 
             % Create SpecifytargetfilecolumnorderLabel
             app.SpecifytargetfilecolumnorderLabel = uilabel(app.AlternativeFileFormatTab);
             app.SpecifytargetfilecolumnorderLabel.HorizontalAlignment = 'center';
             app.SpecifytargetfilecolumnorderLabel.FontWeight = 'bold';
             app.SpecifytargetfilecolumnorderLabel.FontColor = [0.4667 0.6745 0.1882];
-            app.SpecifytargetfilecolumnorderLabel.Position = [25 4 190 24];
+            app.SpecifytargetfilecolumnorderLabel.Position = [32 1 190 24];
             app.SpecifytargetfilecolumnorderLabel.Text = 'Specify target file column order';
 
-            % Create stDataRowSpinnerLabel
-            app.stDataRowSpinnerLabel = uilabel(app.AlternativeFileFormatTab);
-            app.stDataRowSpinnerLabel.HorizontalAlignment = 'center';
-            app.stDataRowSpinnerLabel.FontWeight = 'bold';
-            app.stDataRowSpinnerLabel.Position = [210 24 52 30];
-            app.stDataRowSpinnerLabel.Text = {'1st Data'; 'Row'};
+            % Create RowdatastartsonSpinnerLabel
+            app.RowdatastartsonSpinnerLabel = uilabel(app.AlternativeFileFormatTab);
+            app.RowdatastartsonSpinnerLabel.HorizontalAlignment = 'center';
+            app.RowdatastartsonSpinnerLabel.FontWeight = 'bold';
+            app.RowdatastartsonSpinnerLabel.Position = [220 24 58 30];
+            app.RowdatastartsonSpinnerLabel.Text = {'Row data'; 'starts on'};
 
-            % Create stDataRowSpinner
-            app.stDataRowSpinner = uispinner(app.AlternativeFileFormatTab);
-            app.stDataRowSpinner.Limits = [1 Inf];
-            app.stDataRowSpinner.FontSize = 14;
-            app.stDataRowSpinner.Position = [215 57 43 41];
-            app.stDataRowSpinner.Value = 2;
+            % Create RowdatastartsonSpinner
+            app.RowdatastartsonSpinner = uispinner(app.AlternativeFileFormatTab);
+            app.RowdatastartsonSpinner.Limits = [1 Inf];
+            app.RowdatastartsonSpinner.FontSize = 14;
+            app.RowdatastartsonSpinner.Position = [228 57 43 41];
+            app.RowdatastartsonSpinner.Value = 2;
 
             % Create CsvOrSpreadsheetSwitch
             app.CsvOrSpreadsheetSwitch = uiswitch(app.AlternativeFileFormatTab, 'rocker');
@@ -8034,24 +8337,46 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CsvOrSpreadsheetSwitch.Position = [107 101 43 19];
             app.CsvOrSpreadsheetSwitch.Value = 'csv (txt)';
 
-            % Create AutoIncrementTimePointSwitchLabel
-            app.AutoIncrementTimePointSwitchLabel = uilabel(app.LoadDataPanel);
-            app.AutoIncrementTimePointSwitchLabel.HorizontalAlignment = 'center';
-            app.AutoIncrementTimePointSwitchLabel.FontWeight = 'bold';
-            app.AutoIncrementTimePointSwitchLabel.Position = [14 489 97 30];
-            app.AutoIncrementTimePointSwitchLabel.Text = {'Auto-Increment '; 'Time Point'};
+            % Create MultisheetSpreadhseetTab
+            app.MultisheetSpreadhseetTab = uitab(app.FileFinderTab);
+            app.MultisheetSpreadhseetTab.Title = 'Multi-sheet Spreadhseet';
 
-            % Create AutoIncrementTimePointSwitch
-            app.AutoIncrementTimePointSwitch = uiswitch(app.LoadDataPanel, 'slider');
-            app.AutoIncrementTimePointSwitch.ValueChangedFcn = createCallbackFcn(app, @AutoIncrementTimePointSwitchValueChanged, true);
-            app.AutoIncrementTimePointSwitch.Position = [142 497 45 20];
+            % Create KnobMultiSelect_SpreadsheetMultisheet
+            app.KnobMultiSelect_SpreadsheetMultisheet = uiknob(app.MultisheetSpreadhseetTab, 'discrete');
+            app.KnobMultiSelect_SpreadsheetMultisheet.Items = {'Off', 'Condition', 'Well Number', 'Time Point'};
+            app.KnobMultiSelect_SpreadsheetMultisheet.ValueChangedFcn = createCallbackFcn(app, @KnobMultiSelect_SpreadsheetMultisheetValueChanged, true);
+            app.KnobMultiSelect_SpreadsheetMultisheet.FontSize = 14;
+            app.KnobMultiSelect_SpreadsheetMultisheet.Position = [128 17 64 64];
+
+            % Create ReaddatafromspreadsheetincrementingLabel
+            app.ReaddatafromspreadsheetincrementingLabel = uilabel(app.MultisheetSpreadhseetTab);
+            app.ReaddatafromspreadsheetincrementingLabel.HorizontalAlignment = 'center';
+            app.ReaddatafromspreadsheetincrementingLabel.WordWrap = 'on';
+            app.ReaddatafromspreadsheetincrementingLabel.FontWeight = 'bold';
+            app.ReaddatafromspreadsheetincrementingLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.ReaddatafromspreadsheetincrementingLabel.Position = [5 19 81 89];
+            app.ReaddatafromspreadsheetincrementingLabel.Text = 'Read data from spreadsheet using sheet name as field entry';
+
+            % Create AutoIncrementTimePointperfileLabel
+            app.AutoIncrementTimePointperfileLabel = uilabel(app.LoadDataPanel);
+            app.AutoIncrementTimePointperfileLabel.HorizontalAlignment = 'center';
+            app.AutoIncrementTimePointperfileLabel.FontWeight = 'bold';
+            app.AutoIncrementTimePointperfileLabel.FontColor = [0.4941 0.1843 0.5569];
+            app.AutoIncrementTimePointperfileLabel.Position = [7 474 97 44];
+            app.AutoIncrementTimePointperfileLabel.Text = {'Auto-Increment '; 'Time Point '; 'per file'};
+
+            % Create AutoIncrementTimePointperfileSwitch
+            app.AutoIncrementTimePointperfileSwitch = uiswitch(app.LoadDataPanel, 'slider');
+            app.AutoIncrementTimePointperfileSwitch.ValueChangedFcn = createCallbackFcn(app, @AutoIncrementTimePointperfileSwitchValueChanged, true);
+            app.AutoIncrementTimePointperfileSwitch.FontColor = [0.4902 0.1804 0.5608];
+            app.AutoIncrementTimePointperfileSwitch.Position = [124 486 45 20];
 
             % Create FirstLabel
             app.FirstLabel = uilabel(app.LoadDataPanel);
             app.FirstLabel.FontSize = 18;
             app.FirstLabel.FontWeight = 'bold';
             app.FirstLabel.FontColor = [0 0.4471 0.7412];
-            app.FirstLabel.Position = [26 436 44 23];
+            app.FirstLabel.Position = [9 436 44 23];
             app.FirstLabel.Text = 'First';
 
             % Create ThenLabel
@@ -8135,7 +8460,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ConditionListBoxLabel
             app.ConditionListBoxLabel = uilabel(app.TrimData);
             app.ConditionListBoxLabel.HorizontalAlignment = 'right';
-            app.ConditionListBoxLabel.Position = [18 254 55 22];
+            app.ConditionListBoxLabel.FontSize = 14;
+            app.ConditionListBoxLabel.Position = [9 254 64 22];
             app.ConditionListBoxLabel.Text = 'Condition';
 
             % Create ConditionListBox
@@ -8145,23 +8471,25 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ExperimentNumberListBoxLabel
             app.ExperimentNumberListBoxLabel = uilabel(app.TrimData);
             app.ExperimentNumberListBoxLabel.HorizontalAlignment = 'right';
-            app.ExperimentNumberListBoxLabel.Position = [5 167 119 43];
+            app.ExperimentNumberListBoxLabel.FontSize = 14;
+            app.ExperimentNumberListBoxLabel.Position = [-32 167 165 43];
             app.ExperimentNumberListBoxLabel.Text = 'Experiment Number';
 
             % Create ExperimentNumberListBox
             app.ExperimentNumberListBox = uilistbox(app.TrimData);
-            app.ExperimentNumberListBox.Position = [136 164 87 58];
+            app.ExperimentNumberListBox.Position = [144 164 87 58];
 
             % Create WellNumberListBoxLabel
             app.WellNumberListBoxLabel = uilabel(app.TrimData);
             app.WellNumberListBoxLabel.HorizontalAlignment = 'right';
-            app.WellNumberListBoxLabel.Position = [49 117 74 22];
+            app.WellNumberListBoxLabel.FontSize = 14;
+            app.WellNumberListBoxLabel.Position = [45 117 86 22];
             app.WellNumberListBoxLabel.Text = 'Well Number';
 
             % Create WellNumberListBox
             app.WellNumberListBox = uilistbox(app.TrimData);
             app.WellNumberListBox.Multiselect = 'on';
-            app.WellNumberListBox.Position = [137 101 87 54];
+            app.WellNumberListBox.Position = [145 101 87 54];
             app.WellNumberListBox.Value = {'Item 1'};
 
             % Create ChosenDataTable
@@ -8183,7 +8511,8 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create TimeListBoxLabel
             app.TimeListBoxLabel = uilabel(app.TrimData);
             app.TimeListBoxLabel.HorizontalAlignment = 'right';
-            app.TimeListBoxLabel.Position = [260 183 48 22];
+            app.TimeListBoxLabel.FontSize = 14;
+            app.TimeListBoxLabel.Position = [260 182 48 23];
             app.TimeListBoxLabel.Text = 'Time';
 
             % Create TimeListBox
@@ -8435,19 +8764,24 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HyperparamsTab = uitab(app.CCTFitOptionsTabGroup);
             app.HyperparamsTab.Title = 'Hyperparams →';
 
-            % Create TextArea
-            app.TextArea = uitextarea(app.HyperparamsTab);
-            app.TextArea.Editable = 'off';
-            app.TextArea.Position = [24 6 265 70];
-            app.TextArea.Value = {'The Global Optimization Iterations is the hyperparameter with the greatest impact on fit quality and computation time. This tab group contains adittional hyperparameters and algorithm modifiers.'; ''; 'The most pertinent setting is the fitting of the series resistance - by default it is extracted from the impedance data as the highest frequency impedance (R_inf). This assumes that a sufficiently high frequency is measured.'};
-
             % Create Label_4
             app.Label_4 = uilabel(app.HyperparamsTab);
             app.Label_4.HorizontalAlignment = 'center';
+            app.Label_4.FontSize = 14;
             app.Label_4.FontWeight = 'bold';
             app.Label_4.FontColor = [0.4667 0.6745 0.1882];
-            app.Label_4.Position = [24 74 268 22];
-            app.Label_4.Text = 'Adjust aspects of the equivalent circuit fitting';
+            app.Label_4.Position = [75 54 163 34];
+            app.Label_4.Text = {'Adjust aspects of the '; 'equivalent circuit fitting'};
+
+            % Create DropDown_2
+            app.DropDown_2 = uidropdown(app.HyperparamsTab);
+            app.DropDown_2.Items = {'Choose Utility', 'Alternate Series Resistance Estimate', 'Fit the Electrode and Barrier Sequentially (Select-A-Circuit Only)', 'Regularize in the Time Domain (EXPERIMENTAL)', 'Apply an Error Correction Factor (Zmeasured/Ztrue)'};
+            app.DropDown_2.DropDownOpeningFcn = createCallbackFcn(app, @DropDown_2Opening, true);
+            app.DropDown_2.ValueChangedFcn = createCallbackFcn(app, @DropDown_2ValueChanged, true);
+            app.DropDown_2.FontSize = 14;
+            app.DropDown_2.ClickedFcn = createCallbackFcn(app, @DropDown_2Clicked, true);
+            app.DropDown_2.Position = [7 11 301 35];
+            app.DropDown_2.Value = 'Choose Utility';
 
             % Create SeriesResistanceEstimateTab
             app.SeriesResistanceEstimateTab = uitab(app.CCTFitOptionsTabGroup);
