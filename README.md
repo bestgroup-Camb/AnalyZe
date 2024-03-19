@@ -4,28 +4,42 @@
 A MATLAB application for handling and analyzing Electrochemical Impedance Spectroscopy (EIS) data in biological (barrier) applications. In particular, biological models, such as epithelial monolayers, organotypic 3D tissue analogues and supported lipid bilayers, are commonly interrogated non-destructively by some re-imagining of the application of an electrochemical potential accross the model and the measurement of the flux/current of ionic species through said model. EIS is a small-signal linearlization which follows this general approach, the output of which is the frequency domain transfer function of the linear approximation of the system about some operating point. The objective of this application is to provide a platform for the collation of MATLAB-based tools to extract information pertaining to the biological system from this frequency-domain data. While the inital focus of the toolkit is variations on the system identification theme, the hope is for the app to be continually extended with different tools by the community. 
 
 ![Schematic of a gerneralised biological barrier being elechtrochemically interrogated alongside the standard equivalent circuit](/images/Equivalent_circuit_Barrier.png)
-
+[Created in BioRender.com]
 
 ## Features
 
 - Import .txt (.csv) and label impedance data.
-- Write .mat files for future analysis.
+    - support for multi-sheet spreadsheet files.
+    - Limited support for user-defined data format (datafile column order).
+    - Plot impedance Bode plots and overlay multiple impedance spectra.
+    - Write .mat files for future analysis.
 - Fit equivalent circuits to EIS data
     - Equivalent circuit fitting assumes the objective is the extraction of the parameters associated with a biological barrier of the form R//C.
+        - However, arbitrary circuit fitting is supported with all circuit paramters reported.
     - Batch processing.
     - Multi-start global optimization with parallelization.
     - Fit pre-defined or user defined circuits.
+        - User defined circuits allow impedance elements with arbitrary function definitions.
         - Sequentially fit pre-defined circuits.
-    - Estimate electrolyte resistance (R_inf) by semi-circle fitting in the Nyquist domain.
+    - Estimate electrolyte resistance (R_inf) by:
+        -  semi-circle fitting in the Nyquist domain.
+        -  highest frequency impedance measurement.
+        -  free paramter fitting.
     - Assess regression by residual plots, complex residual Kernel Density Estimation, real/imaginary QQ-plots and conventional goodness of fit and information metrics.
-    - Plot fitted parameters over time and compare accross experimental conditions. 
+    - Plot fitted parameters over time and compare accross experimental conditions.
+        - Basic time series post-processing, including:
+            - Normalization
+            - Outlier Removal
+            - Time resampling
+            - Calculate {Mean, Std} across time series.
     - Results can be saved and recalled between app sessions.
 - Plot impedance magnitude at slected frequencies as a function of time within an experimental condition.
+    - Plot a cross section, in time, at a particular frequency.
 - Fit an arbitrary order transfer function to the data.
     - Batch processing.
     - Tunable pole order and number of zeros.
     - Plotting of fitted pole values as a function of time within an experimental condition. 
-    - Model assesment by way of confidence plotted intervals, goodness of fit metrics and information criteria. 
+    - Model assesment by way of confidence intervals, goodness of fit metrics and information criteria. 
     - Results can be saved and recalled between app sessions. 
 
 
@@ -41,11 +55,12 @@ For more information refer to [Creating MATLAB GUIs](https://www.mathworks.com/h
 
 ## MATLAB Dependencies
 
-- \>= MATLAB 2022b
+\>= [![Generic badge](https://img.shields.io/badge/MATLAB-R2023b-BLUE.svg)](https://shields.io/)
 - Control System Toolbox
 - System Identification Toolbox
 - Signal Processing Toolbox
 - Statistics and Machine Learning Toolbox
+- Optimization Toolbox
 - Global Optimization Toolbox
 - Econometrics Toolbox
 
@@ -90,3 +105,5 @@ Initiate the share utility (Share->MATLAB App)
 ## Testing
 
 From the MATLAB command window, run /test/AnalyZeTestWrapper.m to execute all tests.
+
+Or, add the required .m test files from ./test to the MATLAB Test Browser and run as required.
