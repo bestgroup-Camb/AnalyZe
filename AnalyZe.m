@@ -38,6 +38,7 @@ classdef AnalyZe < matlab.apps.AppBase
         ImpedanceDataMenu               matlab.ui.container.Menu
         CircuitFitResultsMenu           matlab.ui.container.Menu
         TrasferFnFitResultsMenu         matlab.ui.container.Menu
+        VisualizeDataMenu               matlab.ui.container.Menu
         ToolboxMenu                     matlab.ui.container.Menu
         CircuitFittingMenu              matlab.ui.container.Menu
         FitaCircuitMenu                 matlab.ui.container.Menu
@@ -58,8 +59,10 @@ classdef AnalyZe < matlab.apps.AppBase
         HelpMenu                        matlab.ui.container.Menu
         ToggleExplainerPopupsMenu       matlab.ui.container.Menu
         GithubRepositoryMenu            matlab.ui.container.Menu
+        RaiseNewGithubIssueMenu         matlab.ui.container.Menu
         TabGroup                        matlab.ui.container.TabGroup
         HomeTab                         matlab.ui.container.Tab
+        VisualizeDataButton             matlab.ui.control.Button
         Image5                          matlab.ui.control.Image
         Hyperlink                       matlab.ui.control.Hyperlink
         ExplainerModeSwitch             matlab.ui.control.Switch
@@ -123,6 +126,57 @@ classdef AnalyZe < matlab.apps.AppBase
         ConditionEditFieldLabel         matlab.ui.control.Label
         TimePointAUEditFieldLabel       matlab.ui.control.Label
         LoadEISDat                      matlab.ui.control.UIAxes
+        VisualizeDataTab                matlab.ui.container.Tab
+        PlotButton                      matlab.ui.control.Button
+        TabGroup7                       matlab.ui.container.TabGroup
+        PlotTypeTab                     matlab.ui.container.Tab
+        DimsSwitch_2                    matlab.ui.control.Switch
+        BodeTypeLabel                   matlab.ui.control.Label
+        BodeTypeSwitch                  matlab.ui.control.Switch
+        IndependentVariableKnob         matlab.ui.control.DiscreteKnob
+        IndependentVariableKnobLabel    matlab.ui.control.Label
+        DimsSwitchLabel                 matlab.ui.control.Label
+        DimsSwitch                      matlab.ui.control.Switch
+        PlotTypeSwitch                  matlab.ui.control.Switch
+        PlotTypeSwitchLabel             matlab.ui.control.Label
+        ModifyPlotTab                   matlab.ui.container.Tab
+        SurfaceTypeDropDown             matlab.ui.control.DropDown
+        SurfaceTypeLabel                matlab.ui.control.Label
+        ymaxEditField                   matlab.ui.control.NumericEditField
+        ymaxEditFieldLabel              matlab.ui.control.Label
+        ReZLabel                        matlab.ui.control.Label
+        OffsetAlignSwitch               matlab.ui.control.Switch
+        LegendSwitchLabel               matlab.ui.control.Label
+        LegendSwitch                    matlab.ui.control.Switch
+        SurfaceColourDropDown           matlab.ui.control.DropDown
+        SurfaceColourDropDownLabel      matlab.ui.control.Label
+        SpecifyPlotLimitsSwitchLabel    matlab.ui.control.Label
+        SpecifyPlotLimitsSwitch         matlab.ui.control.Switch
+        zminEditField                   matlab.ui.control.NumericEditField
+        zminEditFieldLabel              matlab.ui.control.Label
+        yminEditField                   matlab.ui.control.NumericEditField
+        yminEditFieldLabel              matlab.ui.control.Label
+        zmaxEditField                   matlab.ui.control.NumericEditField
+        zmaxEditFieldLabel              matlab.ui.control.Label
+        OffsetEditField                 matlab.ui.control.NumericEditField
+        OffsetEditFieldLabel            matlab.ui.control.Label
+        xmaxEditField                   matlab.ui.control.NumericEditField
+        xmaxEditFieldLabel              matlab.ui.control.Label
+        xminEditField                   matlab.ui.control.NumericEditField
+        xminEditFieldLabel              matlab.ui.control.Label
+        TrimData_4                      matlab.ui.container.Panel
+        RefreshData_4                   matlab.ui.control.Button
+        TimeListBox_3                   matlab.ui.control.ListBox
+        TimeListBox_3Label              matlab.ui.control.Label
+        ChooseButton_3                  matlab.ui.control.Button
+        ChosenDataTable_4               matlab.ui.control.Table
+        WellNumberListBox_4             matlab.ui.control.ListBox
+        WellNumberLabel                 matlab.ui.control.Label
+        ExperimentNumberListBox_4       matlab.ui.control.ListBox
+        ExperimentNumberLabel           matlab.ui.control.Label
+        ConditionListBox_4              matlab.ui.control.ListBox
+        ConditionListBox_4Label         matlab.ui.control.Label
+        VisualiseDataAxes               matlab.ui.control.UIAxes
         AnalysisCCTFITTab               matlab.ui.container.Tab
         SaveFigureButton                matlab.ui.control.Button
         LoadResultsButton               matlab.ui.control.Button
@@ -443,6 +497,8 @@ classdef AnalyZe < matlab.apps.AppBase
         DatToFit % Description
         DatToCrossSection % Description
          % Description
+        Pax % Description
+        
     end
     
     properties (Access = public)
@@ -489,7 +545,8 @@ classdef AnalyZe < matlab.apps.AppBase
         MultiFileSelectAutoIncrementLastInput = [];
         AutoFileTimeIncrementArray = {};
         AutoFileTimeIncremementPosition = 0;
-        csv_file_arbitrary_format_init = [-1,-1,-1,-1,-1,-1,-1,-1]
+        csv_file_arbitrary_format_init = [-1,-1,-1,-1,-1,-1,-1,-1];
+        DatToViz;
     end
     
     methods (Access = private)
@@ -1120,7 +1177,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                         [X,Y] = meshgrid(Time_last,Freqs);
                                         
                                       
-                                      cla(app.CSResultsPlot,'reset')
+                                        cla(app.CSResultsPlot,'reset')
                                  
                                         waterfall(app.CSResultsPlot,X,Y,Z)
                                         xlabel(app.CSResultsPlot,'Time')
@@ -1990,6 +2047,12 @@ classdef AnalyZe < matlab.apps.AppBase
             else
                 app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectroneress.png');
             end
+
+            %%Programmatic elements
+            app.Pax = polaraxes(app.VisualizeDataTab);
+            app.Pax.Units = "pixels";
+            app.Pax.Position = [419,19,576,682];
+            app.Pax.Visible = false;
         end
 
         % Button pushed function: FindFileButton
@@ -3786,9 +3849,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                 Mod = Dat_i_EIS.Z2;
                                 Arg = Dat_i_EIS.Phase;
             
-                               
-                                
-                                                
+              
                                 yyaxis(app.CSDataPlot, 'left')
                                 plot(app.CSDataPlot, Freq, Mod, '-r','LineWidth',1)
                                 set(app.CSDataPlot,'YScale','log')
@@ -4465,17 +4526,17 @@ classdef AnalyZe < matlab.apps.AppBase
 
         end
 
-        % Callback function: not associated with a component
+        % Callback function
         function HOMEButtonPushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
 
-        % Callback function: not associated with a component
+        % Callback function
         function HOMEButton_2Pushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
 
-        % Callback function: not associated with a component
+        % Callback function
         function HOMEButton_3Pushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
@@ -6517,7 +6578,7 @@ classdef AnalyZe < matlab.apps.AppBase
             end
         end
 
-        % Callback function: not associated with a component
+        % Callback function
         function HOMEButton_4Pushed(app, event)
             app.TabGroup.SelectedTab = app.HomeTab;
         end
@@ -6735,7 +6796,8 @@ classdef AnalyZe < matlab.apps.AppBase
                     prompt = {['Enter the symbol for your custom element.',newline,...
                                     'This is a single, unique, (capital) character',newline,...
                                     'Reserved characters (predefined elements) are forbidden (Symbol|R,C,Q,W,L,p), as are any previously used custom characters.',newline,...
-                                    'You will be requested to enter the impedance function of this element after you initiate the circuit fit. This function is of the form Z = Z(param1,param2,....,jw).'],...
+                                    'You will be requested to enter the impedance function of this element after you initiate the circuit fit. This function is of the form Z = Z(param1,param2,....,jw).',newline,...
+                                    'For example, a capacitive impedance is defined by Zc = Zc(C,jw) = (C*jw)^(-1) '],...
                                ['Enter the number of parameters (excluding frequency).',newline,...
                                     'This is the number of real valued parameters of which the elmenent impedance function is comprised, barring frequency.',newline,...
                                     'A CPE element, for example, is defined by two parameters.']};
@@ -6743,6 +6805,9 @@ classdef AnalyZe < matlab.apps.AppBase
                     dims = [1 100];
                     definput = {'X','2'};
                     answer = inputdlg(prompt,dlgtitle,dims,definput);
+                    
+                    if isempty(answer), msgbox("Add Custom Element Operation Cancelled","Custom Circuit Element",'error'); return; end
+
                     Elem = answer{1};
                     NumParams = answer{2};
 
@@ -8248,6 +8313,484 @@ classdef AnalyZe < matlab.apps.AppBase
         function SaveFigureMenuSelected(app, event)
             app.SaveFigureButton_2.ButtonPushedFcn(app,event);
         end
+
+        % Menu selected function: RaiseNewGithubIssueMenu
+        function RaiseNewGithubIssueMenuSelected(app, event)
+            web('https://github.com/bestgroup-Camb/AnalyZe/issues/new');
+        end
+
+        % Button pushed function: RefreshData_4
+        function RefreshData_4ButtonPushed(app, event)
+             Dat = app.Data;
+
+                Conditions = "Select All";
+                Exp = "Select All";
+                Well = "Select All";
+                Time = [];
+                for (i=1:length(Dat))
+                    Conditions(i+1) = Dat(i).Name;
+                    Exp(i+1) = Dat(i).ExperimentNumber;
+                    Well(i+1) = Dat(i).Well;
+                    Time(i) = Dat(i).Time;
+                end
+
+                
+                Conditions = unique(Conditions);
+                Exp = unique(Exp);
+                Well = unique(Well);
+                Time = sort(unique(Time));
+                    Time = string((Time'));
+                    Time(end+1) = "Select All";
+
+                app.ConditionListBox_4.Items = Conditions;
+                app.ExperimentNumberListBox_4.Items = Exp;
+                app.WellNumberListBox_4.Items = Well;
+                app.TimeListBox_3.Items = Time;
+        end
+
+        % Button pushed function: ChooseButton_3
+        function ChooseButton_3Pushed(app, event)
+                          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                flag = app.TutorialMode;
+                   
+                   if flag
+                        msgbox('You can now select a subset of time points by holding CTRL and multi-selecting from the Time list box','Heads-Up','help')
+                   end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            Condition = app.ConditionListBox_4.Value;
+            Well = app.WellNumberListBox_4.Value;
+            Exp = app.ExperimentNumberListBox_4.Value;
+            Time = string(app.TimeListBox_3.Value);
+
+            Dat = app.Data;
+
+                ConditionsAll = "";
+                ExpAll = "";
+                WellAll = "";
+                TimeAll = "";
+                for (i=1:length(Dat))
+                    ConditionsAll(i) = Dat(i).Name;
+                    ExpAll(i) = Dat(i).ExperimentNumber;
+                    WellAll(i) = Dat(i).Well;
+                    TimeAll(i) = Dat(i).Time;
+                end
+                
+               Indexes = [];
+               switch Condition{1}
+                    case 'Select All'
+                        Indexes = [1:length(Dat)];
+                   otherwise
+                        Indexes = [];
+                       for j = 1:length(Condition)
+                            Ind_j = find(ConditionsAll == Condition(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(ConditionsAll == Condition);
+               end
+                 Dat = Dat(Indexes);
+                 ExpAll = ExpAll(Indexes);
+                 WellAll = WellAll(Indexes);
+                 TimeAll = TimeAll(Indexes);
+
+
+             Indexes = [];
+               switch Exp{1}
+                    case 'Select All'
+                        Indexes = [1:length(Dat)];
+                   otherwise
+                       Indexes = [];
+                       for j = 1:length(Exp)
+                            Ind_j = find(ExpAll == Exp(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(ExpAll == Exp);
+               end
+                 Dat = Dat(Indexes);
+                 WellAll = WellAll(Indexes);
+                 TimeAll = TimeAll(Indexes);
+
+             Indexes = [];
+               switch Well{1}
+                    case 'Select All'
+                        Indexes = [1:length(Dat)];
+                   otherwise
+                       Indexes = [];
+                       for j = 1:length(Well)
+                            Ind_j = find(WellAll == Well(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(WellAll == Well);
+               end
+                 Dat = Dat(Indexes);
+                 TimeAll = TimeAll(Indexes);
+
+             Indexes = [];
+               switch Time
+                    case 'Select All'
+                        Indexes = [1:length(Dat)];
+                   otherwise
+                       Indexes = [];
+                       for j = 1:length(Time)
+                            Ind_j = find(TimeAll == Time(j));
+                            Indexes = [Indexes Ind_j];
+                       end
+                        %Indexes = find(TimeAll == Time);
+               end
+                Dat = Dat(Indexes);
+
+             %% Cluster data
+                DatToViz_temp = Dat;
+                DatToViz_Clustered  = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+        
+
+                while length(DatToViz_temp) >= 1
+                    
+                    basecase = DatToViz_temp(1);
+                    temp  = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+                    
+                    indexes = [];
+                    var = DatToViz_temp;
+                    for i = 1:length(var) 
+                        var_i = var(i);
+                        if (string(basecase.Name) == string(var_i.Name)) && (basecase.ExperimentNumber == var_i.ExperimentNumber) && (string(basecase.Well) == string(var_i.Well))
+                            temp(end+1) = var_i;
+                            indexes = [indexes,i];
+                        end
+                        
+                    end
+                    DatToViz_temp(indexes) = [];
+
+                    % Sort Cluster By Time
+                            Time_Sorted_Clustered = struct('Name', {'Start'}, 'Time', {-1}, 'ExperimentNumber', {-1}, 'Well', {'A0'} , 'Data', {});
+                    
+                           while length(temp) >= 1
+                               
+                               min_ind = 1;
+                               min_t = temp(1).Time;
+
+                               for i = 1:length(temp)
+                                    if temp(i).Time < min_t
+                                        min_ind = i;
+                                        min_t = temp(i).Time;
+                                    end
+                               end
+                               Time_Sorted_Clustered = [Time_Sorted_Clustered, temp(min_ind)];
+                               temp(min_ind) = [];
+
+                           end
+
+
+                    
+                    DatToViz_Clustered = [DatToViz_Clustered, Time_Sorted_Clustered];
+
+                end
+
+
+
+            %% Load into table
+             app.ChosenDataTable_4.Data = [];
+            for (i = 1:length(DatToViz_Clustered))
+                var = DatToViz_Clustered;
+                var = var(i);
+                newData = {var.Name var.ExperimentNumber var.Well var.Time};
+                app.ChosenDataTable_4.Data = [app.ChosenDataTable_4.Data; newData];
+            end
+
+           app.DatToViz = DatToViz_Clustered;
+        end
+
+        % Value changed function: DimsSwitch
+        function DimsSwitchValueChanged(app, event)
+            value = app.DimsSwitch.Value;
+            switch value
+                case '2D'
+                    app.IndependentVariableKnob.Value = 'Freq';
+                    app.IndependentVariableKnob.Enable = false;
+                    app.DimsSwitch_2.Enable = false;
+                case '3D'
+                    app.IndependentVariableKnob.Enable = true;
+                    app.DimsSwitch_2.Enable = true;
+            end
+        end
+
+        % Value changed function: BodeTypeSwitch
+        function BodeTypeSwitchValueChanged(app, event)
+            value = app.BodeTypeSwitch.Value;
+             switch value
+                case 'H(jw)'
+                    app.DimsSwitch.Enable = true;
+                    
+                case 'Polar'
+                    app.DimsSwitch.Value = '2D';
+                    app.DimsSwitch.Enable = false;
+
+                    
+            end
+        end
+
+        % Button pushed function: VisualizeDataButton
+        function VisualizeDataButtonPushed(app, event)
+            app.TabGroup.SelectedTab = app.VisualizeDataTab;
+            app.RefreshData_4.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: VisualizeDataMenu
+        function VisualizeDataMenuSelected(app, event)
+            app.TabGroup.SelectedTab = app.VisualizeDataTab;
+            app.RefreshData_4.ButtonPushedFcn(app,event);
+        end
+
+        % Button pushed function: PlotButton
+        function PlotButtonPushed(app, event)
+            
+            Dat = app.DatToViz;
+            if (length(Dat)>0)
+                %% Plot
+    
+                 cla(app.VisualiseDataAxes,'reset')
+                 try
+                    cla(app.Pax,'reset')
+                    app.Pax.Visible = false;
+                 end
+
+                 X=[];
+                 Y=[];
+                 Z=[];
+    
+                for (i = 1:length(Dat))
+                    Dat_i = Dat(i);
+                    Dat_i_EIS = Dat_i.Data;
+                    Freq = Dat_i_EIS.FrequencyHz;
+                    Mod = Dat_i_EIS.Z2;
+                    Arg = Dat_i_EIS.Phase;
+                    Real = Dat_i_EIS.Z;
+                    Imag = Dat_i_EIS.Z1;
+                    Disp_name = string(Dat_i.Name) + ", " + string(Dat_i.ExperimentNumber) + ", " + string(Dat_i.Well) + ", " + string(Dat_i.Time);
+
+                    % Offset Align
+                    OffsetVal = app.OffsetAlignSwitch.Value;
+                    switch OffsetVal
+                        case 'On'
+                            
+                            Real = (Real - Real(find(max(Freq)))) + app.OffsetEditField.Value;
+                            Mod = sqrt((Real.^2)+(Imag.^2));
+                            Arg = -1.*rad2deg( (atan((-1.*Imag)./(Real))) );
+                    end
+
+                    PlotTypeVal = app.PlotTypeSwitch.Value;
+                    switch PlotTypeVal
+                        case "Bode"
+                            BodeTypeVal = app.BodeTypeSwitch.Value;
+                            switch BodeTypeVal
+                                case "H(jw)"
+                                    DimsVal = app.DimsSwitch.Value;
+                                    switch DimsVal
+                                        case "2D"
+                                            %Normal Bode
+                                            yyaxis(app.VisualiseDataAxes, 'left')
+                                            plot(app.VisualiseDataAxes, Freq, Mod, 'r','LineWidth',1,'DisplayName',Disp_name)
+                                            set(app.VisualiseDataAxes,'YScale','log')
+                                            set(app.VisualiseDataAxes,'XScale','log')
+                                            xlabel(app.VisualiseDataAxes,'Frequency (Hz)');
+                                            ylabel(app.VisualiseDataAxes,'Magnitude, |Z|, (\Omega )');
+                                            hold(app.VisualiseDataAxes, 'on')
+                                                
+                                            yyaxis(app.VisualiseDataAxes, 'right')
+                                            ylabel(app.VisualiseDataAxes,'-Phase, \angle Z (deg)');
+                                            plot(app.VisualiseDataAxes, Freq, Arg, 'g','LineWidth',1,'DisplayName',Disp_name)
+                                            set(app.VisualiseDataAxes,'YScale','linear')
+                                        case "3D"
+                                            %3D Bode
+                                            IndepVarVal = app.IndependentVariableKnob.Value;
+                                            switch IndepVarVal
+                                                case 'Freq'
+                                                    plot3(app.VisualiseDataAxes, Freq, Mod, Arg,'LineWidth',1,'DisplayName',Disp_name)                       
+                                                    
+                                                    set(app.VisualiseDataAxes,'XScale','log')
+                                                    xlabel(app.VisualiseDataAxes,'Frequency (Hz)');
+
+                                                    X = [X;Freq'];
+                                                    
+                                                case 'Time'
+                                                    plot3(app.VisualiseDataAxes, ones(length(Mod),1).*Dat_i.Time , Mod, Arg,'LineWidth',1,'DisplayName',Disp_name)                     
+    
+                                                    xlabel(app.VisualiseDataAxes,'Time');
+                                                   
+                                                    X = [X;transpose(ones(length(Mod),1).*Dat_i.Time)];
+
+                                                case 'Exp Num'
+                                                    plot3(app.VisualiseDataAxes, repmat(categorical(string(Dat_i.ExperimentNumber)),length(Mod),1) , Mod, Arg,'LineWidth',1,'DisplayName',Disp_name)
+
+                                                    xlabel(app.VisualiseDataAxes,'Experiment Number');
+                                                   
+                                                    X = [X;transpose(repmat(categorical(string(Dat_i.ExperimentNumber)),length(Mod),1))];
+                                                    
+                                                case 'Well Num'
+                                                    plot3(app.VisualiseDataAxes, repmat(categorical(string(Dat_i.Well)),length(Mod),1) , Mod, Arg,'LineWidth',1,'DisplayName',Disp_name)
+
+                                                    xlabel(app.VisualiseDataAxes,'Well Number');
+                                                   
+                                                    X = [X;transpose(repmat(categorical(string(Dat_i.Well)),length(Mod),1))];
+
+                                                case 'Condition'
+                                                    plot3(app.VisualiseDataAxes, repmat(categorical(string(Dat_i.Name)),length(Mod),1) , Mod, Arg,'LineWidth',1,'DisplayName',Disp_name)
+
+                                                    xlabel(app.VisualiseDataAxes,'Condition');
+                                                   
+                                                    X = [X;transpose(repmat(categorical(string(Dat_i.Name)),length(Mod),1))];
+                                            end
+                                            set(app.VisualiseDataAxes,'YScale','log')
+                                            ylabel(app.VisualiseDataAxes,'Magnitude, |Z|, (\Omega )');
+                                            zlabel(app.VisualiseDataAxes,'-Phase, \angle Z (deg)');
+                                            hold(app.VisualiseDataAxes, 'on')
+                                            grid(app.VisualiseDataAxes,'on')
+                                            Y = [Y;Mod'];
+                                            Z = [Z;Arg'];
+
+                                    end
+                                        
+
+                                case "Polar"
+                                    %Polar Bode
+                                    app.VisualiseDataAxes.Visible = false;
+                                    app.Pax.Visible = true;
+                                    hold(app.Pax,'on')
+                                    polarplot(app.Pax,deg2rad(Arg),Mod,'DisplayName',Disp_name)
+                            end
+                        case "Nyquist"
+                            DimsVal = app.DimsSwitch.Value;
+                                    switch DimsVal
+                                        case "2D"
+                                            %Normal Nyq
+                                                plot(app.VisualiseDataAxes , Real, Imag,'LineWidth',1,'DisplayName',Disp_name)
+                                                xlabel(app.VisualiseDataAxes,'Real(Z)');
+                                                ylabel( app.VisualiseDataAxes, '-Imag(Z)');
+                                                Re_max = max(Real);
+                                                Im_max = max(Imag);
+                                                Re_min = min(Real);
+                                                Im_min = min(Imag);
+
+                                                xlim(app.VisualiseDataAxes,[min([Re_min,Im_min]) max([Re_max,Im_max])])
+                                                ylim(app.VisualiseDataAxes,[min([Re_min,Im_min]) max([Re_max,Im_max])])
+                                                hold(app.VisualiseDataAxes, 'on')
+                                                grid(app.VisualiseDataAxes, 'on')
+                                                
+                                        case "3D"
+                                             %3D Nyq
+                                             IndepVarVal = app.IndependentVariableKnob.Value;
+                                            switch IndepVarVal
+                                                case 'Freq'
+                                                    plot3(app.VisualiseDataAxes, Freq, Real, Imag,'LineWidth',1,'DisplayName',Disp_name)
+                                                    
+                                                    set(app.VisualiseDataAxes,'XScale','log')
+                                                    xlabel(app.VisualiseDataAxes,'Frequency (Hz)');
+
+                                                    X = [X;Freq'];
+                                                    
+                                                case 'Time'
+                                                    plot3(app.VisualiseDataAxes, ones(length(Mod),1).*Dat_i.Time , Real, Imag,'LineWidth',1,'DisplayName',Disp_name)                     
+    
+                                                    xlabel(app.VisualiseDataAxes,'Time');
+                                                   
+                                                    X = [X;transpose(ones(length(Mod),1).*Dat_i.Time)];
+
+                                                case 'Exp Num'
+                                                    plot3(app.VisualiseDataAxes, repmat(categorical(string(Dat_i.ExperimentNumber)),length(Mod),1) , Real, Imag,'LineWidth',1,'DisplayName',Disp_name)
+
+                                                    xlabel(app.VisualiseDataAxes,'Experiment Number');
+                                                   
+                                                    X = [X;transpose(repmat(categorical(string(Dat_i.ExperimentNumber)),length(Mod),1))];
+                                                    
+                                                case 'Well Num'
+                                                    plot3(app.VisualiseDataAxes, repmat(categorical(string(Dat_i.Well)),length(Mod),1) , Real, Imag,'LineWidth',1,'DisplayName',Disp_name)
+
+                                                    xlabel(app.VisualiseDataAxes,'Well Number');
+                                                   
+                                                    X = [X;transpose(repmat(categorical(string(Dat_i.Well)),length(Mod),1))];
+
+                                                case 'Condition'
+                                                    plot3(app.VisualiseDataAxes, repmat(categorical(string(Dat_i.Name)),length(Mod),1) , Real, Imag,'LineWidth',1,'DisplayName',Disp_name)
+
+                                                    xlabel(app.VisualiseDataAxes,'Condition');
+                                                   
+                                                    X = [X;transpose(repmat(categorical(string(Dat_i.Name)),length(Mod),1))];
+                                            end
+                                            ylabel(app.VisualiseDataAxes,'Real(Z)');
+                                            zlabel(app.VisualiseDataAxes,'-Imag(Z)');
+                                            hold(app.VisualiseDataAxes, 'on')
+                                            grid(app.VisualiseDataAxes, 'on')
+                                            Y = [Y;Real'];
+                                            Z = [Z;Imag'];
+                                    end          
+                    end
+    
+                end
+            else
+                errordlg({'No Data Selected!'},'Choose Data')
+            end
+
+            legendVal = app.LegendSwitch.Value;
+            switch legendVal
+                case 'On'
+                    PolarVal = app.BodeTypeSwitch.Value;
+                    switch PolarVal
+                        case 'Polar'
+                            legend(app.Pax);
+                        otherwise
+                            legend(app.VisualiseDataAxes)
+                    end
+                    
+            end
+
+            %% Surface plots
+            SurfVal = app.DimsSwitch_2.Value;
+            switch SurfVal
+                case 'Surface'
+                    hold(app.VisualiseDataAxes,'Off')
+                    legend(app.VisualiseDataAxes, 'Off')
+                    
+                    SurfTypeVal = app.SurfaceTypeDropDown.Value;
+                    switch SurfTypeVal
+                        case 'mesh'
+                            mesh(app.VisualiseDataAxes,X,Y,Z)
+                        case 'surf'
+                            surf(app.VisualiseDataAxes,X,Y,Z)
+                        case 'waterfall'
+                            waterfall(app.VisualiseDataAxes,X,Y,Z)
+                        case 'contour'
+                            contour(app.VisualiseDataAxes,X,Y,Z)
+                    end
+                    colormap(app.VisualiseDataAxes, app.SurfaceColourDropDown.Value);
+            end
+
+            %% Mod plot
+            DimsVal = app.DimsSwitch.Value;
+            PlotLimsVal = app.SpecifyPlotLimitsSwitch.Value;
+            
+            switch PlotLimsVal
+                case 'On'
+                    yyaxis(app.VisualiseDataAxes, 'left')
+                    xlim(app.VisualiseDataAxes,[app.xminEditField.Value app.xmaxEditField.Value]);
+                    ylim(app.VisualiseDataAxes,[app.yminEditField.Value app.ymaxEditField.Value]);
+                    switch DimsVal
+                        case '3D'
+                            zlim(app.VisualiseDataAxes,[app.zminEditField.Value app.zmaxEditField.Value]);
+                    end
+            end
+
+        end
+
+        % Value changed function: PlotTypeSwitch
+        function PlotTypeSwitchValueChanged(app, event)
+            value = app.PlotTypeSwitch.Value;
+            switch value
+                case "Nyquist"
+                    app.BodeTypeSwitch.Enable = false;
+                case "Bode"
+                    app.BodeTypeSwitch.Enable = true;
+            end
+        end
     end
 
     % Component initialization
@@ -8320,6 +8863,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.TrasferFnFitResultsMenu = uimenu(app.DumpDataToMATLABWorkspaceMenu);
             app.TrasferFnFitResultsMenu.MenuSelectedFcn = createCallbackFcn(app, @TrasferFnFitResultsMenuSelected, true);
             app.TrasferFnFitResultsMenu.Text = 'Trasfer Fn Fit Results';
+
+            % Create VisualizeDataMenu
+            app.VisualizeDataMenu = uimenu(app.DataMenu);
+            app.VisualizeDataMenu.MenuSelectedFcn = createCallbackFcn(app, @VisualizeDataMenuSelected, true);
+            app.VisualizeDataMenu.Text = 'Visualize Data';
 
             % Create ToolboxMenu
             app.ToolboxMenu = uimenu(app.UIFigure);
@@ -8413,6 +8961,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.GithubRepositoryMenu.MenuSelectedFcn = createCallbackFcn(app, @GithubRepositoryMenuSelected, true);
             app.GithubRepositoryMenu.Text = 'Github Repository';
 
+            % Create RaiseNewGithubIssueMenu
+            app.RaiseNewGithubIssueMenu = uimenu(app.GithubRepositoryMenu);
+            app.RaiseNewGithubIssueMenu.MenuSelectedFcn = createCallbackFcn(app, @RaiseNewGithubIssueMenuSelected, true);
+            app.RaiseNewGithubIssueMenu.Text = 'Raise New Github Issue';
+
             % Create TabGroup
             app.TabGroup = uitabgroup(app.UIFigure);
             app.TabGroup.TabLocation = 'bottom';
@@ -8427,7 +8980,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create Image2
             app.Image2 = uiimage(app.HomeTab);
             app.Image2.ScaleMethod = 'fill';
-            app.Image2.Position = [-1 -23 1020 733];
+            app.Image2.Position = [-1 1 1020 709];
             app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectronicist.png');
 
             % Create AnalyZeLabel
@@ -8463,7 +9016,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ImportDataButton.ButtonPushedFcn = createCallbackFcn(app, @ImportDataButtonPushed, true);
             app.ImportDataButton.FontSize = 24;
             app.ImportDataButton.FontWeight = 'bold';
-            app.ImportDataButton.Position = [15 127 100 67];
+            app.ImportDataButton.Position = [122 180 100 67];
             app.ImportDataButton.Text = {'Import'; 'Data'};
 
             % Create FitEquivalentCircuitButton
@@ -8471,7 +9024,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FitEquivalentCircuitButton.ButtonPushedFcn = createCallbackFcn(app, @FitEquivalentCircuitButtonPushed, true);
             app.FitEquivalentCircuitButton.FontSize = 18;
             app.FitEquivalentCircuitButton.FontWeight = 'bold';
-            app.FitEquivalentCircuitButton.Position = [121 234 196 30];
+            app.FitEquivalentCircuitButton.Position = [228 287 196 30];
             app.FitEquivalentCircuitButton.Text = 'Fit Equivalent Circuit';
 
             % Create TimeSeriesMagnitudeCrossSectionButton
@@ -8479,7 +9032,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.TimeSeriesMagnitudeCrossSectionButton.ButtonPushedFcn = createCallbackFcn(app, @TimeSeriesMagnitudeCrossSectionButtonPushed, true);
             app.TimeSeriesMagnitudeCrossSectionButton.FontSize = 18;
             app.TimeSeriesMagnitudeCrossSectionButton.FontWeight = 'bold';
-            app.TimeSeriesMagnitudeCrossSectionButton.Position = [146 131 234 54];
+            app.TimeSeriesMagnitudeCrossSectionButton.Position = [253 184 234 54];
             app.TimeSeriesMagnitudeCrossSectionButton.Text = {'Time Series'; 'Magnitude Cross Section'};
 
             % Create FitTransferFunctionButton
@@ -8487,7 +9040,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FitTransferFunctionButton.ButtonPushedFcn = createCallbackFcn(app, @FitTransferFunctionButtonPushed, true);
             app.FitTransferFunctionButton.FontSize = 18;
             app.FitTransferFunctionButton.FontWeight = 'bold';
-            app.FitTransferFunctionButton.Position = [111 58 196 30];
+            app.FitTransferFunctionButton.Position = [218 111 196 30];
             app.FitTransferFunctionButton.Text = 'Fit Transfer Function';
 
             % Create ExplainerModeSwitchLabel
@@ -8520,6 +9073,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Image5 = uiimage(app.HomeTab);
             app.Image5.Position = [857 586 151 129];
             app.Image5.ImageSource = fullfile(pathToMLAPP, 'images', 'github_icon_2.png');
+
+            % Create VisualizeDataButton
+            app.VisualizeDataButton = uibutton(app.HomeTab, 'push');
+            app.VisualizeDataButton.ButtonPushedFcn = createCallbackFcn(app, @VisualizeDataButtonPushed, true);
+            app.VisualizeDataButton.FontSize = 18;
+            app.VisualizeDataButton.FontWeight = 'bold';
+            app.VisualizeDataButton.Position = [21 128 102 52];
+            app.VisualizeDataButton.Text = {'Visualize'; 'Data'};
 
             % Create InportDataTab
             app.InportDataTab = uitab(app.TabGroup);
@@ -8869,6 +9430,334 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OrLabel.FontColor = [0 0.4471 0.7412];
             app.OrLabel.Position = [522 23 26 23];
             app.OrLabel.Text = 'Or';
+
+            % Create VisualizeDataTab
+            app.VisualizeDataTab = uitab(app.TabGroup);
+            app.VisualizeDataTab.Title = 'Visualize Data';
+
+            % Create VisualiseDataAxes
+            app.VisualiseDataAxes = uiaxes(app.VisualizeDataTab);
+            title(app.VisualiseDataAxes, 'Title')
+            xlabel(app.VisualiseDataAxes, 'X')
+            ylabel(app.VisualiseDataAxes, 'Y')
+            zlabel(app.VisualiseDataAxes, 'Z')
+            app.VisualiseDataAxes.Position = [419 19 576 682];
+
+            % Create TrimData_4
+            app.TrimData_4 = uipanel(app.VisualizeDataTab);
+            app.TrimData_4.Title = 'Select Data';
+            app.TrimData_4.Position = [15 214 388 490];
+
+            % Create ConditionListBox_4Label
+            app.ConditionListBox_4Label = uilabel(app.TrimData_4);
+            app.ConditionListBox_4Label.HorizontalAlignment = 'right';
+            app.ConditionListBox_4Label.FontSize = 14;
+            app.ConditionListBox_4Label.Position = [38 405 64 22];
+            app.ConditionListBox_4Label.Text = 'Condition';
+
+            % Create ConditionListBox_4
+            app.ConditionListBox_4 = uilistbox(app.TrimData_4);
+            app.ConditionListBox_4.Multiselect = 'on';
+            app.ConditionListBox_4.Position = [110 406 222 61];
+            app.ConditionListBox_4.Value = {'Item 1'};
+
+            % Create ExperimentNumberLabel
+            app.ExperimentNumberLabel = uilabel(app.TrimData_4);
+            app.ExperimentNumberLabel.HorizontalAlignment = 'right';
+            app.ExperimentNumberLabel.FontSize = 14;
+            app.ExperimentNumberLabel.Position = [4 346 81 43];
+            app.ExperimentNumberLabel.Text = {'Experiment '; 'Number'};
+
+            % Create ExperimentNumberListBox_4
+            app.ExperimentNumberListBox_4 = uilistbox(app.TrimData_4);
+            app.ExperimentNumberListBox_4.Multiselect = 'on';
+            app.ExperimentNumberListBox_4.Position = [96 343 90 58];
+            app.ExperimentNumberListBox_4.Value = {'Item 1'};
+
+            % Create WellNumberLabel
+            app.WellNumberLabel = uilabel(app.TrimData_4);
+            app.WellNumberLabel.HorizontalAlignment = 'right';
+            app.WellNumberLabel.FontSize = 14;
+            app.WellNumberLabel.Position = [28 289 55 34];
+            app.WellNumberLabel.Text = {'Well '; 'Number'};
+
+            % Create WellNumberListBox_4
+            app.WellNumberListBox_4 = uilistbox(app.TrimData_4);
+            app.WellNumberListBox_4.Multiselect = 'on';
+            app.WellNumberListBox_4.Position = [97 279 88 59];
+            app.WellNumberListBox_4.Value = {'Item 1'};
+
+            % Create ChosenDataTable_4
+            app.ChosenDataTable_4 = uitable(app.TrimData_4);
+            app.ChosenDataTable_4.ColumnName = {'Condition'; 'Experiment Number'; 'Well'; 'Time Point'};
+            app.ChosenDataTable_4.RowName = {};
+            app.ChosenDataTable_4.Position = [12 10 366 260];
+
+            % Create ChooseButton_3
+            app.ChooseButton_3 = uibutton(app.TrimData_4, 'push');
+            app.ChooseButton_3.ButtonPushedFcn = createCallbackFcn(app, @ChooseButton_3Pushed, true);
+            app.ChooseButton_3.FontSize = 18;
+            app.ChooseButton_3.FontWeight = 'bold';
+            app.ChooseButton_3.FontColor = [0.4667 0.6745 0.1882];
+            app.ChooseButton_3.Tooltip = {'Select the Data subset to be fit'};
+            app.ChooseButton_3.Position = [240 279 88 30];
+            app.ChooseButton_3.Text = 'Choose';
+
+            % Create TimeListBox_3Label
+            app.TimeListBox_3Label = uilabel(app.TrimData_4);
+            app.TimeListBox_3Label.HorizontalAlignment = 'right';
+            app.TimeListBox_3Label.FontSize = 14;
+            app.TimeListBox_3Label.Position = [179 363 48 23];
+            app.TimeListBox_3Label.Text = 'Time';
+
+            % Create TimeListBox_3
+            app.TimeListBox_3 = uilistbox(app.TrimData_4);
+            app.TimeListBox_3.Multiselect = 'on';
+            app.TimeListBox_3.Position = [242 327 89 75];
+            app.TimeListBox_3.Value = {'Item 1'};
+
+            % Create RefreshData_4
+            app.RefreshData_4 = uibutton(app.TrimData_4, 'push');
+            app.RefreshData_4.ButtonPushedFcn = createCallbackFcn(app, @RefreshData_4ButtonPushed, true);
+            app.RefreshData_4.Icon = fullfile(pathToMLAPP, 'images', 'Refresh_icon.png');
+            app.RefreshData_4.FontWeight = 'bold';
+            app.RefreshData_4.FontColor = [0.4667 0.6745 0.1882];
+            app.RefreshData_4.Tooltip = {'Refresh Data Options'};
+            app.RefreshData_4.Position = [6 431 41 36];
+            app.RefreshData_4.Text = '';
+
+            % Create TabGroup7
+            app.TabGroup7 = uitabgroup(app.VisualizeDataTab);
+            app.TabGroup7.Position = [18 40 383 167];
+
+            % Create PlotTypeTab
+            app.PlotTypeTab = uitab(app.TabGroup7);
+            app.PlotTypeTab.Title = 'Plot Type';
+
+            % Create PlotTypeSwitchLabel
+            app.PlotTypeSwitchLabel = uilabel(app.PlotTypeTab);
+            app.PlotTypeSwitchLabel.HorizontalAlignment = 'center';
+            app.PlotTypeSwitchLabel.FontSize = 18;
+            app.PlotTypeSwitchLabel.FontWeight = 'bold';
+            app.PlotTypeSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.PlotTypeSwitchLabel.Position = [2 12 85 23];
+            app.PlotTypeSwitchLabel.Text = 'Plot Type';
+
+            % Create PlotTypeSwitch
+            app.PlotTypeSwitch = uiswitch(app.PlotTypeTab, 'slider');
+            app.PlotTypeSwitch.Items = {'Bode', 'Nyquist'};
+            app.PlotTypeSwitch.Orientation = 'vertical';
+            app.PlotTypeSwitch.ValueChangedFcn = createCallbackFcn(app, @PlotTypeSwitchValueChanged, true);
+            app.PlotTypeSwitch.FontSize = 18;
+            app.PlotTypeSwitch.Position = [31 60 20 45];
+            app.PlotTypeSwitch.Value = 'Bode';
+
+            % Create DimsSwitch
+            app.DimsSwitch = uiswitch(app.PlotTypeTab, 'slider');
+            app.DimsSwitch.Items = {'2D', '3D'};
+            app.DimsSwitch.Orientation = 'vertical';
+            app.DimsSwitch.ValueChangedFcn = createCallbackFcn(app, @DimsSwitchValueChanged, true);
+            app.DimsSwitch.Position = [169 60 20 45];
+            app.DimsSwitch.Value = '2D';
+
+            % Create DimsSwitchLabel
+            app.DimsSwitchLabel = uilabel(app.PlotTypeTab);
+            app.DimsSwitchLabel.HorizontalAlignment = 'center';
+            app.DimsSwitchLabel.FontWeight = 'bold';
+            app.DimsSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.DimsSwitchLabel.Position = [163 13 34 22];
+            app.DimsSwitchLabel.Text = 'Dims';
+
+            % Create IndependentVariableKnobLabel
+            app.IndependentVariableKnobLabel = uilabel(app.PlotTypeTab);
+            app.IndependentVariableKnobLabel.HorizontalAlignment = 'center';
+            app.IndependentVariableKnobLabel.FontWeight = 'bold';
+            app.IndependentVariableKnobLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.IndependentVariableKnobLabel.Enable = 'off';
+            app.IndependentVariableKnobLabel.Position = [218 124 126 22];
+            app.IndependentVariableKnobLabel.Text = 'Independent Variable';
+
+            % Create IndependentVariableKnob
+            app.IndependentVariableKnob = uiknob(app.PlotTypeTab, 'discrete');
+            app.IndependentVariableKnob.Items = {'Freq', 'Exp Num', 'Well Num', 'Condition', 'Time'};
+            app.IndependentVariableKnob.Enable = 'off';
+            app.IndependentVariableKnob.Position = [250 43 60 60];
+            app.IndependentVariableKnob.Value = 'Freq';
+
+            % Create BodeTypeSwitch
+            app.BodeTypeSwitch = uiswitch(app.PlotTypeTab, 'slider');
+            app.BodeTypeSwitch.Items = {'H(jw)', 'Polar'};
+            app.BodeTypeSwitch.Orientation = 'vertical';
+            app.BodeTypeSwitch.ValueChangedFcn = createCallbackFcn(app, @BodeTypeSwitchValueChanged, true);
+            app.BodeTypeSwitch.Position = [112 61 20 45];
+            app.BodeTypeSwitch.Value = 'H(jw)';
+
+            % Create BodeTypeLabel
+            app.BodeTypeLabel = uilabel(app.PlotTypeTab);
+            app.BodeTypeLabel.HorizontalAlignment = 'center';
+            app.BodeTypeLabel.FontWeight = 'bold';
+            app.BodeTypeLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.BodeTypeLabel.Position = [105 6 35 30];
+            app.BodeTypeLabel.Text = {'Bode'; 'Type'};
+
+            % Create DimsSwitch_2
+            app.DimsSwitch_2 = uiswitch(app.PlotTypeTab, 'slider');
+            app.DimsSwitch_2.Items = {'Line', 'Surface'};
+            app.DimsSwitch_2.Enable = 'off';
+            app.DimsSwitch_2.Position = [255 15 45 20];
+            app.DimsSwitch_2.Value = 'Line';
+
+            % Create ModifyPlotTab
+            app.ModifyPlotTab = uitab(app.TabGroup7);
+            app.ModifyPlotTab.Title = 'Modify Plot';
+
+            % Create xminEditFieldLabel
+            app.xminEditFieldLabel = uilabel(app.ModifyPlotTab);
+            app.xminEditFieldLabel.HorizontalAlignment = 'right';
+            app.xminEditFieldLabel.Position = [8 78 34 22];
+            app.xminEditFieldLabel.Text = 'x-min';
+
+            % Create xminEditField
+            app.xminEditField = uieditfield(app.ModifyPlotTab, 'numeric');
+            app.xminEditField.Position = [45 78 52 22];
+
+            % Create xmaxEditFieldLabel
+            app.xmaxEditFieldLabel = uilabel(app.ModifyPlotTab);
+            app.xmaxEditFieldLabel.HorizontalAlignment = 'right';
+            app.xmaxEditFieldLabel.Position = [100 78 38 22];
+            app.xmaxEditFieldLabel.Text = 'x-max';
+
+            % Create xmaxEditField
+            app.xmaxEditField = uieditfield(app.ModifyPlotTab, 'numeric');
+            app.xmaxEditField.Position = [141 78 52 22];
+
+            % Create OffsetEditFieldLabel
+            app.OffsetEditFieldLabel = uilabel(app.ModifyPlotTab);
+            app.OffsetEditFieldLabel.HorizontalAlignment = 'right';
+            app.OffsetEditFieldLabel.Position = [253 2 57 22];
+            app.OffsetEditFieldLabel.Text = 'Offset (Ω)';
+
+            % Create OffsetEditField
+            app.OffsetEditField = uieditfield(app.ModifyPlotTab, 'numeric');
+            app.OffsetEditField.Position = [312 2 52 22];
+
+            % Create zmaxEditFieldLabel
+            app.zmaxEditFieldLabel = uilabel(app.ModifyPlotTab);
+            app.zmaxEditFieldLabel.HorizontalAlignment = 'right';
+            app.zmaxEditFieldLabel.Position = [98 22 38 22];
+            app.zmaxEditFieldLabel.Text = 'z-max';
+
+            % Create zmaxEditField
+            app.zmaxEditField = uieditfield(app.ModifyPlotTab, 'numeric');
+            app.zmaxEditField.Position = [141 22 52 22];
+
+            % Create yminEditFieldLabel
+            app.yminEditFieldLabel = uilabel(app.ModifyPlotTab);
+            app.yminEditFieldLabel.HorizontalAlignment = 'right';
+            app.yminEditFieldLabel.Position = [9 49 34 22];
+            app.yminEditFieldLabel.Text = 'y-min';
+
+            % Create yminEditField
+            app.yminEditField = uieditfield(app.ModifyPlotTab, 'numeric');
+            app.yminEditField.Position = [45 49 52 22];
+
+            % Create zminEditFieldLabel
+            app.zminEditFieldLabel = uilabel(app.ModifyPlotTab);
+            app.zminEditFieldLabel.HorizontalAlignment = 'right';
+            app.zminEditFieldLabel.Position = [7 22 34 22];
+            app.zminEditFieldLabel.Text = 'z-min';
+
+            % Create zminEditField
+            app.zminEditField = uieditfield(app.ModifyPlotTab, 'numeric');
+            app.zminEditField.Position = [45 22 52 22];
+
+            % Create SpecifyPlotLimitsSwitch
+            app.SpecifyPlotLimitsSwitch = uiswitch(app.ModifyPlotTab, 'slider');
+            app.SpecifyPlotLimitsSwitch.Items = {'On', 'Off'};
+            app.SpecifyPlotLimitsSwitch.Position = [119 116 45 20];
+
+            % Create SpecifyPlotLimitsSwitchLabel
+            app.SpecifyPlotLimitsSwitchLabel = uilabel(app.ModifyPlotTab);
+            app.SpecifyPlotLimitsSwitchLabel.HorizontalAlignment = 'center';
+            app.SpecifyPlotLimitsSwitchLabel.FontWeight = 'bold';
+            app.SpecifyPlotLimitsSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.SpecifyPlotLimitsSwitchLabel.Position = [21 109 66 30];
+            app.SpecifyPlotLimitsSwitchLabel.Text = {'Specify'; 'Plot Limits'};
+
+            % Create SurfaceColourDropDownLabel
+            app.SurfaceColourDropDownLabel = uilabel(app.ModifyPlotTab);
+            app.SurfaceColourDropDownLabel.HorizontalAlignment = 'right';
+            app.SurfaceColourDropDownLabel.FontWeight = 'bold';
+            app.SurfaceColourDropDownLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.SurfaceColourDropDownLabel.Position = [210 112 49 30];
+            app.SurfaceColourDropDownLabel.Text = {'Surface'; 'Colour'};
+
+            % Create SurfaceColourDropDown
+            app.SurfaceColourDropDown = uidropdown(app.ModifyPlotTab);
+            app.SurfaceColourDropDown.Items = {'parula', 'turbo', 'hsv', 'hot', 'cool', 'summer', 'winter', 'jet'};
+            app.SurfaceColourDropDown.Position = [265 114 112 25];
+            app.SurfaceColourDropDown.Value = 'parula';
+
+            % Create LegendSwitch
+            app.LegendSwitch = uiswitch(app.ModifyPlotTab, 'slider');
+            app.LegendSwitch.Items = {'On', 'Off'};
+            app.LegendSwitch.Position = [296 55 45 20];
+            app.LegendSwitch.Value = 'On';
+
+            % Create LegendSwitchLabel
+            app.LegendSwitchLabel = uilabel(app.ModifyPlotTab);
+            app.LegendSwitchLabel.HorizontalAlignment = 'center';
+            app.LegendSwitchLabel.FontWeight = 'bold';
+            app.LegendSwitchLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.LegendSwitchLabel.Position = [219 54 48 22];
+            app.LegendSwitchLabel.Text = 'Legend';
+
+            % Create OffsetAlignSwitch
+            app.OffsetAlignSwitch = uiswitch(app.ModifyPlotTab, 'slider');
+            app.OffsetAlignSwitch.Items = {'On', 'Off'};
+            app.OffsetAlignSwitch.Position = [297 30 45 20];
+
+            % Create ReZLabel
+            app.ReZLabel = uilabel(app.ModifyPlotTab);
+            app.ReZLabel.HorizontalAlignment = 'center';
+            app.ReZLabel.FontWeight = 'bold';
+            app.ReZLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.ReZLabel.Position = [225 22 40 30];
+            app.ReZLabel.Text = {'Offset'; 'Align'};
+
+            % Create ymaxEditFieldLabel
+            app.ymaxEditFieldLabel = uilabel(app.ModifyPlotTab);
+            app.ymaxEditFieldLabel.HorizontalAlignment = 'right';
+            app.ymaxEditFieldLabel.Position = [100 50 38 22];
+            app.ymaxEditFieldLabel.Text = 'y-max';
+
+            % Create ymaxEditField
+            app.ymaxEditField = uieditfield(app.ModifyPlotTab, 'numeric');
+            app.ymaxEditField.Position = [141 50 52 22];
+
+            % Create SurfaceTypeLabel
+            app.SurfaceTypeLabel = uilabel(app.ModifyPlotTab);
+            app.SurfaceTypeLabel.HorizontalAlignment = 'right';
+            app.SurfaceTypeLabel.FontWeight = 'bold';
+            app.SurfaceTypeLabel.FontColor = [0.4667 0.6745 0.1882];
+            app.SurfaceTypeLabel.Position = [211 79 49 30];
+            app.SurfaceTypeLabel.Text = {'Surface'; 'Type'};
+
+            % Create SurfaceTypeDropDown
+            app.SurfaceTypeDropDown = uidropdown(app.ModifyPlotTab);
+            app.SurfaceTypeDropDown.Items = {'mesh', 'surf', 'waterfall', 'contour'};
+            app.SurfaceTypeDropDown.Position = [266 82 112 25];
+            app.SurfaceTypeDropDown.Value = 'mesh';
+
+            % Create PlotButton
+            app.PlotButton = uibutton(app.VisualizeDataTab, 'push');
+            app.PlotButton.ButtonPushedFcn = createCallbackFcn(app, @PlotButtonPushed, true);
+            app.PlotButton.FontSize = 22;
+            app.PlotButton.FontWeight = 'bold';
+            app.PlotButton.FontColor = [0.4667 0.6745 0.1882];
+            app.PlotButton.Tooltip = {'Select the Data subset to be fit'};
+            app.PlotButton.Position = [156 2 82 36];
+            app.PlotButton.Text = 'Plot';
 
             % Create AnalysisCCTFITTab
             app.AnalysisCCTFITTab = uitab(app.TabGroup);
