@@ -39,6 +39,7 @@ classdef AnalyZe < matlab.apps.AppBase
         CircuitFitResultsMenu           matlab.ui.container.Menu
         TrasferFnFitResultsMenu         matlab.ui.container.Menu
         VisualizeDataMenu               matlab.ui.container.Menu
+        SaveFigureMenu_2                matlab.ui.container.Menu
         ToolboxMenu                     matlab.ui.container.Menu
         CircuitFittingMenu              matlab.ui.container.Menu
         FitaCircuitMenu                 matlab.ui.container.Menu
@@ -71,7 +72,7 @@ classdef AnalyZe < matlab.apps.AppBase
         TimeSeriesMagnitudeCrossSectionButton  matlab.ui.control.Button
         FitEquivalentCircuitButton      matlab.ui.control.Button
         ImportDataButton                matlab.ui.control.Button
-        DouglasvanNiekerkVersion4March2024Label  matlab.ui.control.Label
+        DouglasvanNiekerkVersion5March2024Label  matlab.ui.control.Label
         Image                           matlab.ui.control.Image
         BioImpedanceDataAnalysisToolLabel  matlab.ui.control.Label
         AnalyZeLabel                    matlab.ui.control.Label
@@ -127,8 +128,10 @@ classdef AnalyZe < matlab.apps.AppBase
         TimePointAUEditFieldLabel       matlab.ui.control.Label
         LoadEISDat                      matlab.ui.control.UIAxes
         VisualizeDataTab                matlab.ui.container.Tab
+        SaveFigureButton_4              matlab.ui.control.Button
+        HoldReleaseButton               matlab.ui.control.StateButton
         PlotButton                      matlab.ui.control.Button
-        TabGroup7                       matlab.ui.container.TabGroup
+        VizDataPlotParamsTabGroup       matlab.ui.container.TabGroup
         PlotTypeTab                     matlab.ui.container.Tab
         DimsSwitch_2                    matlab.ui.control.Switch
         BodeTypeLabel                   matlab.ui.control.Label
@@ -392,6 +395,7 @@ classdef AnalyZe < matlab.apps.AppBase
         ClipTimeVectorSwitch            matlab.ui.control.Switch
         ClipTimeVectorSwitchLabel       matlab.ui.control.Label
         Panel_2                         matlab.ui.container.Panel
+        ResetAccumulatorButton          matlab.ui.control.Button
         PlotMeanSwitch                  matlab.ui.control.Switch
         PlotMeanSwitchLabel             matlab.ui.control.Label
         WaterFallSwitch                 matlab.ui.control.Switch
@@ -1146,11 +1150,11 @@ classdef AnalyZe < matlab.apps.AppBase
                                         
                                       app.CS_xline = xline(app.CSDataPlot,CS_Freq,'LineWidth',3);
 
-                                      app.CrossSectionResultsCurrentCondition(end+1) = struct('Name', {Dat_i.Name},...
-                                          'ExperimentNumber', {Dat_i.ExperimentNumber},...
-                                          'Well', {Dat_i.Well} ,...
-                                          'CSResults', (CS_local)...
-                                          );
+                                      % app.CrossSectionResultsCurrentCondition(end+1) = struct('Name', {Dat_i.Name},...
+                                      %     'ExperimentNumber', {Dat_i.ExperimentNumber},...
+                                      %     'Well', {Dat_i.Well} ,...
+                                      %     'CSResults', (CS_local)...
+                                      %     );
 
                                       if (length(app.CrossSectionResultsCurrentCondition) == 1 )
                                             app.CrossSectionResultsCurrentCondition(end+1) = struct('Name', {Dat_i.Name},...
@@ -1164,7 +1168,6 @@ classdef AnalyZe < matlab.apps.AppBase
                                         Time_last = CS_last.CSResults.Time;
                                         Freqs = [1:length(app.CrossSectionResultsCurrentCondition)];
 
-
                                         Z = [];
                                         
                                         for (j = 1:length(app.CrossSectionResultsCurrentCondition))
@@ -1175,13 +1178,15 @@ classdef AnalyZe < matlab.apps.AppBase
                                         end
 
                                         [X,Y] = meshgrid(Time_last,Freqs);
-                                        
-                                      
+
                                         cla(app.CSResultsPlot,'reset')
-                                 
+                                    
+                                        Disp_Name_i = Dat_i.Name + ", Exp " + Dat_i.ExperimentNumber + ", Well " + Dat_i.Well;
                                         waterfall(app.CSResultsPlot,X,Y,Z)
+                                        legend(app.CSResultsPlot,Disp_Name_i,'Location','best')
                                         xlabel(app.CSResultsPlot,'Time')
                                         ylabel(app.CSResultsPlot,'Frequency (Hz)')
+                                        set(app.CSResultsPlot,'YScale','log')
                                         zlabel(app.CSResultsPlot,'|Z|')
 
                                   case 'Off'
@@ -1212,7 +1217,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                                 return
                                             end
                                             
-                                            Disp_Name_i = CS_i.Name + ", " + CS_i.ExperimentNumber + ", " + CS_i.Well;
+                                            Disp_Name_i = CS_i.Name + ", Exp " + CS_i.ExperimentNumber + ", Well " + CS_i.Well;
                                             if isreal(CS_i.CSResults.y_z)
                                                 plot(app.CSResultsPlot, CS_i.CSResults.Time, (CS_i.CSResults.y_z), '-*', 'LineWidth',2, 'DisplayName',Disp_Name_i)
                                             else
@@ -1258,7 +1263,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                 
 
                           case 'Off'
-                               delete(app.CS_xline)
+                              delete(app.CS_xline)
                               app.CS_xline = xline(app.CSDataPlot,CS_Freq,'LineWidth',3);
 
                               app.CrossSectionResultsCumulative = [];
@@ -1279,14 +1284,13 @@ classdef AnalyZe < matlab.apps.AppBase
 
                               if isreal(CS_local.y_z)
                                 plot(app.CSResultsPlot, CS_local.Time, (CS_local.y_z), '-*', 'LineWidth',2)
-                            else
-                                plot(app.CSResultsPlot, CS_local.Time, abs(CS_local.y_z), '-*', 'LineWidth',2)
-                            end
+                              else
+                                  plot(app.CSResultsPlot, CS_local.Time, abs(CS_local.y_z), '-*', 'LineWidth',2)
+                              end
 
-                              
 
                               xlabel(app.CSResultsPlot,'Time')
-                            ylabel(app.CSResultsPlot,'|Z|')
+                             ylabel(app.CSResultsPlot,'|Z|')
 
                       end
 
@@ -2214,6 +2218,11 @@ classdef AnalyZe < matlab.apps.AppBase
             end
 
 
+            
+             %% Bring UI back to top
+              drawnow;
+              figure(app.UIFigure)
+
 
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2544,6 +2553,10 @@ classdef AnalyZe < matlab.apps.AppBase
                 
              end
               hold(app.LoadEISDat, 'off');
+
+              %% Bring UI back to top
+              drawnow;
+              figure(app.UIFigure)
 
         end
 
@@ -3808,8 +3821,7 @@ classdef AnalyZe < matlab.apps.AppBase
                        Dat_n = Dat_n(Indexes);
                        IndexRecord{6} = Indexes;
                         
-                       
-                       
+
                         
                        if (length(Dat_n)>0)
                             app.DatToCrossSection = Dat_n;
@@ -3881,7 +3893,12 @@ classdef AnalyZe < matlab.apps.AppBase
 
             app.HzEditField.Value = value;
 
-            CrossSection(app,value,false);
+            if ~isempty(app.CrossSectionResultsCumulative)
+                CrossSection(app,value,false);
+            else
+                msgbox('First run Choose and Plot to create new plot','No Current Plot to Refresh','warn')
+            end
+            
         end
 
         % Value changed function: HzEditField
@@ -3890,7 +3907,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.setSliderVal(value);
             
             
-            CrossSection(app,value,false);
+            if ~isempty(app.CrossSectionResultsCumulative)
+                CrossSection(app,value,false);
+            else
+                msgbox('First run Choose and Plot to create new plot','No Current Plot to Refresh','warn')
+            end
                 
 
         end
@@ -7330,7 +7351,7 @@ classdef AnalyZe < matlab.apps.AppBase
             value = app.OverlayTimeSeriesSwitch.Value;
             switch value
                 case 'On'
-                    msgbox("Series Mean Calculation Reset - Toggle the overlay switch to reset data contributing to mean.")
+                    %msgbox("Series Mean Calculation Reset - Toggle the overlay switch to reset data contributing to mean.",'Data Accumulator Cleared!','help')
                     cla(app.CSDataPlot,'reset')
                     cla(app.CSResultsPlot,'reset')
                     app.CrossSectionResultsCumulative = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {},'Indexes',{});% Description
@@ -7674,10 +7695,15 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Button pushed function: RefreshPlotButton
         function RefreshPlotButtonPushed(app, event)
-            value = app.HzEditField.Value;
-            app.setSliderVal(value);
-
-            CrossSection(app,value,false);
+            
+            if ~isempty(app.CrossSectionResultsCumulative)
+                value = app.HzEditField.Value;
+                app.setSliderVal(value);
+    
+                CrossSection(app,value,false);
+            else
+                msgbox('First run Choose and Plot to create new plot','No Current Plot to Refresh','warn')
+            end
         end
 
         % Callback function
@@ -8354,7 +8380,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 flag = app.TutorialMode;
                    
                    if flag
-                        msgbox('You can now select a subset of time points by holding CTRL and multi-selecting from the Time list box','Heads-Up','help')
+                        msgbox('You can now select a subset of values by holding CTRL and multi-selecting from the list box','Heads-Up','help')
                    end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -8521,11 +8547,14 @@ classdef AnalyZe < matlab.apps.AppBase
                 case 'H(jw)'
                     app.DimsSwitch.Enable = true;
                     
+                    cla(app.Pax,'reset')
+                    app.Pax.Visible = false;
+                    
                 case 'Polar'
                     app.DimsSwitch.Value = '2D';
                     app.DimsSwitch.Enable = false;
-
                     
+       
             end
         end
 
@@ -8547,12 +8576,29 @@ classdef AnalyZe < matlab.apps.AppBase
             Dat = app.DatToViz;
             if (length(Dat)>0)
                 %% Plot
-    
-                 cla(app.VisualiseDataAxes,'reset')
-                 try
-                    cla(app.Pax,'reset')
-                    app.Pax.Visible = false;
-                 end
+
+                HoldPlotVal = app.HoldReleaseButton.Value;
+                switch HoldPlotVal
+                    case true
+                        hold(app.VisualiseDataAxes,'On')
+                        Pval = app.BodeTypeSwitch.Value;
+                        switch Pval
+                            case 'Polar'
+                                try
+                                    hold(app.Pax,'On')
+                                end
+                        end
+
+                    otherwise
+                        cla(app.VisualiseDataAxes,'reset')
+                        Pval = app.BodeTypeSwitch.Value;
+                         switch Pval
+                            case 'Polar'
+                                try
+                                    cla(app.Pax,'reset')
+                                end
+                        end
+                end
 
                  X=[];
                  Y=[];
@@ -8566,7 +8612,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     Arg = Dat_i_EIS.Phase;
                     Real = Dat_i_EIS.Z;
                     Imag = Dat_i_EIS.Z1;
-                    Disp_name = string(Dat_i.Name) + ", " + string(Dat_i.ExperimentNumber) + ", " + string(Dat_i.Well) + ", " + string(Dat_i.Time);
+                    Disp_name = string(Dat_i.Name) + ", Exp " + string(Dat_i.ExperimentNumber) + ", Well " + string(Dat_i.Well) + ", Time " + string(Dat_i.Time);
 
                     % Offset Align
                     OffsetVal = app.OffsetAlignSwitch.Value;
@@ -8670,9 +8716,24 @@ classdef AnalyZe < matlab.apps.AppBase
                                                 Im_max = max(Imag);
                                                 Re_min = min(Real);
                                                 Im_min = min(Imag);
-
-                                                xlim(app.VisualiseDataAxes,[min([Re_min,Im_min]) max([Re_max,Im_max])])
-                                                ylim(app.VisualiseDataAxes,[min([Re_min,Im_min]) max([Re_max,Im_max])])
+                                                NetMin = min([Re_min Im_min]);
+                                                NetMax = max([Re_max Im_max]);
+                                                Current_xlim = app.VisualiseDataAxes.XLim;
+                                                Current_ylim = app.VisualiseDataAxes.YLim;
+                                                 
+                                                if Current_xlim == Current_ylim
+                                                    if NetMin < Current_xlim(1)
+                                                        Current_xlim(1) = NetMin;
+                                                        Current_ylim(1) = NetMin;
+                                                    end
+                                                    if NetMax > Current_xlim(2)
+                                                        Current_xlim(2) = NetMax;
+                                                        Current_ylim(2) = NetMax;
+                                                    end
+                                                else
+                                                    xlim(app.VisualiseDataAxes,[NetMin NetMax])
+                                                    ylim(app.VisualiseDataAxes,[NetMin NetMax])
+                                                end
                                                 hold(app.VisualiseDataAxes, 'on')
                                                 grid(app.VisualiseDataAxes, 'on')
                                                 
@@ -8736,48 +8797,59 @@ classdef AnalyZe < matlab.apps.AppBase
                     PolarVal = app.BodeTypeSwitch.Value;
                     switch PolarVal
                         case 'Polar'
-                            legend(app.Pax);
+                            legend(app.Pax,'Location','best');
                         otherwise
-                            legend(app.VisualiseDataAxes)
+                            legend(app.VisualiseDataAxes,'Location','best')
                     end
                     
             end
 
             %% Surface plots
-            SurfVal = app.DimsSwitch_2.Value;
-            switch SurfVal
-                case 'Surface'
-                    hold(app.VisualiseDataAxes,'Off')
-                    legend(app.VisualiseDataAxes, 'Off')
-                    
-                    SurfTypeVal = app.SurfaceTypeDropDown.Value;
-                    switch SurfTypeVal
-                        case 'mesh'
-                            mesh(app.VisualiseDataAxes,X,Y,Z)
-                        case 'surf'
-                            surf(app.VisualiseDataAxes,X,Y,Z)
-                        case 'waterfall'
-                            waterfall(app.VisualiseDataAxes,X,Y,Z)
-                        case 'contour'
-                            contour(app.VisualiseDataAxes,X,Y,Z)
+            switch (app.DimsSwitch.Value)
+                case '3D'
+                    SurfVal = app.DimsSwitch_2.Value;
+                    switch SurfVal
+                        case 'Surface'
+                            hold(app.VisualiseDataAxes,'Off')
+                            legend(app.VisualiseDataAxes, 'Off')
+                            
+                            SurfTypeVal = app.SurfaceTypeDropDown.Value;
+                            switch SurfTypeVal
+                                case 'mesh'
+                                    mesh(app.VisualiseDataAxes,X,Y,Z)
+                                case 'surf'
+                                    surf(app.VisualiseDataAxes,X,Y,Z)
+                                case 'waterfall'
+                                    waterfall(app.VisualiseDataAxes,X,Y,Z)
+                                case 'contour'
+                                    contour(app.VisualiseDataAxes,X,Y,Z)
+                            end
+                            colormap(app.VisualiseDataAxes, app.SurfaceColourDropDown.Value);
                     end
-                    colormap(app.VisualiseDataAxes, app.SurfaceColourDropDown.Value);
             end
 
             %% Mod plot
-            DimsVal = app.DimsSwitch.Value;
-            PlotLimsVal = app.SpecifyPlotLimitsSwitch.Value;
-            
-            switch PlotLimsVal
-                case 'On'
-                    yyaxis(app.VisualiseDataAxes, 'left')
-                    xlim(app.VisualiseDataAxes,[app.xminEditField.Value app.xmaxEditField.Value]);
-                    ylim(app.VisualiseDataAxes,[app.yminEditField.Value app.ymaxEditField.Value]);
-                    switch DimsVal
-                        case '3D'
-                            zlim(app.VisualiseDataAxes,[app.zminEditField.Value app.zmaxEditField.Value]);
+            BodeTypeVal = app.BodeTypeSwitch.Value;
+            switch BodeTypeVal
+                case 'Polar'
+                otherwise
+                    DimsVal = app.DimsSwitch.Value;
+
+                    PlotLimsVal = app.SpecifyPlotLimitsSwitch.Value;
+                    
+                    switch PlotLimsVal
+                        case 'On'
+                            yyaxis(app.VisualiseDataAxes, 'left')
+                            xlim(app.VisualiseDataAxes,[app.xminEditField.Value app.xmaxEditField.Value]);
+                            ylim(app.VisualiseDataAxes,[app.yminEditField.Value app.ymaxEditField.Value]);
+                            switch DimsVal
+                                case '3D'
+                                    zlim(app.VisualiseDataAxes,[app.zminEditField.Value app.zmaxEditField.Value]);
+                            end
                     end
             end
+
+            
 
         end
 
@@ -8789,6 +8861,309 @@ classdef AnalyZe < matlab.apps.AppBase
                     app.BodeTypeSwitch.Enable = false;
                 case "Bode"
                     app.BodeTypeSwitch.Enable = true;
+            end
+        end
+
+        % Value changed function: HoldReleaseButton
+        function HoldReleaseButtonValueChanged(app, event)
+            
+            value = app.HoldReleaseButton.Value;
+            switch value
+                case true
+                    TabGroupChildren = allchild(app.VizDataPlotParamsTabGroup);
+                    for tgc = 1:length(TabGroupChildren)
+                       children = allchild(TabGroupChildren(tgc));
+                        for c = 1:length(children)
+                            temp_component = children(c);
+                            temp_component.Enable = false;
+                        end
+                    end
+                case false
+                    TabGroupChildren = allchild(app.VizDataPlotParamsTabGroup);
+                    for tgc = 1:length(TabGroupChildren)
+                       children = allchild(TabGroupChildren(tgc));
+                        for c = 1:length(children)
+                            temp_component = children(c);
+                            temp_component.Enable = true;
+                        end
+                    end
+
+                    %Clear plots
+                    cla(app.VisualiseDataAxes,'reset')
+                         try
+                            cla(app.Pax,'reset')
+                            
+                         end
+
+                    %Additional active/inactive rules
+                    dVal = app.DimsSwitch.Value;
+                    switch dVal
+                        case '2D'
+                            app.IndependentVariableKnob.Enable = false;
+                            app.DimsSwitch_2.Enable = false;
+                    end
+                    pvalue = app.BodeTypeSwitch.Value;
+                     switch pvalue
+                        case 'Polar'
+                            app.DimsSwitch.Value = '2D';
+                            app.DimsSwitch.Enable = false;
+                         otherwise
+                             app.Pax.Visible = false;
+                     end
+
+            end
+        end
+
+        % Button pushed function: SaveFigureButton_4
+        function SaveFigureButton_4Pushed(app, event)
+             % Get File Type
+
+                 FileTypeList = {'jpeg','png','tiff','tiffn','meta','pdf','eps','epsc','eps2','epsc2','meta','svg'};
+                 [indx,tf] = listdlg('PromptString',{'Select a File Type',''},...
+                'SelectionMode','single','ListString',FileTypeList);
+                 if isempty(indx), msgbox('Operation Cancelled','Save Fig','warn'); return; end 
+                FileType = FileTypeList{indx};
+
+
+            
+           % Create a temporary figure with axes.
+                fig_temp = figure;
+                fig_temp.Visible = 'off';
+                fig_temp.Position = app.UIFigure.Position;
+                switch (app.BodeTypeSwitch.Value)
+                    case 'Polar'
+                        figAxes = polaraxes(fig_temp);
+                    otherwise
+                        figAxes = axes(fig_temp);
+                end
+                 
+          
+            % Copy all UIAxes children, take over axes limits and aspect ratio.            
+                % Copy all UIAxes children, take over axes limits and aspect ratio.
+                    % Polar or Cartesian axes
+                        UserFileName = inputdlg("Enter File Name: ");
+                        selpath = uigetdir();
+
+                        %% Bring UI back to top
+                          drawnow;
+                          figure(app.UIFigure)
+        
+                        BodeTypeVal = app.BodeTypeSwitch.Value;
+                        switch BodeTypeVal
+                            case 'Polar'
+                                axs = app.Pax;
+                                FullFileName = selpath + "\AnalyZeVisualizer_Polar_" + string(UserFileName);
+                                allChildren = findall(axs,'Type','Line')
+                            case 'H(jw)'
+                                axs = app.VisualiseDataAxes;
+                                FullFileName = selpath + "\AnalyZeVisualizer_" + string(UserFileName);
+                                
+                                 allChildren = findall(axs,'Type','Line');
+                                 if isempty(allChildren)
+                                    allChildren = findall(axs,'Type','Scatter');
+                                end
+                                if isempty(allChildren)
+                                    allChildren = findall(axs,'Type','Contour');
+                                end
+                                if isempty(allChildren)
+                                    allChildren = findall(axs,'Type','Surface');
+                                end
+                        end
+
+                switch (app.BodeTypeSwitch.Value)
+                    case 'Polar'
+
+                        copyobj(allChildren, figAxes)
+                        figAxes.RLim = axs.RLim;
+                        %figAxes.RAxis = axs.RAxis;
+                        
+                        figAxes.ThetaLim = axs.ThetaLim;
+                        %figAxes.ThetaAxis = axs.ThetaAxis;
+                        
+                        
+                    otherwise
+                        PlotTypeVal = app.PlotTypeSwitch.Value;
+                        switch PlotTypeVal
+                            case 'Bode'
+                                switch (app.DimsSwitch.Value)
+                                    case '2D'
+                                        yyaxis(axs,"right")
+                                        yyaxis(figAxes,"right")
+        
+                                        allChildren = findall(axs,'Type','Line');
+        
+                                        copyobj(allChildren(1:(length(allChildren)/2)), figAxes)
+                                        figAxes.XLim = axs.XLim;
+                                        figAxes.XScale = axs.XScale;
+                                        figAxes.YLim = axs.YLim;
+                                        figAxes.YScale = axs.YScale;
+                                        figAxes.ZLim = axs.ZLim;
+                                        figAxes.PlotBoxAspectRatio = axs.PlotBoxAspectRatio;
+                                        fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                                        fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize; 
+                
+                                        yyaxis(axs,"left")
+                                        yyaxis(figAxes,"left")
+                                        
+                                        %allChildren = findall(axs,'Type','Line'); %axs.XAxis.Parent.Children;
+                                        copyobj(allChildren((length(allChildren)/2)+1:end), figAxes)
+                                        figAxes.XLim = axs.XLim;
+                                        figAxes.XScale = axs.XScale;
+                                        figAxes.YLim = axs.YLim;
+                                        figAxes.YScale = axs.YScale;
+                                        figAxes.ZLim = axs.ZLim;
+                                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+                                        fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                                        fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize; 
+        
+                                    otherwise %Bode 3D
+                                        copyobj(allChildren, figAxes)
+                                        
+                                        switch (app.IndependentVariableKnob)
+                                            case 'Freq'
+                                                figAxes.XLim = axs.XLim;
+                                                figAxes.XScale = axs.XScale;
+                                            case 'Time'
+                                                figAxes.XLim = axs.XLim;
+                                                figAxes.XScale = axs.XScale;
+                                            otherwise
+                                                %figAxes.XTick = axs.XTick;
+                                                figAxes.XTickLabel = axs.XTickLabel;
+                                        end
+
+                                        figAxes.YLim = axs.YLim;
+                                        figAxes.YScale = axs.YScale;
+                                        figAxes.ZLim = axs.ZLim;
+                                        figAxes.PlotBoxAspectRatio = axs.PlotBoxAspectRatio;
+                                        %figAxes.DataAspectRatio = axs.DataAspectRatio;
+        
+                                end
+        
+                            otherwise %Nyquist
+                                copyobj(allChildren, figAxes)
+                                switch (app.IndependentVariableKnob)
+                                    case 'Freq'
+                                        figAxes.XLim = axs.XLim;
+                                        figAxes.XScale = axs.XScale;
+                                    case 'Time'
+                                        figAxes.XLim = axs.XLim;
+                                        figAxes.XScale = axs.XScale;
+                                    otherwise
+                                        %figAxes.XTick = axs.XTick;
+                                        figAxes.XTickLabel = axs.XTickLabel;
+                                end
+                                figAxes.YLim = axs.YLim;
+                                figAxes.YScale = axs.YScale;
+                                figAxes.ZLim = axs.ZLim;
+                                figAxes.PlotBoxAspectRatio = axs.PlotBoxAspectRatio;
+                                %figAxes.DataAspectRatio = axs.DataAspectRatio;               
+        
+                        end
+        
+                        fig_temp.CurrentAxes.YLabel.String = axs.YLabel.String;
+                        fig_temp.CurrentAxes.YLabel.FontSize = axs.YLabel.FontSize;
+                        fig_temp.CurrentAxes.XLabel.String = axs.XLabel.String;
+                        fig_temp.CurrentAxes.XLabel.FontSize = axs.XLabel.FontSize;
+                        fig_temp.CurrentAxes.Title.String = axs.Title.String;
+                        fig_temp.CurrentAxes.Title.FontSize = axs.Title.FontSize;
+        
+                        figAxes.XGrid = axs.XGrid;
+                        figAxes.YGrid = axs.YGrid;
+        
+                        DimsVal = app.DimsSwitch.Value;
+                        switch DimsVal
+                            case '3D'
+                                figAxes.CameraPosition = axs.CameraPosition;
+                                figAxes.CameraViewAngle = axs.CameraViewAngle;
+                                figAxes.ZScale = axs.ZScale;
+                                fig_temp.CurrentAxes.ZLabel.String = axs.ZLabel.String;
+                                fig_temp.CurrentAxes.ZLabel.FontSize = axs.ZLabel.FontSize;
+                                figAxes.PlotBoxAspectRatio = axs.PlotBoxAspectRatio;
+                                figAxes.DataAspectRatio = axs.DataAspectRatio; 
+                                figAxes.ZGrid = axs.ZGrid;
+                        end
+                end
+
+
+                %%legend
+
+                 try
+                    lgnd_names= [];
+                    for l= 1:length(axs.Legend.String)
+                        lgndName_l = axs.Legend.String{l};
+                        lgnd_names = [lgnd_names;{lgndName_l}];
+                    end
+                    %lgndName1 = axs.Legend.String{1};
+                    lgd = legend(figAxes,lgnd_names);
+                    lgd.Box = axs.Legend.Box;
+                    lgd.Position = axs.Legend.Position;
+                        answer = questdlg('Move legend outside of plot area if present?', ...
+	                    'Legend location', ...
+	                    'Yes','No','No');
+                        switch answer
+                            case 'Yes'
+                                lgd.Location = 'bestoutside' ;
+                                %legend(figAxes,'Location','bestoutside');
+                            case 'No'
+                                lgd.Position = axs.Legend.Position;
+                        end
+                    lgd.Visible = "on";
+                end
+
+
+            % Save as png and fig files.
+                saveas(fig_temp, FullFileName, FileType);
+                %saveas(fig_temp, FullFileName, 'fig');
+                fig_temp.Visible = 'on';
+                savefig(fig_temp, FullFileName);
+            % Delete the temporary figure.
+                delete(fig_temp);
+
+
+                msgbox("File Saved as " + "\AnalyZeResults_<PlotType>_" + string(UserFileName))
+ 
+        end
+
+        % Menu selected function: SaveFigureMenu_2
+        function SaveFigureMenu_2Selected(app, event)
+            app.SaveFigureButton_4.ButtonPushedFcn(app,event);
+        end
+
+        % Button pushed function: ResetAccumulatorButton
+        function ResetAccumulatorButtonPushed(app, event)
+            msgbox("Data contributing to mean calculation reset.",'Data Accumulator Cleared!','help')
+                    cla(app.CSDataPlot,'reset')
+                    cla(app.CSResultsPlot,'reset')
+                    app.CrossSectionResultsCumulative = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {},'Indexes',{});% Description
+                    app.CrossSectionResultsCurrentCondition = struct('Name', {'Start'},  'ExperimentNumber', {-1}, 'Well', {'A0'} , 'CSResults', {});
+        end
+
+        % Value changed function: WaterFallSwitch
+        function WaterFallSwitchValueChanged(app, event)
+            value = app.WaterFallSwitch.Value;
+            cla(app.CSResultsPlot,'reset')
+        end
+
+        % Value changed function: OffsetAlignSwitch
+        function OffsetAlignSwitchValueChanged(app, event)
+            value = app.OffsetAlignSwitch.Value;
+            switch value
+                case 'On'
+
+                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                flag = app.TutorialMode;
+                   
+                   if flag
+                        msgbox({'Uniformly subtract the real component of the highest frequency measurement (for sufficiently high frequency, corresponds to the system series resistance).',...
+                                        '',...
+                                        'Optionally, uniformly offset the data by a real value',...
+                                        'NOTE: Bode plots are plotted on logarithmic scales and thus relatively small or large real offsets can distort the appearance of the data.',...
+                                        '',...
+                                        'i.e. Let Z = (Re(Z) + jIm(Z)) - Re(Z)|fmax + Offset',...
+                                        'Then, |Z| = sqrt(Re(Z)^2 + Im(Z)^2)',...
+                                        '    Arg(Z) = atan(Im(Z)/Re(Z))'},'Explainer','help')
+                   end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             end
         end
     end
@@ -8868,6 +9243,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.VisualizeDataMenu = uimenu(app.DataMenu);
             app.VisualizeDataMenu.MenuSelectedFcn = createCallbackFcn(app, @VisualizeDataMenuSelected, true);
             app.VisualizeDataMenu.Text = 'Visualize Data';
+
+            % Create SaveFigureMenu_2
+            app.SaveFigureMenu_2 = uimenu(app.VisualizeDataMenu);
+            app.SaveFigureMenu_2.MenuSelectedFcn = createCallbackFcn(app, @SaveFigureMenu_2Selected, true);
+            app.SaveFigureMenu_2.Text = 'Save Figure';
 
             % Create ToolboxMenu
             app.ToolboxMenu = uimenu(app.UIFigure);
@@ -9004,12 +9384,12 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Image.Position = [739 -3 264 265];
             app.Image.ImageSource = fullfile(pathToMLAPP, 'images', 'BEST_Logo.png');
 
-            % Create DouglasvanNiekerkVersion4March2024Label
-            app.DouglasvanNiekerkVersion4March2024Label = uilabel(app.HomeTab);
-            app.DouglasvanNiekerkVersion4March2024Label.FontSize = 14;
-            app.DouglasvanNiekerkVersion4March2024Label.FontColor = [0 0.4471 0.7412];
-            app.DouglasvanNiekerkVersion4March2024Label.Position = [734 9 286 26];
-            app.DouglasvanNiekerkVersion4March2024Label.Text = 'Douglas van Niekerk Version 4 - March 2024';
+            % Create DouglasvanNiekerkVersion5March2024Label
+            app.DouglasvanNiekerkVersion5March2024Label = uilabel(app.HomeTab);
+            app.DouglasvanNiekerkVersion5March2024Label.FontSize = 14;
+            app.DouglasvanNiekerkVersion5March2024Label.FontColor = [0 0.4471 0.7412];
+            app.DouglasvanNiekerkVersion5March2024Label.Position = [734 9 286 26];
+            app.DouglasvanNiekerkVersion5March2024Label.Text = 'Douglas van Niekerk Version 5 - March 2024';
 
             % Create ImportDataButton
             app.ImportDataButton = uibutton(app.HomeTab, 'push');
@@ -9537,12 +9917,12 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RefreshData_4.Position = [6 431 41 36];
             app.RefreshData_4.Text = '';
 
-            % Create TabGroup7
-            app.TabGroup7 = uitabgroup(app.VisualizeDataTab);
-            app.TabGroup7.Position = [18 40 383 167];
+            % Create VizDataPlotParamsTabGroup
+            app.VizDataPlotParamsTabGroup = uitabgroup(app.VisualizeDataTab);
+            app.VizDataPlotParamsTabGroup.Position = [18 40 383 167];
 
             % Create PlotTypeTab
-            app.PlotTypeTab = uitab(app.TabGroup7);
+            app.PlotTypeTab = uitab(app.VizDataPlotParamsTabGroup);
             app.PlotTypeTab.Title = 'Plot Type';
 
             % Create PlotTypeSwitchLabel
@@ -9619,7 +9999,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.DimsSwitch_2.Value = 'Line';
 
             % Create ModifyPlotTab
-            app.ModifyPlotTab = uitab(app.TabGroup7);
+            app.ModifyPlotTab = uitab(app.VizDataPlotParamsTabGroup);
             app.ModifyPlotTab.Title = 'Modify Plot';
 
             % Create xminEditFieldLabel
@@ -9726,6 +10106,7 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create OffsetAlignSwitch
             app.OffsetAlignSwitch = uiswitch(app.ModifyPlotTab, 'slider');
             app.OffsetAlignSwitch.Items = {'On', 'Off'};
+            app.OffsetAlignSwitch.ValueChangedFcn = createCallbackFcn(app, @OffsetAlignSwitchValueChanged, true);
             app.OffsetAlignSwitch.Position = [297 30 45 20];
 
             % Create ReZLabel
@@ -9769,6 +10150,24 @@ classdef AnalyZe < matlab.apps.AppBase
             app.PlotButton.Tooltip = {'Select the Data subset to be fit'};
             app.PlotButton.Position = [156 2 82 36];
             app.PlotButton.Text = 'Plot';
+
+            % Create HoldReleaseButton
+            app.HoldReleaseButton = uibutton(app.VisualizeDataTab, 'state');
+            app.HoldReleaseButton.ValueChangedFcn = createCallbackFcn(app, @HoldReleaseButtonValueChanged, true);
+            app.HoldReleaseButton.Text = 'Hold/Release';
+            app.HoldReleaseButton.FontSize = 14;
+            app.HoldReleaseButton.FontWeight = 'bold';
+            app.HoldReleaseButton.FontColor = [0 0.4471 0.7412];
+            app.HoldReleaseButton.Position = [45 8 103 25];
+
+            % Create SaveFigureButton_4
+            app.SaveFigureButton_4 = uibutton(app.VisualizeDataTab, 'push');
+            app.SaveFigureButton_4.ButtonPushedFcn = createCallbackFcn(app, @SaveFigureButton_4Pushed, true);
+            app.SaveFigureButton_4.FontSize = 14;
+            app.SaveFigureButton_4.FontWeight = 'bold';
+            app.SaveFigureButton_4.FontColor = [0 0 1];
+            app.SaveFigureButton_4.Position = [301 7 100 26];
+            app.SaveFigureButton_4.Text = 'Save Figure';
 
             % Create AnalysisCCTFITTab
             app.AnalysisCCTFITTab = uitab(app.TabGroup);
@@ -10978,28 +11377,44 @@ classdef AnalyZe < matlab.apps.AppBase
             app.OverlayTimeSeriesSwitch = uiswitch(app.Panel_2, 'toggle');
             app.OverlayTimeSeriesSwitch.Orientation = 'horizontal';
             app.OverlayTimeSeriesSwitch.ValueChangedFcn = createCallbackFcn(app, @OverlayTimeSeriesSwitchValueChanged, true);
+            app.OverlayTimeSeriesSwitch.FontSize = 14;
             app.OverlayTimeSeriesSwitch.FontWeight = 'bold';
             app.OverlayTimeSeriesSwitch.Position = [33 166 72 32];
 
             % Create WaterFallSwitchLabel
             app.WaterFallSwitchLabel = uilabel(app.Panel_2);
             app.WaterFallSwitchLabel.HorizontalAlignment = 'center';
-            app.WaterFallSwitchLabel.Position = [39 8 56 22];
+            app.WaterFallSwitchLabel.FontSize = 14;
+            app.WaterFallSwitchLabel.FontWeight = 'bold';
+            app.WaterFallSwitchLabel.Position = [32 41 68 22];
             app.WaterFallSwitchLabel.Text = 'WaterFall';
 
             % Create WaterFallSwitch
             app.WaterFallSwitch = uiswitch(app.Panel_2, 'slider');
-            app.WaterFallSwitch.Position = [44 37 45 20];
+            app.WaterFallSwitch.ValueChangedFcn = createCallbackFcn(app, @WaterFallSwitchValueChanged, true);
+            app.WaterFallSwitch.FontSize = 14;
+            app.WaterFallSwitch.Position = [43 70 45 20];
 
             % Create PlotMeanSwitchLabel
             app.PlotMeanSwitchLabel = uilabel(app.Panel_2);
             app.PlotMeanSwitchLabel.HorizontalAlignment = 'center';
-            app.PlotMeanSwitchLabel.Position = [37 64 59 22];
+            app.PlotMeanSwitchLabel.FontSize = 14;
+            app.PlotMeanSwitchLabel.FontWeight = 'bold';
+            app.PlotMeanSwitchLabel.Position = [31 91 71 22];
             app.PlotMeanSwitchLabel.Text = 'Plot Mean';
 
             % Create PlotMeanSwitch
             app.PlotMeanSwitch = uiswitch(app.Panel_2, 'slider');
-            app.PlotMeanSwitch.Position = [44 88 45 20];
+            app.PlotMeanSwitch.FontSize = 14;
+            app.PlotMeanSwitch.Position = [43 115 45 20];
+
+            % Create ResetAccumulatorButton
+            app.ResetAccumulatorButton = uibutton(app.Panel_2, 'push');
+            app.ResetAccumulatorButton.ButtonPushedFcn = createCallbackFcn(app, @ResetAccumulatorButtonPushed, true);
+            app.ResetAccumulatorButton.FontWeight = 'bold';
+            app.ResetAccumulatorButton.FontColor = [0.6353 0.0784 0.1843];
+            app.ResetAccumulatorButton.Position = [7 5 124 23];
+            app.ResetAccumulatorButton.Text = 'Reset Accumulator';
 
             % Create CrossSectionOptions
             app.CrossSectionOptions = uitabgroup(app.CrossSectionParametersPanel);
