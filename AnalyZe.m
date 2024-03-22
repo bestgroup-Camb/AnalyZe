@@ -1349,7 +1349,7 @@ classdef AnalyZe < matlab.apps.AppBase
                     case 'On'
                         MaxFreqInd = find(freq_i == max(freq_i));
 
-                        y_z_CS_i = y_z_CS_i - abs(y_z_i(MaxFreqInd(1)));
+                        y_z_CS_i = y_z_CS_i - real(y_z_i(MaxFreqInd(1)));
                     case 'Off'
                 end
 
@@ -8989,14 +8989,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.AnalyZeLabel.FontSize = 200;
             app.AnalyZeLabel.FontWeight = 'bold';
             app.AnalyZeLabel.FontColor = [0 1 1];
-            app.AnalyZeLabel.Position = [161 347 733 266];
+            app.AnalyZeLabel.Position = [161 394 733 266];
             app.AnalyZeLabel.Text = 'AnalyZe';
 
             % Create BioImpedanceDataAnalysisToolLabel
             app.BioImpedanceDataAnalysisToolLabel = uilabel(app.HomeTab);
             app.BioImpedanceDataAnalysisToolLabel.FontSize = 36;
             app.BioImpedanceDataAnalysisToolLabel.FontColor = [0 1 1];
-            app.BioImpedanceDataAnalysisToolLabel.Position = [473 327 550 47];
+            app.BioImpedanceDataAnalysisToolLabel.Position = [473 374 550 47];
             app.BioImpedanceDataAnalysisToolLabel.Text = 'BioImpedance Data Analysis Tool';
 
             % Create Image
@@ -9014,41 +9014,50 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create ImportDataButton
             app.ImportDataButton = uibutton(app.HomeTab, 'push');
             app.ImportDataButton.ButtonPushedFcn = createCallbackFcn(app, @ImportDataButtonPushed, true);
+            app.ImportDataButton.Icon = fullfile(pathToMLAPP, 'images', 'import_icon.png');
             app.ImportDataButton.FontSize = 24;
             app.ImportDataButton.FontWeight = 'bold';
-            app.ImportDataButton.Position = [122 180 100 67];
+            app.ImportDataButton.FontColor = [0.4667 0.6745 0.1882];
+            app.ImportDataButton.Position = [25 244 141 88];
             app.ImportDataButton.Text = {'Import'; 'Data'};
 
             % Create FitEquivalentCircuitButton
             app.FitEquivalentCircuitButton = uibutton(app.HomeTab, 'push');
             app.FitEquivalentCircuitButton.ButtonPushedFcn = createCallbackFcn(app, @FitEquivalentCircuitButtonPushed, true);
+            app.FitEquivalentCircuitButton.Icon = fullfile(pathToMLAPP, 'images', 'circuit_icon.png');
             app.FitEquivalentCircuitButton.FontSize = 18;
             app.FitEquivalentCircuitButton.FontWeight = 'bold';
-            app.FitEquivalentCircuitButton.Position = [228 287 196 30];
+            app.FitEquivalentCircuitButton.FontColor = [0.851 0.3255 0.098];
+            app.FitEquivalentCircuitButton.Position = [191 258 303 60];
             app.FitEquivalentCircuitButton.Text = 'Fit Equivalent Circuit';
 
             % Create TimeSeriesMagnitudeCrossSectionButton
             app.TimeSeriesMagnitudeCrossSectionButton = uibutton(app.HomeTab, 'push');
             app.TimeSeriesMagnitudeCrossSectionButton.ButtonPushedFcn = createCallbackFcn(app, @TimeSeriesMagnitudeCrossSectionButtonPushed, true);
+            app.TimeSeriesMagnitudeCrossSectionButton.Icon = fullfile(pathToMLAPP, 'images', 'Section_icon.png');
             app.TimeSeriesMagnitudeCrossSectionButton.FontSize = 18;
             app.TimeSeriesMagnitudeCrossSectionButton.FontWeight = 'bold';
-            app.TimeSeriesMagnitudeCrossSectionButton.Position = [253 184 234 54];
+            app.TimeSeriesMagnitudeCrossSectionButton.FontColor = [0.851 0.3255 0.098];
+            app.TimeSeriesMagnitudeCrossSectionButton.Position = [370 107 307 67];
             app.TimeSeriesMagnitudeCrossSectionButton.Text = {'Time Series'; 'Magnitude Cross Section'};
 
             % Create FitTransferFunctionButton
             app.FitTransferFunctionButton = uibutton(app.HomeTab, 'push');
             app.FitTransferFunctionButton.ButtonPushedFcn = createCallbackFcn(app, @FitTransferFunctionButtonPushed, true);
+            app.FitTransferFunctionButton.Icon = fullfile(pathToMLAPP, 'images', 'TransferFn_icon.png');
             app.FitTransferFunctionButton.FontSize = 18;
             app.FitTransferFunctionButton.FontWeight = 'bold';
-            app.FitTransferFunctionButton.Position = [218 111 196 30];
+            app.FitTransferFunctionButton.FontColor = [0.851 0.3255 0.098];
+            app.FitTransferFunctionButton.Position = [277 188 270 57];
             app.FitTransferFunctionButton.Text = 'Fit Transfer Function';
 
             % Create ExplainerModeSwitchLabel
             app.ExplainerModeSwitchLabel = uilabel(app.HomeTab);
             app.ExplainerModeSwitchLabel.HorizontalAlignment = 'center';
             app.ExplainerModeSwitchLabel.FontSize = 18;
+            app.ExplainerModeSwitchLabel.FontWeight = 'bold';
             app.ExplainerModeSwitchLabel.FontColor = [0 1 1];
-            app.ExplainerModeSwitchLabel.Position = [456 25 130 23];
+            app.ExplainerModeSwitchLabel.Position = [22 32 138 23];
             app.ExplainerModeSwitchLabel.Text = 'Explainer Mode';
 
             % Create ExplainerModeSwitch
@@ -9056,7 +9065,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.ExplainerModeSwitch.ValueChangedFcn = createCallbackFcn(app, @ExplainerModeSwitchValueChanged, true);
             app.ExplainerModeSwitch.FontSize = 18;
             app.ExplainerModeSwitch.FontColor = [0 1 1];
-            app.ExplainerModeSwitch.Position = [479 53 90 40];
+            app.ExplainerModeSwitch.Position = [49 60 90 40];
             app.ExplainerModeSwitch.Value = 'On';
 
             % Create Hyperlink
@@ -9077,9 +9086,11 @@ classdef AnalyZe < matlab.apps.AppBase
             % Create VisualizeDataButton
             app.VisualizeDataButton = uibutton(app.HomeTab, 'push');
             app.VisualizeDataButton.ButtonPushedFcn = createCallbackFcn(app, @VisualizeDataButtonPushed, true);
+            app.VisualizeDataButton.Icon = fullfile(pathToMLAPP, 'images', 'search_icon.png');
             app.VisualizeDataButton.FontSize = 18;
             app.VisualizeDataButton.FontWeight = 'bold';
-            app.VisualizeDataButton.Position = [21 128 102 52];
+            app.VisualizeDataButton.FontColor = [0.4667 0.6745 0.1882];
+            app.VisualizeDataButton.Position = [17 160 156 75];
             app.VisualizeDataButton.Text = {'Visualize'; 'Data'};
 
             % Create InportDataTab
