@@ -77,6 +77,7 @@ classdef AnalyZe < matlab.apps.AppBase
         BioImpedanceDataAnalysisToolLabel  matlab.ui.control.Label
         AnalyZeLabel                    matlab.ui.control.Label
         Image2                          matlab.ui.control.Image
+        Image2_2                        matlab.ui.control.Image
         InportDataTab                   matlab.ui.container.Tab
         OrLabel                         matlab.ui.control.Label
         PlotSelectedButton              matlab.ui.control.Button
@@ -187,6 +188,7 @@ classdef AnalyZe < matlab.apps.AppBase
         SaveResultsButton               matlab.ui.control.Button
         TabGroup2                       matlab.ui.container.TabGroup
         PlotsTab                        matlab.ui.container.Tab
+        PlotAndExportZSwitch            matlab.ui.control.RockerSwitch
         AuxCCTFitResults                matlab.ui.container.TabGroup
         Nyquist                         matlab.ui.container.Tab
         NyqResults                      matlab.ui.control.UIAxes
@@ -201,6 +203,8 @@ classdef AnalyZe < matlab.apps.AppBase
         HoldPlotsSwitchLabel            matlab.ui.control.Label
         BodeResults                     matlab.ui.control.UIAxes
         ResultsTab                      matlab.ui.container.Tab
+        PlotAndExportZSwitch_2          matlab.ui.control.RockerSwitch
+        PlotResultsfromTableSelectionButton_2  matlab.ui.control.Button
         AutoMarkButton                  matlab.ui.control.Button
         ResultsTable                    matlab.ui.control.Table
         FitDiagnosticTab                matlab.ui.container.Tab
@@ -303,8 +307,9 @@ classdef AnalyZe < matlab.apps.AppBase
         ProgressGuage                   matlab.ui.control.SemicircularGauge
         CircuitToFit                    matlab.ui.container.TabGroup
         EquivalentCircuitTab            matlab.ui.container.Tab
+        DropDown_3                      matlab.ui.control.DropDown
+        MoreInfoCCTFitButton            matlab.ui.control.Button
         Label_3                         matlab.ui.control.Label
-        EquivalentCCTExplainerText      matlab.ui.control.TextArea
         Image4                          matlab.ui.control.Image
         WriteACircuitTab                matlab.ui.container.Tab
         IncludeBarrierSwitch_2          matlab.ui.control.RockerSwitch
@@ -331,6 +336,7 @@ classdef AnalyZe < matlab.apps.AppBase
         CircuitBuilderTable             matlab.ui.control.Table
         BuildACircuitMaxValuesTab       matlab.ui.container.Tab
         CircuitBuilderTable_MaxVals     matlab.ui.control.Table
+        Tab                             matlab.ui.container.Tab
         RunningLamp                     matlab.ui.control.Lamp
         RunningLampLabel                matlab.ui.control.Label
         GoButton                        matlab.ui.control.Button
@@ -2045,11 +2051,14 @@ classdef AnalyZe < matlab.apps.AppBase
             writelines(evalc('type(mfilename(''fullpath'')+".mlapp")'),mfilename('fullpath')+".m");
 
             PictureCoinFlip = round(rand(1));
-            pathToMLAPP = fileparts(mfilename('fullpath'));
+           %pathToMLAPP = fileparts(mfilename('fullpath'));
+
             if PictureCoinFlip
-                app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectronicist.png');
+                app.Image2.Visible = true;
+                app.Image2_2.Visible = false;
             else
-                app.Image2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectroneress.png');
+                app.Image2.Visible = false;
+                app.Image2_2.Visible = true;
             end
 
             %%Programmatic elements
@@ -2850,6 +2859,12 @@ classdef AnalyZe < matlab.apps.AppBase
             NumDays = length(Dat_full);
             NumDevices =1;
 
+            if NumDays == 0;
+                msgbox('We couldn''t find that data! Make sure to use the CHOOSE button to select a subset of your dataset for fitting.','No Data Selected To Fit','warn')
+                return
+            end
+
+
             app.ProgressGuage.Value = 0;
             app.ProgressGuage.Limits = [0,NumDays];
 
@@ -2879,6 +2894,7 @@ classdef AnalyZe < matlab.apps.AppBase
             Upper_bound = [];
             Lower_Bound = [];
             Beta_Zero = [];
+            CircuitUsed = [];
 
             selectedTab = app.CircuitToFit.SelectedTab;
 
@@ -2940,7 +2956,7 @@ classdef AnalyZe < matlab.apps.AppBase
                             end
         
                             if errorflag
-                                msgbox('The app is expecting a leading p(R1,C1) as the Include Barrier Switch is turned on. Please revise circuit string.','Abnormal Barrier Circuit','warning')
+                                msgbox('The app is expecting a leading p(R1,C1) as the Include Barrier Switch is turned on. Please revise circuit string.','Abnormal Barrier Circuit','warn')
                                 return
                             end
         
@@ -2952,6 +2968,11 @@ classdef AnalyZe < matlab.apps.AppBase
                 app.FitSequentiallySwitch.Value = 'Off';
                 fit_sequentially = false;
             
+            end
+
+            if isempty(CircuitUsed)
+                msgbox('Looks like we skipped a step! First Set the Circuit to be Fit.','No Circuit Model','warn')
+                return
             end
 
             %% Recursive Regularization Fit
@@ -3297,28 +3318,34 @@ classdef AnalyZe < matlab.apps.AppBase
                     end
                                     
                     yyaxis(app.BodeResults, 'left')
-                    plot(app.BodeResults, Freq, Mod, '*r','LineWidth',1)
-                    set(app.BodeResults,'YScale','log')
-                    set(app.BodeResults,'XScale','log')
-                    xlabel(app.BodeResults,'Frequency (Hz)');
-                    ylabel(app.BodeResults,'Magnitude, |Z|, (\Omega )');
-                    hold(app.BodeResults, 'on')
-                        plot(app.BodeResults, Freq, Mod_Results, '-r','LineWidth',1)
+                        plot(app.BodeResults,Freq, Mod, '*','Color',"#0072BD",'LineWidth',1)
+                        set(app.BodeResults,'YScale','log')
+                        set(app.BodeResults,'XScale','log')
+                        xlabel(app.BodeResults,'Frequency (Hz)');
+                        ylabel(app.BodeResults,'Magnitude, |Z|, (\Omega)');
+                        hold(app.BodeResults, 'on')
+                        plot(app.BodeResults,Freq, Mod_Results, '-','Color',"#D95319",'LineWidth',1)
 
-                         yyaxis(app.BodeResults, 'right')
-                           ylabel(app.BodeResults,'-Phase, \angle Z (deg)');
-                         plot(app.BodeResults, Freq, Arg, '*g','LineWidth',1)
-                         plot(app.BodeResults, Freq, Arg_Results, '-g','LineWidth',1)
-                         set(app.BodeResults,'YScale','linear')
-                    hold(app.BodeResults, 'off')
+                        yyaxis(app.BodeResults, 'right')
+                        ylabel(app.BodeResults,'-Phase, \angleZ (deg)');
+                        plot(app.BodeResults,Freq, Arg, '*','Color',	"#EDB120",'LineWidth',1)
+                        plot(app.BodeResults,Freq, Arg_Results, '-','Color',"#77AC30",'LineWidth',1)
+                        set(app.BodeResults,'YScale','linear')
+                        hold(app.BodeResults, 'off')
+
+                        f=allchild(app.BodeResults);
+                        legend([f(end),f(end-1),f(2),f(1)],'Measured |Z|','Fit |Z|','Measured -\angleZ','Fit -\angle Z')
                     
        
-                    plot(app.NyqResults , Dat_i_EIS.Z, Dat_i_EIS.Z1, '*r','LineWidth',1)
-                    hold(app.NyqResults, 'on')
+                    plot(app.NyqResults ,  Dat_i_EIS.Z, Dat_i_EIS.Z1, '*','Color',"#D95319",'LineWidth',1)
+                        hold(app.NyqResults, 'on')
                         plot(app.NyqResults , real(Results_yz), -1.*imag(Results_yz), '-k','LineWidth',1)
-                    hold(app.NyqResults, 'off')
-                    xlabel(app.NyqResults,'Real(Z)');
-                    ylabel( app.NyqResults, '-Imag(Z)');
+                        hold(app.NyqResults, 'off')
+                        xlabel(app.NyqResults,'Real(Z)');
+                        ylabel( app.NyqResults, '-Imag(Z)');
+    
+                        f=allchild(app.NyqResults);
+                        legend([f(end),f(1)],'Measured Z','Fit Z')
 
                     drawnow()
                     
@@ -5199,19 +5226,20 @@ classdef AnalyZe < matlab.apps.AppBase
            flag = app.TutorialMode;
            if flag
                 
-               answer = questdlg('Select any cell in the results table - the result associated with that row will be plotted.',...
+               answer = questdlg('Select any cell in the results table - the result associated with that row will be plotted. Use the Plot & Export rocker switch to export the impedance data and overlayed fits.',...
                                     'Plot a Fitting Result',...
                                    'Continue','Cancel','Continue');
            end
-               switch answer
-                   case 'Cancel'
-                       return
-               end
-           
-            
+           switch answer
+               case 'Cancel'
+                   return
+           end
+
+                     
+            %% Plot
             
               ind = app.ResultTableCellsSelected;
-               ind = ind(1);
+              ind = ind(1);
 
                try 
                    Fit_to_plot = app.Fits(ind);
@@ -5224,8 +5252,6 @@ classdef AnalyZe < matlab.apps.AppBase
                Results = Fit_to_plot.FitsResults;
                Dat_EIS = Fit_to_plot.RawData;
                Dat_EIS_yz = Dat_EIS(:,1);
-
-                  %assignin('base','Fit_i',Fit_to_plot);
 
                     Results_yz = Results{4};
                     Mod_Results = abs(Results_yz);
@@ -5256,31 +5282,77 @@ classdef AnalyZe < matlab.apps.AppBase
                         freq = Dat_EIS(:,2);
                     
                         yyaxis(app.BodeResults, 'left')
-                        plot(app.BodeResults,freq, Mod, '*r','LineWidth',1)
+                        plot(app.BodeResults,freq, Mod, '*','Color',"#0072BD",'LineWidth',1)
                         set(app.BodeResults,'YScale','log')
                         set(app.BodeResults,'XScale','log')
                         xlabel(app.BodeResults,'Frequency (Hz)');
-                        ylabel(app.BodeResults,'Magnitude, |Z|, (\Omega )');
+                        ylabel(app.BodeResults,'Magnitude, |Z|, (\Omega)');
                         hold(app.BodeResults, 'on')
-                            plot(app.BodeResults,freq, Mod_Results, '-r','LineWidth',1)
-    
-                             yyaxis(app.BodeResults, 'right')
-                               ylabel(app.BodeResults,'-Phase, \angle Z (deg)');
-                             plot(app.BodeResults,freq, Arg, '*g','LineWidth',1)
-                             plot(app.BodeResults,freq, Arg_Results, '-g','LineWidth',1)
-                             set(app.BodeResults,'YScale','linear')
+                        plot(app.BodeResults,freq, Mod_Results, '-','Color',"#D95319",'LineWidth',1)
+
+                        yyaxis(app.BodeResults, 'right')
+                        ylabel(app.BodeResults,'-Phase, \angleZ (deg)');
+                        plot(app.BodeResults,freq, Arg, '*','Color',	"#EDB120",'LineWidth',1)
+                        plot(app.BodeResults,freq, Arg_Results, '-','Color',"#77AC30",'LineWidth',1)
+                        set(app.BodeResults,'YScale','linear')
                         hold(app.BodeResults, 'off')
+
+
+                        f=allchild(app.BodeResults);
+                        legend([f(end),f(end-1),f(2),f(1)],'Measured |Z|','Fit |Z|','Measured -\angleZ','Fit -\angle Z')
                     end
                     
        
-                    plot(app.NyqResults , real(Dat_EIS_yz), -1.*imag(Dat_EIS_yz), '*r','LineWidth',1)
+                    plot(app.NyqResults , real(Dat_EIS_yz), -1.*imag(Dat_EIS_yz), '*','Color',"#D95319",'LineWidth',1)
                     hold(app.NyqResults, 'on')
-                        plot(app.NyqResults , real(Results_yz), -1.*imag(Results_yz), '-k','LineWidth',1)
+                    plot(app.NyqResults , real(Results_yz), -1.*imag(Results_yz), '-k','LineWidth',1)
                     hold(app.NyqResults, 'off')
                     xlabel(app.NyqResults,'Real(Z)');
                     ylabel( app.NyqResults, '-Imag(Z)');
 
+                    f=allchild(app.NyqResults);
+                    legend([f(end),f(1)],'Measured Z','Fit Z')
+
                     drawnow()
+
+                    %% Check if export requested
+                       PlotAndExport = false;
+                       value = app.PlotAndExportZSwitch.Value;
+                       switch value
+                           case 'Plot & Export Z'
+                               PlotAndExport = true;
+                           otherwise
+                               PlotAndExport = false;
+                       end
+
+                       if PlotAndExport
+                             UserFileName = inputdlg("Enter File Name: ","Export plotted impedance data and fit");
+                             selpath = uigetdir();
+
+                             if isempty(UserFileName) || isempty(selpath)
+                                  msgbox('Oops! We didn''t get a filename and save directory for that!','Export Data Aborted','error')
+                                  %error('No Filename or save directory entered.')
+                             else
+                                ReZ = real(Dat_EIS_yz);
+                                negImZ = -1.*imag(Dat_EIS_yz);
+                                ReZ_results = real(Results_yz);
+                                negImZ_results = -1.*imag(Results_yz);
+    
+                                SelectedImpedanceFitsTable = table(freq(:),Dat_EIS_yz(:),Mod(:),Arg(:),ReZ(:),negImZ(:),...
+                                                                          Results_yz(:),Mod_Results(:),Arg_Results(:),ReZ_results(:),negImZ_results(:),...
+                                                                          'VariableNames',{'Frequency (Hz)', 'Measured Imedance (Z)','Measured |Z| (Ohms)','Measured -Arg(Z) (deg)','Measured Re(Z) (Ohms)','Measured -Im(Z) (Ohms)',...
+                                                                                            'Fit Imedance (Z)','Fit |Z| (Ohms)','Fit -Arg(Z) (deg)','Fit Re(Z) (Ohms)','Fit -Im(Z) (Ohms)'});
+    
+    
+                                save(selpath + "\SelectedAnalyZeImpedanceFits_" + string(UserFileName) + ".mat","SelectedImpedanceFitsTable",'-mat');
+    
+                                filename= selpath + "\SelectedAnalyZeImpedanceFits_" + string(UserFileName) + ".csv";
+                                writetable(SelectedImpedanceFitsTable,filename);
+
+                                f = msgbox("Success! Impedance plot data and fits for Results Table entry "+ string(ind) +" saved as SelectedAnalyZeImpedanceFits_" + string(UserFileName) + ".mat and SelectedAnalyZeImpedanceFits_"  + string(UserFileName) + ".csv :D",'Save Impedance Plot Data','help');
+                             end
+
+                       end
 
                     %% Update Log
                                     
@@ -9166,6 +9238,53 @@ classdef AnalyZe < matlab.apps.AppBase
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             end
         end
+
+        % Button pushed function: PlotResultsfromTableSelectionButton_2
+        function PlotResultsfromTableSelectionButton_2Pushed(app, event)
+            app.PlotResultsfromTableSelectionButton.ButtonPushedFcn(app,event);
+            app.TabGroup2.SelectedTab = app.PlotsTab;
+        end
+
+        % Value changed function: PlotAndExportZSwitch
+        function PlotAndExportZSwitchValueChanged(app, event)
+            value = app.PlotAndExportZSwitch.Value;
+            app.PlotAndExportZSwitch_2.Value = value;
+        end
+
+        % Value changed function: PlotAndExportZSwitch_2
+        function PlotAndExportZSwitch_2ValueChanged(app, event)
+            value = app.PlotAndExportZSwitch_2.Value;
+             app.PlotAndExportZSwitch.Value = value;
+        end
+
+        % Button pushed function: MoreInfoCCTFitButton
+        function MoreInfoCCTFitButtonPushed(app, event)
+            msgbox({'This module is principally designed to fit impedance data which incoporates a biological barrier (commonly an epithelial barrier or lipid bilayer);',...
+                    'which is modelled as a parallel resistance and capacitance (R//C) which are denoted Rb and Cb.',...
+                    '',...
+                    'The Write-A-Circuit submodule allows for arbitrary circuit models, and need not include a barrier (R//C) component.'},...
+                    'Circuit Fitting Module Info','help')
+        end
+
+        % Value changed function: DropDown_3
+        function DropDown_3ValueChanged(app, event)
+            value = app.DropDown_3.Value;
+            
+            switch value
+                case 'Input a Circuit Model to Fit'
+                case 'Write an arbitrary circuit (Recommended)'
+                    app.CircuitToFit.SelectedTab  = app.WriteACircuitTab;
+                case 'Select from a list of commonly used circuit models'
+                    app.CircuitToFit.SelectedTab  = app.SelectACircuitTab;
+                case 'Block-build a circuit (Deprecated)'
+                    app.CircuitToFit.SelectedTab  = app.BuildACircuitMaxValuesTab;
+            end
+
+            app.DropDown_3.Value = 'Input a Circuit Model to Fit';
+
+            app.CircuitToFitSelectionChanged(app)
+            
+        end
     end
 
     % Component initialization
@@ -9356,6 +9475,13 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HomeTab = uitab(app.TabGroup);
             app.HomeTab.Title = 'Home';
             app.HomeTab.Tag = 'Home';
+
+            % Create Image2_2
+            app.Image2_2 = uiimage(app.HomeTab);
+            app.Image2_2.ScaleMethod = 'fill';
+            app.Image2_2.Visible = 'off';
+            app.Image2_2.Position = [1 0 1020 709];
+            app.Image2_2.ImageSource = fullfile(pathToMLAPP, 'images', 'Bioelectroneress.png');
 
             % Create Image2
             app.Image2 = uiimage(app.HomeTab);
@@ -10314,19 +10440,29 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Image4.Position = [254 6 197 116];
             app.Image4.ImageSource = fullfile(pathToMLAPP, 'images', 'Equivalent_circuit_Barrier_2.png');
 
-            % Create EquivalentCCTExplainerText
-            app.EquivalentCCTExplainerText = uitextarea(app.EquivalentCircuitTab);
-            app.EquivalentCCTExplainerText.Editable = 'off';
-            app.EquivalentCCTExplainerText.Position = [8 3 239 86];
-            app.EquivalentCCTExplainerText.Value = {'This module is principally designed to fit impedance data which incoporates a biological barrier (commonly an epithelial barrier or lipid bilayer); which is modelled as R//C and denoted Rb and Cb. '; ''; 'The Write-A-Circuit submodule allows for arbitrary circuit models, and need not include a barrier (R//C) component.'};
-
             % Create Label_3
             app.Label_3 = uilabel(app.EquivalentCircuitTab);
             app.Label_3.HorizontalAlignment = 'center';
+            app.Label_3.FontSize = 18;
             app.Label_3.FontWeight = 'bold';
             app.Label_3.FontColor = [0.4667 0.6745 0.1882];
-            app.Label_3.Position = [6 92 242 30];
-            app.Label_3.Text = {'Choose an equivalent circuit model to fit '; 'to the measured impedance data.'};
+            app.Label_3.Position = [32 71 197 44];
+            app.Label_3.Text = {'Choose an equivalent '; 'circuit model to fit'};
+
+            % Create MoreInfoCCTFitButton
+            app.MoreInfoCCTFitButton = uibutton(app.EquivalentCircuitTab, 'push');
+            app.MoreInfoCCTFitButton.ButtonPushedFcn = createCallbackFcn(app, @MoreInfoCCTFitButtonPushed, true);
+            app.MoreInfoCCTFitButton.Icon = fullfile(pathToMLAPP, 'images', 'Light_Bulb_or_Idea_Flat_Icon_Vector.svg');
+            app.MoreInfoCCTFitButton.Position = [416 84 39 38];
+            app.MoreInfoCCTFitButton.Text = '';
+
+            % Create DropDown_3
+            app.DropDown_3 = uidropdown(app.EquivalentCircuitTab);
+            app.DropDown_3.Items = {'Input a Circuit Model to Fit', 'Write an arbitrary circuit (Recommended)', 'Select from a list of commonly used circuit models', 'Block-build a circuit (Deprecated)'};
+            app.DropDown_3.ValueChangedFcn = createCallbackFcn(app, @DropDown_3ValueChanged, true);
+            app.DropDown_3.FontSize = 14;
+            app.DropDown_3.Position = [8 29 244 35];
+            app.DropDown_3.Value = 'Input a Circuit Model to Fit';
 
             % Create WriteACircuitTab
             app.WriteACircuitTab = uitab(app.CircuitToFit);
@@ -10486,6 +10622,10 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CircuitBuilderTable_MaxVals.FontSize = 10;
             app.CircuitBuilderTable_MaxVals.Position = [55 8 364 116];
 
+            % Create Tab
+            app.Tab = uitab(app.CircuitToFit);
+            app.Tab.Title = 'Tab';
+
             % Create ProgressGuage
             app.ProgressGuage = uigauge(app.FittingParams, 'semicircular');
             app.ProgressGuage.FontSize = 9;
@@ -10505,9 +10645,9 @@ classdef AnalyZe < matlab.apps.AppBase
             app.Label_4.HorizontalAlignment = 'center';
             app.Label_4.FontSize = 14;
             app.Label_4.FontWeight = 'bold';
-            app.Label_4.FontColor = [0.4667 0.6745 0.1882];
-            app.Label_4.Position = [75 54 163 34];
-            app.Label_4.Text = {'Adjust aspects of the '; 'equivalent circuit fitting'};
+            app.Label_4.FontColor = [0.0745 0.6235 1];
+            app.Label_4.Position = [38 54 238 34];
+            app.Label_4.Text = {'(OPTIONAL) Adjust aspects of the '; 'equivalent circuit fitting'};
 
             % Create DropDown_2
             app.DropDown_2 = uidropdown(app.HyperparamsTab);
@@ -10730,21 +10870,21 @@ classdef AnalyZe < matlab.apps.AppBase
             app.HoldPlotsSwitchLabel.HorizontalAlignment = 'center';
             app.HoldPlotsSwitchLabel.FontSize = 18;
             app.HoldPlotsSwitchLabel.FontWeight = 'bold';
-            app.HoldPlotsSwitchLabel.Position = [11 259 94 23];
+            app.HoldPlotsSwitchLabel.Position = [8 302 94 23];
             app.HoldPlotsSwitchLabel.Text = 'Hold Plots';
 
             % Create HoldPlotsSwitch
             app.HoldPlotsSwitch = uiswitch(app.PlotsTab, 'toggle');
             app.HoldPlotsSwitch.FontSize = 18;
-            app.HoldPlotsSwitch.Position = [39 157 32 72];
+            app.HoldPlotsSwitch.Position = [36 200 32 72];
 
             % Create PlotResultsfromTableSelectionButton
             app.PlotResultsfromTableSelectionButton = uibutton(app.PlotsTab, 'push');
             app.PlotResultsfromTableSelectionButton.ButtonPushedFcn = createCallbackFcn(app, @PlotResultsfromTableSelectionButtonPushed, true);
-            app.PlotResultsfromTableSelectionButton.FontSize = 17;
+            app.PlotResultsfromTableSelectionButton.FontSize = 14;
             app.PlotResultsfromTableSelectionButton.FontWeight = 'bold';
             app.PlotResultsfromTableSelectionButton.FontColor = [0.302 0.7451 0.9333];
-            app.PlotResultsfromTableSelectionButton.Position = [7 17 96 92];
+            app.PlotResultsfromTableSelectionButton.Position = [14 94 81 77];
             app.PlotResultsfromTableSelectionButton.Text = {'Plot'; 'Results'; 'from Table'; 'Selection'};
 
             % Create AuxCCTFitResults
@@ -10795,6 +10935,14 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RecursiveTimeRegLogSwitch_2.Position = [291 8 45 20];
             app.RecursiveTimeRegLogSwitch_2.Value = 'Rb';
 
+            % Create PlotAndExportZSwitch
+            app.PlotAndExportZSwitch = uiswitch(app.PlotsTab, 'rocker');
+            app.PlotAndExportZSwitch.Items = {'Plot Only', 'Plot & Export Z'};
+            app.PlotAndExportZSwitch.ValueChangedFcn = createCallbackFcn(app, @PlotAndExportZSwitchValueChanged, true);
+            app.PlotAndExportZSwitch.Tooltip = {'Select Plot & Export to save the impedance data and fits from the table selection.'};
+            app.PlotAndExportZSwitch.Position = [42 23 20 45];
+            app.PlotAndExportZSwitch.Value = 'Plot Only';
+
             % Create ResultsTab
             app.ResultsTab = uitab(app.TabGroup2);
             app.ResultsTab.Title = 'Results';
@@ -10816,8 +10964,25 @@ classdef AnalyZe < matlab.apps.AppBase
             app.AutoMarkButton.FontSize = 14;
             app.AutoMarkButton.FontWeight = 'bold';
             app.AutoMarkButton.FontColor = [0.4941 0.1843 0.5569];
-            app.AutoMarkButton.Position = [186 6 90 30];
+            app.AutoMarkButton.Position = [13 6 90 30];
             app.AutoMarkButton.Text = 'Auto-Mark';
+
+            % Create PlotResultsfromTableSelectionButton_2
+            app.PlotResultsfromTableSelectionButton_2 = uibutton(app.ResultsTab, 'push');
+            app.PlotResultsfromTableSelectionButton_2.ButtonPushedFcn = createCallbackFcn(app, @PlotResultsfromTableSelectionButton_2Pushed, true);
+            app.PlotResultsfromTableSelectionButton_2.FontWeight = 'bold';
+            app.PlotResultsfromTableSelectionButton_2.FontColor = [0.302 0.7451 0.9333];
+            app.PlotResultsfromTableSelectionButton_2.Position = [181 3 107 38];
+            app.PlotResultsfromTableSelectionButton_2.Text = {'Plot Results from '; 'Table Selection'};
+
+            % Create PlotAndExportZSwitch_2
+            app.PlotAndExportZSwitch_2 = uiswitch(app.ResultsTab, 'rocker');
+            app.PlotAndExportZSwitch_2.Items = {'Plot Only', 'Plot & Export Z'};
+            app.PlotAndExportZSwitch_2.Orientation = 'horizontal';
+            app.PlotAndExportZSwitch_2.ValueChangedFcn = createCallbackFcn(app, @PlotAndExportZSwitch_2ValueChanged, true);
+            app.PlotAndExportZSwitch_2.Tooltip = {'Select Plot & Export to save the impedance data and fits from the table selection.'};
+            app.PlotAndExportZSwitch_2.Position = [347 12 45 20];
+            app.PlotAndExportZSwitch_2.Value = 'Plot Only';
 
             % Create FitDiagnosticTab
             app.FitDiagnosticTab = uitab(app.TabGroup2);
@@ -11214,6 +11379,8 @@ classdef AnalyZe < matlab.apps.AppBase
             app.SaveResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
             app.SaveResultsButton.ButtonPushedFcn = createCallbackFcn(app, @SaveResultsButtonPushed, true);
             app.SaveResultsButton.FontSize = 14;
+            app.SaveResultsButton.FontWeight = 'bold';
+            app.SaveResultsButton.FontColor = [0.4667 0.6745 0.1882];
             app.SaveResultsButton.Position = [759 12 114 30];
             app.SaveResultsButton.Text = 'Save Results';
 
@@ -11230,6 +11397,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.LoadResultsButton = uibutton(app.AnalysisCCTFITTab, 'push');
             app.LoadResultsButton.ButtonPushedFcn = createCallbackFcn(app, @LoadResultsButtonPushed, true);
             app.LoadResultsButton.FontSize = 14;
+            app.LoadResultsButton.FontColor = [0.4667 0.6745 0.1882];
             app.LoadResultsButton.Position = [881 13 114 30];
             app.LoadResultsButton.Text = 'Load Results';
 
