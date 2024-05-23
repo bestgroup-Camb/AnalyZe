@@ -9091,7 +9091,7 @@ classdef AnalyZe < matlab.apps.AppBase
                                     otherwise %Bode 3D
                                         copyobj(allChildren, figAxes)
                                         
-                                        switch (app.IndependentVariableKnob)
+                                        switch (app.IndependentVariableKnob.Value)
                                             case 'Freq'
                                                 figAxes.XLim = axs.XLim;
                                                 figAxes.XScale = axs.XScale;
@@ -9111,9 +9111,9 @@ classdef AnalyZe < matlab.apps.AppBase
         
                                 end
         
-                            otherwise %Nyquist
+                            case 'Nyquist'
                                 copyobj(allChildren, figAxes)
-                                switch (app.IndependentVariableKnob)
+                                switch (app.IndependentVariableKnob.Value)
                                     case 'Freq'
                                         figAxes.XLim = axs.XLim;
                                         figAxes.XScale = axs.XScale;
@@ -9192,7 +9192,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 delete(fig_temp);
 
 
-                msgbox("File Saved as " + "\AnalyZeResults_<PlotType>_" + string(UserFileName))
+                msgbox("File Saved as " + "\AnalyZeVisualize_<PlotType>_" + string(UserFileName))
  
         end
 
@@ -9554,7 +9554,7 @@ classdef AnalyZe < matlab.apps.AppBase
             app.FitTransferFunctionButton.FontSize = 18;
             app.FitTransferFunctionButton.FontWeight = 'bold';
             app.FitTransferFunctionButton.FontColor = [0.851 0.3255 0.098];
-            app.FitTransferFunctionButton.Position = [277 188 270 57];
+            app.FitTransferFunctionButton.Position = [277 188 291 57];
             app.FitTransferFunctionButton.Text = 'Fit Transfer Function';
 
             % Create ExplainerModeSwitchLabel
