@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+title: AnalyZe
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Douglas Carl
+    family-names: van Niekerk
+    email: dcv24@cam.ac.uk
+    affiliation: >-
+      Department of Chemical Engineering & Biotechnology,
+      University of Cambridge, United Kingdom
+    orcid: 'https://orcid.org/0000-0002-6449-7808'
+  - given-names: Róisín M.
+    family-names: Owens
+    email: rmo37@cam.ac.uk
+    affiliation: >-
+      Department of Chemical Engineering & Biotechnology,
+      University of Cambridge, United Kingdom
+    orcid: 'https://orcid.org/0000-0001-7856-2108'
+repository-code: 'https://github.com/bestgroup-Camb/AnalyZe'
+abstract: >-
+  A MATLAB application GUI for visualizing and analyzing
+  Electrical Impedance Spectroscopy (EIS) data in biological
+  applications.
+keywords:
+  - EIS
+  - Bioimpedance
+  - Barrier Function
+  - Equivalent Circuit Fitting
+license: MIT
+commit: 67cb32df8d8dd5f7551b320cc00b38e86b6ed808
+version: '5.0'
+date-released: '2024-03-22'
