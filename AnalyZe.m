@@ -39,6 +39,7 @@ classdef AnalyZe < matlab.apps.AppBase
         CircuitFitResultsMenu           matlab.ui.container.Menu
         TrasferFnFitResultsMenu         matlab.ui.container.Menu
         VisualizeDataMenu               matlab.ui.container.Menu
+        OpenVisualizerMenu              matlab.ui.container.Menu
         SaveFigureMenu_2                matlab.ui.container.Menu
         ToolboxMenu                     matlab.ui.container.Menu
         CircuitFittingMenu              matlab.ui.container.Menu
@@ -61,6 +62,7 @@ classdef AnalyZe < matlab.apps.AppBase
         ToggleExplainerPopupsMenu       matlab.ui.container.Menu
         GithubRepositoryMenu            matlab.ui.container.Menu
         RaiseNewGithubIssueMenu         matlab.ui.container.Menu
+        NavigatetoRepoHomePageMenu      matlab.ui.container.Menu
         TabGroup                        matlab.ui.container.TabGroup
         HomeTab                         matlab.ui.container.Tab
         VisualizeDataButton             matlab.ui.control.Button
@@ -2302,7 +2304,7 @@ classdef AnalyZe < matlab.apps.AppBase
                         case 'Well Number'
                             app.CurrentWell = app.MultiFileSelectAutoIncrementArray{MSelct};
                         case 'Time Point'
-                            app.CurrentEISTime = app.MultiFileSelectAutoIncrementArray{MSelct};
+                            app.CurrentEISTime = str2double(app.MultiFileSelectAutoIncrementArray{MSelct});
                         otherwise
                     end
 
@@ -7114,7 +7116,7 @@ classdef AnalyZe < matlab.apps.AppBase
                 fig_temp.CurrentAxes.Title.String = axs.Title.String;
                 fig_temp.CurrentAxes.Title.FontSize = axs.Title.FontSize;
 
-                switch PlotName
+                switch plotName
                     case 'Bode Fits'
                         %figAxes.DataAspectRatio = axs.DataAspectRatio;
                         yyaxis(axs,"right")
@@ -8217,7 +8219,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Menu selected function: GithubRepositoryMenu
         function GithubRepositoryMenuSelected(app, event)
-            web('https://github.com/bestgroup-Camb/AnalyZe');
+           
         end
 
         % Menu selected function: ClearAllDataMenu
@@ -8638,8 +8640,7 @@ classdef AnalyZe < matlab.apps.AppBase
 
         % Menu selected function: VisualizeDataMenu
         function VisualizeDataMenuSelected(app, event)
-            app.TabGroup.SelectedTab = app.VisualizeDataTab;
-            app.RefreshData_4.ButtonPushedFcn(app,event);
+            
         end
 
         % Button pushed function: PlotButton
@@ -8911,13 +8912,16 @@ classdef AnalyZe < matlab.apps.AppBase
                     
                     switch PlotLimsVal
                         case 'On'
-                            yyaxis(app.VisualiseDataAxes, 'left')
-                            xlim(app.VisualiseDataAxes,[app.xminEditField.Value app.xmaxEditField.Value]);
-                            ylim(app.VisualiseDataAxes,[app.yminEditField.Value app.ymaxEditField.Value]);
                             switch DimsVal
                                 case '3D'
                                     zlim(app.VisualiseDataAxes,[app.zminEditField.Value app.zmaxEditField.Value]);
+                                case '2D'
+                                    yyaxis(app.VisualiseDataAxes, 'left')
                             end
+                            
+                            xlim(app.VisualiseDataAxes,[app.xminEditField.Value app.xmaxEditField.Value]);
+                            ylim(app.VisualiseDataAxes,[app.yminEditField.Value app.ymaxEditField.Value]);
+                           
                     end
             end
 
@@ -9285,6 +9289,17 @@ classdef AnalyZe < matlab.apps.AppBase
             app.CircuitToFitSelectionChanged(app)
             
         end
+
+        % Menu selected function: OpenVisualizerMenu
+        function OpenVisualizerMenuSelected(app, event)
+            app.TabGroup.SelectedTab = app.VisualizeDataTab;
+            app.RefreshData_4.ButtonPushedFcn(app,event);
+        end
+
+        % Menu selected function: NavigatetoRepoHomePageMenu
+        function NavigatetoRepoHomePageMenuSelected(app, event)
+             web('https://github.com/bestgroup-Camb/AnalyZe');
+        end
     end
 
     % Component initialization
@@ -9362,6 +9377,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.VisualizeDataMenu = uimenu(app.DataMenu);
             app.VisualizeDataMenu.MenuSelectedFcn = createCallbackFcn(app, @VisualizeDataMenuSelected, true);
             app.VisualizeDataMenu.Text = 'Visualize Data';
+
+            % Create OpenVisualizerMenu
+            app.OpenVisualizerMenu = uimenu(app.VisualizeDataMenu);
+            app.OpenVisualizerMenu.MenuSelectedFcn = createCallbackFcn(app, @OpenVisualizerMenuSelected, true);
+            app.OpenVisualizerMenu.Text = 'Open Visualizer';
 
             % Create SaveFigureMenu_2
             app.SaveFigureMenu_2 = uimenu(app.VisualizeDataMenu);
@@ -9464,6 +9484,11 @@ classdef AnalyZe < matlab.apps.AppBase
             app.RaiseNewGithubIssueMenu = uimenu(app.GithubRepositoryMenu);
             app.RaiseNewGithubIssueMenu.MenuSelectedFcn = createCallbackFcn(app, @RaiseNewGithubIssueMenuSelected, true);
             app.RaiseNewGithubIssueMenu.Text = 'Raise New Github Issue';
+
+            % Create NavigatetoRepoHomePageMenu
+            app.NavigatetoRepoHomePageMenu = uimenu(app.GithubRepositoryMenu);
+            app.NavigatetoRepoHomePageMenu.MenuSelectedFcn = createCallbackFcn(app, @NavigatetoRepoHomePageMenuSelected, true);
+            app.NavigatetoRepoHomePageMenu.Text = 'Navigate to Repo Home Page';
 
             % Create TabGroup
             app.TabGroup = uitabgroup(app.UIFigure);
